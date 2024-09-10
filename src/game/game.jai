@@ -1,6 +1,7 @@
 GameState :: struct {
     should_close : bool = false;   
     entity_manager : *EntityManager;
+    render_handle : *RenderHandle;
 }
 
 start_game :: (game_state: *GameState) {

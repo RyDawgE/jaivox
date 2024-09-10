@@ -6,10 +6,10 @@ main :: () {
 
 #load "./game/game.jai";
 #load "./entity/entity.jai";
+#load "./render/render_context.jai";
 
 #import "Basic";
 #import "Math";
-#import "raylib";
 #import "Bit_Operations";
 #import "Compiler";
 #import "GL";

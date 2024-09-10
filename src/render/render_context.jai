@@ -1,5 +1,5 @@
 RenderHandle :: struct {
-    window : *GLFWwindow;
+    window : *void;
 }
 
 WindowCreationInfo :: struct {
@@ -8,27 +8,6 @@ WindowCreationInfo :: struct {
     title : string : "Jaivox";
 }
 
-create_window :: (game_state : *GameState) {
-    game_state.render_handle = New(RenderHandle);
-
-    if !glfwInit() then return;
-    defer glfwTerminate();
-    
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
-    
-    game_state.render_handle.window = glfwCreateWindow(WindowCreationInfo.width, WindowCreationInfo.height, WindowCreationInfo.title, null, null);
-    
-    if !game_state.render_handle.window then return;
-    
-    defer glfwDestroyWindow(game_state.render_handle.window);
-    
-    glfwMakeContextCurrent(game_state.render_handle.window);
-    
-    while !glfwWindowShouldClose(game_state.render_handle.window) {
-        glfwSwapBuffers(game_state.render_handle.window);
-        glfwPollEvents();
-    }
-    
-    
+initialize_render :: (render_handle : *RenderHandle) {
+  create_window(render_handle);
 }

@@ -14,3 +14,8 @@ main :: () {
 #import "Compiler";
 #import "GL";
 #import "glfw";
+
+#if OS ==  {
+  case .WINDOWS; hello_world :: () { #load "./render/platforms/windows.jai";}
+  case .MACOS;   hello_world :: () { print("mac!\n"); }
+}

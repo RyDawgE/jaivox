@@ -7,19 +7,27 @@ GameState :: struct {
 start_game :: (game_state: *GameState) {
     debug_counter : int = 0;
     game_state.entity_manager = New(EntityManager);
+    game_state.render_handle = New(RenderHandle);
     
-    while !game_state.should_close {
-        entity : *Entity = cast (*Entity) create_entity(game_state.entity_manager, Entity);
+    initialize_render(game_state.render_handle);
+    
+    while !should_game_close(game_state) {
         
-        debug_counter += 1;
+        glClear(GL_COLOR_BUFFER_BIT);
         
-        if (debug_counter % 16 == 0) {
-            destroy_entity(game_state.entity_manager, entity);
-        }
+        glfwSwapBuffers(game_state.render_handle.window);
         
-        if (debug_counter == 1024) {
-            game_state.should_close = true;
-        }
-        
+        glfwPollEvents();
     }
+    
+    cleanup(game_state);
 }
+
+should_game_close :: (game_state : *GameState) -> bool {
+    return get_should_window_close(game_state.render_handle.window) | game_state.should_close;
+}
+
+cleanup :: (game_state : *GameState) {
+    cleanup_window(game_state.render_handle.window);
+}
+

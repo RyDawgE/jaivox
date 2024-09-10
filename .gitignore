@@ -1,0 +1,10 @@
+.build
+build_debug
+build_release
+.DS_Store
+
+*.obj
+*.exe
+*.pdb
+*.lib
+*.rdi

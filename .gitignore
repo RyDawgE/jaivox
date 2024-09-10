@@ -8,3 +8,4 @@ build_release
 *.pdb
 *.lib
 *.rdi
+*.exp

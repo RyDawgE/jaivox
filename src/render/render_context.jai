@@ -9,5 +9,6 @@ WindowCreationInfo :: struct {
 }
 
 initialize_render :: (render_handle : *RenderHandle) {
-  create_window(render_handle);
+  create_game_window();
+  create_render_context();
 }

@@ -1,7 +1,7 @@
-main :: () {
-    game_state : GameState = .{};
+game_state : GameState = .{};
 
-    start_game(*game_state);     
+main :: () {
+    start_game();     
 }
 
 #load "./game/game.jai";
@@ -12,10 +12,8 @@ main :: () {
 #import "Math";
 #import "Bit_Operations";
 #import "Compiler";
-#import "GL";
-#import "glfw";
 
 #if OS ==  {
-  case .WINDOWS; hello_world :: () { #load "./render/platforms/windows.jai";}
+  case .WINDOWS; hello_world :: () { #load "./render/platforms/windows.jai"; }
   case .MACOS;   hello_world :: () { print("mac!\n"); }
 }

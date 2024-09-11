@@ -34,13 +34,13 @@ get_entity_mem_info :: (id : u64) -> u32, u32 {
     return (cast,no_check(u32) id >> 32) - 1, (cast,no_check(u32) id) - 1;
 }
 
-create_entity :: (manager : *EntityManager, $T : Type) -> *void {    
+create_entity :: ($T : Type) -> *void {    
 
     // find first block with available slot
     available_block : *EntityBlock;
     available_block_index := 0;
     
-    for block : manager.entity_blocks {
+    for block : game_state.entity_manager.entity_blocks {
         if !(block.member_mask == ~0) { // ~ flips all bits. so ~0b00000000 -> 0b11111111
             //if block not full
             available_block = *block;
@@ -50,10 +50,10 @@ create_entity :: (manager : *EntityManager, $T : Type) -> *void {
     
     //if theres no available block create a new one
     if (available_block == null) {
-        available_block = array_add(*manager.entity_blocks);
+        available_block = array_add(*game_state.entity_manager.entity_blocks);
         block_size := LARGEST_ENTITY_SIZE * 64;
         available_block.memory = alloc(block_size);
-        available_block_index = manager.entity_blocks.count - 1;
+        available_block_index = game_state.entity_manager.entity_blocks.count - 1;
         //print("New entity block created with size of % bytes\n", block_size);
     }
     
@@ -81,7 +81,7 @@ create_entity :: (manager : *EntityManager, $T : Type) -> *void {
 
 // out: 
 // 00110000
-destroy_entity :: (manager : *EntityManager, entity : *Entity) -> bool {
+destroy_entity :: (entity : *Entity) -> bool {
     if (entity.id == 0 || entity.active == false) {
         return false; //Already inactive
     }
@@ -89,7 +89,7 @@ destroy_entity :: (manager : *EntityManager, entity : *Entity) -> bool {
     entity.active = false;
     block, slot := get_entity_mem_info(entity.id);
     
-    manager.entity_blocks[block].member_mask &= ~((cast(u64) 1) << slot);
+    game_state.entity_manager.entity_blocks[block].member_mask &= ~((cast(u64) 1) << slot);
      
     return true;
 }

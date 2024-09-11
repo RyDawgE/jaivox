@@ -4,30 +4,25 @@ GameState :: struct {
     render_handle : *RenderHandle;
 }
 
-start_game :: (game_state: *GameState) {
+start_game :: () {
     debug_counter : int = 0;
     game_state.entity_manager = New(EntityManager);
     game_state.render_handle = New(RenderHandle);
     
     initialize_render(game_state.render_handle);
     
-    while !should_game_close(game_state) {
-        
-        glClear(GL_COLOR_BUFFER_BIT);
-        
-        glfwSwapBuffers(game_state.render_handle.window);
-        
-        glfwPollEvents();
+    while !should_game_close() {
+        render_loop();
     }
     
-    cleanup(game_state);
+    cleanup();
 }
 
-should_game_close :: (game_state : *GameState) -> bool {
-    return get_should_window_close(game_state.render_handle.window) | game_state.should_close;
+should_game_close :: () -> bool {
+    return game_state.should_close;
 }
 
-cleanup :: (game_state : *GameState) {
+cleanup :: () {
     cleanup_window(game_state.render_handle.window);
 }
 

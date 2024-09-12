@@ -9,6 +9,6 @@ WindowCreationInfo :: struct {
 }
 
 initialize_render :: (render_handle : *RenderHandle) {
-  create_game_window(); // Create Game Window
-  create_render_context(); // Create Render API Context, i.e. OpenGL / Vulkan
+    create_game_window(); // Create Game Window
+    create_render_context(); // Create Render API Context, i.e. OpenGL / Vulkan
 }

@@ -25,3 +25,9 @@ build_command: jai build.jai
 [Debug Macos]
 build_command: arch -x86_64 jai-macos build.jai
 key_binding: Cmd-Shift-B
+
+
+[[settings]]
+tab_size: 4
+insert_spaces_when_pressing_tab: true
+strip_trailing_whitespace_on_save: true

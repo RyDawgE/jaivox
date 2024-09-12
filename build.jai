@@ -1,6 +1,4 @@
-#import "Compiler";
-#import "Basic";
-#import "File";
+#run build();
 
 build :: () {
     w := compiler_create_workspace();
@@ -27,10 +25,10 @@ build :: () {
     add_build_file(tprint("%src/main.jai", #filepath), w);
 
     set_build_options_dc(.{do_output=false});
-    
-
 }
 
-main :: () {}
+// main :: () {}
 
-#run build();
+#import "Compiler";
+#import "Basic";
+#import "File";

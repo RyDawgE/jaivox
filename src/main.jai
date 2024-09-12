@@ -5,7 +5,7 @@ main :: () {
     game_state.input_handle  = New(InputHandle);
 
     initialize_render(game_state.render_handle);
-
+    
     entity := create_entity(Entity);
     subscribe_entity_to_input(entity, game_state.input_handle);
     create_input_binding(entity, 65, test_binding);
@@ -30,7 +30,7 @@ cleanup :: () {
 // platform dependent file inclusion
 #if OS ==  {
     case .WINDOWS;
-        #load "./render/platform/windows.jai";
+        #load "./render/platforms/windows.jai";
 
     case .MACOS; #assert false "MacOS is not supported at this time.";
     case .LINUX; #assert false "Linux is not supported at this time.";

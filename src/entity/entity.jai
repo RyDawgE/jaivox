@@ -96,9 +96,8 @@ destroy_entity :: (entity : *Entity) -> bool {
     
     game_state.entity_handle.entity_blocks[block].member_mask &= ~((cast(u64) 1) << slot);
     
-    // @Todo:
-    // Remove entity from input subscription
-    
+    input_subscription := *game_state.input_handle.subscribed_entities;
+    array_unordered_remove_by_value(input_subscription, entity);
     
     return true;
 }

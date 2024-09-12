@@ -22,6 +22,8 @@ create_render_context :: () {
 }
 
 render_loop :: () {
+    glClearColor( 1.0, 0.0, 0.0, 0.0 ); 
+    glClear(GL_COLOR_BUFFER_BIT);
 }
 
 cleanup_window :: (window : *void) {

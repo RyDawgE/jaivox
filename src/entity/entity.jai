@@ -1,7 +1,12 @@
 Entity :: struct @entity {
     id : u64;
+    
     active : bool = false;
+    subscribed_to_input : bool = false;
+    
     position : Vector3 = .{0, 0, 0};
+    
+    input_bindings : *Table(u32, INPUT_BINDING_PROCEDURE_SIGNATURE);
 }
 
 EntityBlock :: struct {
@@ -9,7 +14,7 @@ EntityBlock :: struct {
     memory : *void;
 }
 
-EntityManager :: struct {
+EntityHandle :: struct {
     entity_blocks : [..] EntityBlock;
 }
 
@@ -23,7 +28,7 @@ get_entity_slot_size :: () -> s64 #compile_time {
           largest = max(largest, type.runtime_size);
         }
     }
-    print("Largest Entity: % bytes.\n", largest);
+    print("\nLargest Entity: % bytes.\n\n", largest);
     return largest;
 }
 
@@ -40,7 +45,7 @@ create_entity :: ($T : Type) -> *void {
     available_block : *EntityBlock;
     available_block_index := 0;
     
-    for block : game_state.entity_manager.entity_blocks {
+    for block : game_state.entity_handle.entity_blocks {
         if !(block.member_mask == ~0) { // ~ flips all bits. so ~0b00000000 -> 0b11111111
             //if block not full
             available_block = *block;
@@ -50,10 +55,10 @@ create_entity :: ($T : Type) -> *void {
     
     //if theres no available block create a new one
     if (available_block == null) {
-        available_block = array_add(*game_state.entity_manager.entity_blocks);
+        available_block = array_add(*game_state.entity_handle.entity_blocks);
         block_size := LARGEST_ENTITY_SIZE * 64;
         available_block.memory = alloc(block_size);
-        available_block_index = game_state.entity_manager.entity_blocks.count - 1;
+        available_block_index = game_state.entity_handle.entity_blocks.count - 1;
         //print("New entity block created with size of % bytes\n", block_size);
     }
     
@@ -89,8 +94,23 @@ destroy_entity :: (entity : *Entity) -> bool {
     entity.active = false;
     block, slot := get_entity_mem_info(entity.id);
     
-    game_state.entity_manager.entity_blocks[block].member_mask &= ~((cast(u64) 1) << slot);
-     
+    game_state.entity_handle.entity_blocks[block].member_mask &= ~((cast(u64) 1) << slot);
+    
+    // @Todo:
+    // Remove entity from input subscription
+    
+    
     return true;
 }
+
+subscribe_entity_to_input :: (entity : *Entity, input_handle : *InputHandle) {
+    entity.subscribed_to_input = true;
+    entity.input_bindings = New(Table(u32, INPUT_BINDING_PROCEDURE_SIGNATURE));
     
+    array_add(*input_handle.subscribed_entities, entity);
+    
+    return;
+}
+
+
+

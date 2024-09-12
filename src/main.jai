@@ -7,11 +7,13 @@ main :: () {
 #load "./game/game.jai";
 #load "./entity/entity.jai";
 #load "./render/render_context.jai";
+#load "./input/input.jai";
 
 #import "Basic";
 #import "Math";
 #import "Bit_Operations";
 #import "Compiler";
+#import "Hash_Table";
 
 #if OS ==  {
   case .WINDOWS; hello_world :: () { #load "./render/platforms/windows.jai"; }

@@ -10,16 +10,16 @@ main :: () {
     subscribe_entity_to_input(entity, game_state.input_handle);
     create_input_binding(entity, 65, test_binding);
 
+    // @MainLoop
     while !game_state.should_close {
         poll_events();
-        render_loop();
     }
 
     cleanup();
 }
 
 cleanup :: () {
-    cleanup_window(game_state.render_handle.window);
+    cleanup_vulkan_instance();
 }
 
 #load "./game/game.jai";
@@ -41,3 +41,4 @@ cleanup :: () {
 #import "Bit_Operations";
 #import "Compiler";
 #import "Hash_Table";
+#import "String";

@@ -1,11 +1,11 @@
 ENABLE_VALIDATION_LAYERS : bool = true;
+REQUIRED_VALIDATION_LAYERS :: (*u8).["VK_LAYER_KHRONOS_validation"]; // These are only "Required" By the programmers and will not be considered for release builds.
 
 RenderHandle :: struct {
-    window            : *void            =               null;
-    instance          : VkInstance       =               null;
-    physical_device   : VkPhysicalDevice =     VK_NULL_HANDLE;
-    required_validation_layers :: (*u8).["VK_LAYER_KHRONOS_validation"];
-    // @ToDo: big stinky hack! fix!!
+    window            : *void                       =               null;
+    instance          : VkInstance                  =               null;
+    debug_messenger   : VkDebugUtilsMessengerEXT    =               null;
+    physical_device   : VkPhysicalDevice            =     VK_NULL_HANDLE;
 }
 
 WindowCreationInfo :: struct {
@@ -28,15 +28,22 @@ create_game_window :: () {
 initialize_render :: (render_handle : *RenderHandle) {
     create_game_window();     // Create Game Window
     create_vulkan_instance(); // Create Vulkan API Instance
+    setup_debug_messenger();  // Create Vulkan Debug Messenger
     pick_physical_device();   // Select GPU for rendering
 }
 
+// Proxy Functions. These get real values in setup_debug_messenger()
+CreateDebugUtilsMessengerEXT  : PFN_vkCreateDebugUtilsMessengerEXT;   
+DestroyDebugUtilsMessengerEXT  : PFN_vkDestroyDebugUtilsMessengerEXT;  
+
 create_vulkan_instance :: () {
-    validation_layers_valid : bool = ENABLE_VALIDATION_LAYERS && check_validation_layer_support() ;
-    
-    assert(validation_layers_valid);
-    
     result : VkResult = .ERROR_INITIALIZATION_FAILED;
+    
+    validation_layers_valid : bool = ENABLE_VALIDATION_LAYERS && check_validation_layer_support() ;
+    assert(validation_layers_valid, "Not all required validation layers were available.");
+    
+    extensions_valid := check_required_extension_support();
+    assert(extensions_valid, "Not all required extensions were found");
     
     extensions := load_platform_extensions(); // This is a platform-specific call.
     
@@ -57,8 +64,8 @@ create_vulkan_instance :: () {
     create_info.ppEnabledExtensionNames = extensions.data;
     
     if (ENABLE_VALIDATION_LAYERS) {
-        create_info.enabledLayerCount   = game_state.render_handle.required_validation_layers.count;
-        create_info.ppEnabledLayerNames = game_state.render_handle.required_validation_layers.data;
+        create_info.enabledLayerCount   = REQUIRED_VALIDATION_LAYERS.count;
+        create_info.ppEnabledLayerNames = REQUIRED_VALIDATION_LAYERS.data;
     } else {
         create_info.enabledLayerCount   = 0;
     }
@@ -67,11 +74,67 @@ create_vulkan_instance :: () {
     
     assert(result == .VK_SUCCESS);
     
+    CreateDebugUtilsMessengerEXT = xx vkGetInstanceProcAddr(game_state.render_handle.instance, "vkCreateDebugUtilsMessengerEXT");
+    DestroyDebugUtilsMessengerEXT = xx vkGetInstanceProcAddr(game_state.render_handle.instance, "vkDestroyDebugUtilsMessengerEXT");
+    
     return;
 }
 
 cleanup_vulkan_instance :: () {
+    if ENABLE_VALIDATION_LAYERS {
+            DestroyDebugUtilsMessengerEXT(game_state.render_handle.instance, game_state.render_handle.debug_messenger, null);
+    }
+
     vkDestroyInstance(game_state.render_handle.instance, null);
+}
+
+
+debug_callback :: (severity : VkDebugUtilsMessageSeverityFlagBitsEXT, type : VkDebugUtilsMessageTypeFlagBitsEXT, data : *VkDebugUtilsMessengerCallbackDataEXT, user_data : *void) -> (u32) #c_call {
+    new_context: Context;
+    push_context new_context {
+        print("VULKAN VALIDATION: %\n", to_string(data.pMessage));
+    }
+    
+    return VK_FALSE;
+}
+
+get_available_vulkan_extensions :: () -> [] VkExtensionProperties {
+    extension_count: u32;
+    vkEnumerateInstanceExtensionProperties(null, *extension_count, null);
+    extension_array := NewArray(extension_count, VkExtensionProperties);
+    vkEnumerateInstanceExtensionProperties(null, *extension_count, extension_array.data);
+    //print("Available extensions:\n");
+    //for extension_array print("    % (%)\n", to_string(it.extensionName.data), it.specVersion);
+    return extension_array;
+}
+
+//This function makes sure the user defined, platform specific required extensions are supported by your hardware vendor.
+check_required_extension_support :: () -> bool {
+    extensions := load_platform_extensions();
+    for required_extension : extensions {
+        found : bool = false;
+        required_extension_name : string = to_string(required_extension);
+        
+        for available_extension : get_available_vulkan_extensions() {
+            //print("%\n", type_of(available_extension.extensionName));
+            available_extension_name : string = cast (string) available_extension.extensionName;
+            available_extension_name.count = required_extension_name.count;
+        
+            //print("comparing: % to %\n", required_extension_name, available_extension_name);
+
+            if compare(required_extension_name, available_extension_name) == 0 {
+                //print("Found extension %\n", required_extension_name);
+                found = true;
+                break;
+            }
+        }
+        
+        if !found {
+            assert(false, "Could not find extension %\n", required_extension_name);
+            return false;
+        }
+    };
+    return true;
 }
 
 //This function merely makes sure all of the required validation layers are supported on the device.
@@ -87,7 +150,7 @@ check_validation_layer_support :: () -> bool {
     
     assert(available_layers.count != 0);
     
-    for layer : game_state.render_handle.required_validation_layers {
+    for layer : REQUIRED_VALIDATION_LAYERS {
         found : bool = false;
         
         for layer_properties : available_layers {
@@ -110,6 +173,24 @@ check_validation_layer_support :: () -> bool {
     return true;
 }
 
+setup_debug_messenger :: () {
+    if !ENABLE_VALIDATION_LAYERS then return;
+    
+    instance := game_state.render_handle.instance;
+    
+    // stole this shit from the vulkan example lmao
+    if CreateDebugUtilsMessengerEXT {
+        
+        debug_callback_create_info: VkDebugUtilsMessengerCreateInfoEXT;
+        debug_callback_create_info.sType = .DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
+        debug_callback_create_info.messageSeverity = .VERBOSE_BIT_EXT | .WARNING_BIT_EXT | .ERROR_BIT_EXT;
+        debug_callback_create_info.messageType = .GENERAL_BIT_EXT | .VALIDATION_BIT_EXT | .PERFORMANCE_BIT_EXT;
+        debug_callback_create_info.pfnUserCallback = debug_callback;
+
+        CreateDebugUtilsMessengerEXT(instance, *debug_callback_create_info, null, *game_state.render_handle.debug_messenger);
+    }
+}
+
 pick_physical_device :: () {
     devices : [..] VkPhysicalDevice; 
     device_count : u32 = 0;
@@ -122,7 +203,6 @@ pick_physical_device :: () {
     vkEnumeratePhysicalDevices(instance, *device_count, devices.data);
     
     assert(devices.count != 0);
-
 }
 
 #scope_file

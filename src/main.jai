@@ -14,7 +14,6 @@ main :: () {
     while !game_state.should_close {
         poll_events();
     }
-
     cleanup();
 }
 

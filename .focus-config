@@ -1,4 +1,4 @@
-[5]  # Version number. Do not delete.
+[6]  # Version number. Do not delete.
 
 [[workspace]]
 # These directories and files will be scanned when a workspace is opened so that search etc. works.
@@ -30,4 +30,4 @@ key_binding: Cmd-Shift-B
 [[settings]]
 tab_size: 4
 insert_spaces_when_pressing_tab: true
-strip_trailing_whitespace_on_save: true
+strip_trailing_whitespace_on_save: except_lines_with_cursor  # options: all, except_lines_with_cursor, disabled

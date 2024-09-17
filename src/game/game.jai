@@ -10,4 +10,3 @@ game_state : GameState = .{};
 test_binding :: (entity: *Entity, event : *Event) {
     print("works!\n");
 }
-

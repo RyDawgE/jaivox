@@ -62,6 +62,7 @@ build :: () {
         ifx optimized then "false" else "true",
     );
 
+    add_build_string(build_constants, w);
     add_build_file(tprint("%src/main.jai", #filepath), w);
 }
 

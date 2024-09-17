@@ -1,4 +1,8 @@
-ENABLE_VALIDATION_LAYERS : bool : #ifx DEBUG then true else false;
+#if DEBUG {
+    ENABLE_VALIDATION_LAYERS :: true;
+} else {
+    ENABLE_VALIDATION_LAYERS :: false;
+}
 
 // These are only "Required" By the programmers and will not be considered for release builds.
 REQUIRED_VALIDATION_LAYERS :: (*u8).["VK_LAYER_KHRONOS_validation"];
@@ -40,15 +44,15 @@ DestroyDebugUtilsMessengerEXT  : PFN_vkDestroyDebugUtilsMessengerEXT;
 
 create_vulkan_instance :: () {
     result : VkResult = .ERROR_INITIALIZATION_FAILED;
-        
+
     if (ENABLE_VALIDATION_LAYERS) {
         validation_layers_valid : bool = check_validation_layer_support() ;
-        assert(validation_layers_valid, "Not all required validation layers were available.");  
+        assert(validation_layers_valid, "Not all required validation layers were available.");
     }
-    
+
     extensions_valid := check_required_extension_support();
     assert(extensions_valid, "Not all required extensions were found");
-    
+
     // @PLATFORM_CALL
     extensions := load_platform_extensions(); // This is a platform-specific call.
 
@@ -79,12 +83,12 @@ create_vulkan_instance :: () {
 
     assert(result == .VK_SUCCESS);
 
-    
+
     if (ENABLE_VALIDATION_LAYERS) {
         CreateDebugUtilsMessengerEXT = xx vkGetInstanceProcAddr(game_state.render_handle.instance, "vkCreateDebugUtilsMessengerEXT");
         DestroyDebugUtilsMessengerEXT = xx vkGetInstanceProcAddr(game_state.render_handle.instance, "vkDestroyDebugUtilsMessengerEXT");
     }
-    
+
     return;
 }
 
@@ -109,13 +113,13 @@ debug_callback :: (severity : VkDebugUtilsMessageSeverityFlagBitsEXT, type : VkD
 get_available_vulkan_extensions :: () -> [] VkExtensionProperties {
     extension_count: u32;
     extension_array : [] VkExtensionProperties;
-    
+
     vkEnumerateInstanceExtensionProperties(null, *extension_count, null);
-    
+
     assert(extension_count != 0);
-    
+
     array_resize(*extension_array, extension_count);
-    
+
     vkEnumerateInstanceExtensionProperties(null, *extension_count, extension_array.data);
 
     return extension_array;
@@ -206,13 +210,13 @@ setup_debug_messenger :: () {
 
 generate_physical_device_score :: (device : VkPhysicalDevice) -> int {
     score := 1;
-    
+
     device_properties : VkPhysicalDeviceProperties;
     device_features : VkPhysicalDeviceFeatures;
-    
+
     vkGetPhysicalDeviceProperties(device, *device_properties);
     vkGetPhysicalDeviceFeatures(device, *device_features);
-    
+
     if device_properties.deviceType == {
         case .DISCRETE_GPU;
             score += 1000;
@@ -221,21 +225,21 @@ generate_physical_device_score :: (device : VkPhysicalDevice) -> int {
         case .INTEGRATED_GPU;
             score += 500;
             #through;
-            
+
         case; score += 0;
     }
-    
+
     return score;
 }
 
 pick_physical_device :: () {
-    devices      : [..] VkPhysicalDevice; 
+    devices      : [..] VkPhysicalDevice;
     device_count :               u32 = 0;
     max_score    :               int = 0;
-    
+
     physical_device : VkPhysicalDevice = VK_NULL_HANDLE;
     instance := game_state.render_handle.instance;
-    
+
     vkEnumeratePhysicalDevices(instance, *device_count, null);
 
     array_resize(*devices, device_count);
@@ -243,7 +247,7 @@ pick_physical_device :: () {
     vkEnumeratePhysicalDevices(instance, *device_count, devices.data);
 
     assert(devices.count != 0);
-    
+
     for device : devices {
         score := generate_physical_device_score(device);
         if (score > max_score) {
@@ -251,11 +255,11 @@ pick_physical_device :: () {
             max_score = score;
         }
     }
-    
+
     assert(physical_device != VK_NULL_HANDLE, "No GPU with Vulkan support was found.");
-    
+
     game_state.render_handle.physical_device = physical_device;
-    
+
 }
 
 #scope_file

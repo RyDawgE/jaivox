@@ -40,16 +40,7 @@ DestroyDebugUtilsMessengerEXT  : PFN_vkDestroyDebugUtilsMessengerEXT;
 
 create_vulkan_instance :: () {
     result : VkResult = .ERROR_INITIALIZATION_FAILED;
-<<<<<<< Updated upstream
-
-    validation_layers_valid : bool = ENABLE_VALIDATION_LAYERS && check_validation_layer_support() ;
-    assert(validation_layers_valid, "Not all required validation layers were available.");
-
-    extensions_valid := check_required_extension_support();
-    assert(extensions_valid, "Not all required extensions were found");
-
-=======
-    
+        
     if (ENABLE_VALIDATION_LAYERS) {
         validation_layers_valid : bool = check_validation_layer_support() ;
         assert(validation_layers_valid, "Not all required validation layers were available.");  
@@ -59,7 +50,6 @@ create_vulkan_instance :: () {
     assert(extensions_valid, "Not all required extensions were found");
     
     // @PLATFORM_CALL
->>>>>>> Stashed changes
     extensions := load_platform_extensions(); // This is a platform-specific call.
 
     // Application Info
@@ -88,19 +78,13 @@ create_vulkan_instance :: () {
     result = vkCreateInstance(*create_info, null, *game_state.render_handle.instance);
 
     assert(result == .VK_SUCCESS);
-<<<<<<< Updated upstream
 
-    CreateDebugUtilsMessengerEXT = xx vkGetInstanceProcAddr(game_state.render_handle.instance, "vkCreateDebugUtilsMessengerEXT");
-    DestroyDebugUtilsMessengerEXT = xx vkGetInstanceProcAddr(game_state.render_handle.instance, "vkDestroyDebugUtilsMessengerEXT");
-
-=======
     
     if (ENABLE_VALIDATION_LAYERS) {
         CreateDebugUtilsMessengerEXT = xx vkGetInstanceProcAddr(game_state.render_handle.instance, "vkCreateDebugUtilsMessengerEXT");
         DestroyDebugUtilsMessengerEXT = xx vkGetInstanceProcAddr(game_state.render_handle.instance, "vkDestroyDebugUtilsMessengerEXT");
     }
     
->>>>>>> Stashed changes
     return;
 }
 
@@ -219,11 +203,7 @@ setup_debug_messenger :: () {
     }
 }
 
-<<<<<<< Updated upstream
-pick_physical_device :: () {
-    devices : [..] VkPhysicalDevice;
-    device_count : u32 = 0;
-=======
+
 generate_physical_device_score :: (device : VkPhysicalDevice) -> int {
     score := 1;
     
@@ -237,7 +217,6 @@ generate_physical_device_score :: (device : VkPhysicalDevice) -> int {
         case .DISCRETE_GPU;
             score += 1000;
             #through;
->>>>>>> Stashed changes
 
         case .INTEGRATED_GPU;
             score += 500;
@@ -262,10 +241,8 @@ pick_physical_device :: () {
     array_resize(*devices, device_count);
 
     vkEnumeratePhysicalDevices(instance, *device_count, devices.data);
-<<<<<<< Updated upstream
 
     assert(devices.count != 0);
-=======
     
     for device : devices {
         score := generate_physical_device_score(device);
@@ -279,7 +256,6 @@ pick_physical_device :: () {
     
     game_state.render_handle.physical_device = physical_device;
     
->>>>>>> Stashed changes
 }
 
 #scope_file

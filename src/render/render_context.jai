@@ -13,6 +13,7 @@ RenderHandle :: struct {
     debug_messenger   : VkDebugUtilsMessengerEXT    =               null;
     physical_device   : VkPhysicalDevice            =     VK_NULL_HANDLE;
     logical_device    : VkDevice                    =     VK_NULL_HANDLE;
+    graphics_queue    : VkQueue                     =               null;
 }
 
 WindowCreationInfo :: struct {
@@ -100,11 +101,14 @@ create_vulkan_instance :: () {
 }
 
 cleanup_vulkan_instance :: () {
+    vkDestroyDevice(game_state.render_handle.logical_device, null);
+    
     if ENABLE_VALIDATION_LAYERS {
         DestroyDebugUtilsMessengerEXT(game_state.render_handle.instance, game_state.render_handle.debug_messenger, null);
     }
 
     vkDestroyInstance(game_state.render_handle.instance, null);
+
 }
 
 
@@ -297,6 +301,40 @@ find_queue_families :: (physical_device : VkPhysicalDevice) -> QueueFamilyIndice
     }
     
     return indices;
+}
+
+create_logical_device :: () {
+    indices : QueueFamilyIndices = find_queue_families(game_state.render_handle.physical_device);
+    
+    device_features : VkPhysicalDeviceFeatures = .{};
+    
+    queue_create_info : VkDeviceQueueCreateInfo = .{};
+    queue_create_info.sType = .DEVICE_QUEUE_CREATE_INFO;
+    queue_create_info.queueFamilyIndex = indices.graphics_family;
+    queue_create_info.queueCount = 1;
+    
+    queue_priority : float = 1.0;
+    queue_create_info.pQueuePriorities = *queue_priority;
+    
+    device_create_info : VkDeviceCreateInfo = .{};
+    device_create_info.sType = .DEVICE_CREATE_INFO;
+    device_create_info.pQueueCreateInfos = *queue_create_info;
+    device_create_info.queueCreateInfoCount = 1;
+    device_create_info.pEnabledFeatures = *device_features;
+    device_create_info.enabledExtensionCount = 0;
+    
+    if (ENABLE_VALIDATION_LAYERS) {
+        device_create_info.enabledLayerCount = cast (u32) REQUIRED_VALIDATION_LAYERS.count;
+        device_create_info.ppEnabledLayerNames = REQUIRED_VALIDATION_LAYERS.data;
+    } else {
+        device_create_info.enabledLayerCount = 0;
+    }
+    
+    result := vkCreateDevice(game_state.render_handle.physical_device, *device_create_info, null, *game_state.render_handle.logical_device);
+    
+    assert(result == .VK_SUCCESS, "Failed to create logical device!");
+    
+    vkGetDeviceQueue(game_state.render_handle.logical_device, indices.graphics_family, 0, *game_state.render_handle.graphics_queue);
 }
 
 #scope_file

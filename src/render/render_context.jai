@@ -12,12 +12,18 @@ RenderHandle :: struct {
     instance          : VkInstance                  =               null;
     debug_messenger   : VkDebugUtilsMessengerEXT    =               null;
     physical_device   : VkPhysicalDevice            =     VK_NULL_HANDLE;
+    logical_device    : VkDevice                    =     VK_NULL_HANDLE;
 }
 
 WindowCreationInfo :: struct {
     width  : s32    :      640;
     height : s32    :      480;
     title  : string : "Jaivox";
+}
+
+QueueFamilyIndices :: struct {
+    graphics_family       : u32  =     0;
+    graphics_family_valid : bool = false;
 }
 
 create_game_window :: () {
@@ -36,6 +42,7 @@ initialize_render :: (render_handle : *RenderHandle) {
     create_vulkan_instance(); // Create Vulkan API Instance
     setup_debug_messenger();  // Create Vulkan Debug Messenger
     pick_physical_device();   // Select GPU for rendering
+    create_logical_device();  // Create Vulkan Logic Profile on GPU
 }
 
 // Proxy Functions. These get real values in setup_debug_messenger()
@@ -217,6 +224,7 @@ generate_physical_device_score :: (device : VkPhysicalDevice) -> int {
     vkGetPhysicalDeviceProperties(device, *device_properties);
     vkGetPhysicalDeviceFeatures(device, *device_features);
 
+    // Favor Discrete GPUs over Integrated GPUs.
     if device_properties.deviceType == {
         case .DISCRETE_GPU;
             score += 1000;
@@ -228,6 +236,9 @@ generate_physical_device_score :: (device : VkPhysicalDevice) -> int {
 
         case; score += 0;
     }
+    
+    // Supporting the graphics queue family is required.
+    if !find_queue_families(device).graphics_family_valid then return 0;
 
     return score;
 }
@@ -260,6 +271,32 @@ pick_physical_device :: () {
 
     game_state.render_handle.physical_device = physical_device;
 
+}
+
+find_queue_families :: (physical_device : VkPhysicalDevice) -> QueueFamilyIndices {
+    indices : QueueFamilyIndices = .{};
+    queue_family_count : u32;
+    queue_families : [..] VkQueueFamilyProperties;
+    
+    vkGetPhysicalDeviceQueueFamilyProperties(physical_device, *queue_family_count, null);
+    
+    array_resize(*queue_families, queue_family_count);
+    
+    vkGetPhysicalDeviceQueueFamilyProperties(physical_device, *queue_family_count, queue_families.data);
+
+    for queue_family : queue_families {
+    
+        if (queue_family.queueFlags & .GRAPHICS_BIT) {
+            indices.graphics_family = cast (u32) it_index;
+            indices.graphics_family_valid = true;
+        }
+        
+        if (indices.graphics_family_valid) {
+            break;
+        }
+    }
+    
+    return indices;
 }
 
 #scope_file

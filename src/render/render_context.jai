@@ -4,18 +4,24 @@
     ENABLE_VALIDATION_LAYERS :: false;
 }
 
+REQUIRED_DEVICE_EXTENSIONS :: (*u8).[VK_KHR_SWAPCHAIN_EXTENSION_NAME];
+
 // These are only "Required" By the programmers and will not be considered for release builds.
 REQUIRED_VALIDATION_LAYERS :: (*u8).["VK_LAYER_KHRONOS_validation"];
 
 RenderHandle :: struct {
-    window            : *void                       =               null;
-    instance          : VkInstance                  =               null;
-    surface           : VkSurfaceKHR                =     VK_NULL_HANDLE;
-    debug_messenger   : VkDebugUtilsMessengerEXT    =               null;
-    physical_device   : VkPhysicalDevice            =     VK_NULL_HANDLE;
-    logical_device    : VkDevice                    =     VK_NULL_HANDLE;
-    graphics_queue    : VkQueue                     =               null;
-    present_queue     : VkQueue                     =               null;
+    window                  : *void                       =               null;
+    instance                : VkInstance                  =               null;
+    surface                 : VkSurfaceKHR                =     VK_NULL_HANDLE;
+    debug_messenger         : VkDebugUtilsMessengerEXT    =               null;
+    physical_device         : VkPhysicalDevice            =     VK_NULL_HANDLE;
+    logical_device          : VkDevice                    =     VK_NULL_HANDLE;
+    graphics_queue          : VkQueue                     =               null;
+    present_queue           : VkQueue                     =               null;
+    swap_chain              : VkSwapchainKHR              =               null;
+    swap_chain_images       : [..] VkImage;
+    swap_chain_image_format : VkFormat;
+    swap_chain_extent       : VkExtent2D;
 }
 
 WindowCreationInfo :: struct {
@@ -29,6 +35,12 @@ QueueFamilyIndices :: struct {
     graphics_family_valid : bool = false;
     present_family       : u32  =     0;
     present_family_valid : bool = false;
+}
+
+SwapChainSupportDetails :: struct {
+    capabilities : VkSurfaceCapabilitiesKHR;;
+    formats : [..] VkSurfaceFormatKHR;
+    present_modes : [..] VkPresentModeKHR;
 }
 
 create_game_window :: () {
@@ -49,6 +61,7 @@ initialize_render :: (render_handle : *RenderHandle) {
     create_surface();         // Create Vulkan Surface to render to Game Window
     pick_physical_device();   // Select GPU for rendering
     create_logical_device();  // Create Vulkan Logic Profile on GPU
+    create_swap_chain();      // Create Image Chain Buffer
 }
 
 // Proxy Functions. These get real values in setup_debug_messenger()
@@ -63,7 +76,7 @@ create_vulkan_instance :: () {
         assert(validation_layers_valid, "Not all required validation layers were available.");
     }
 
-    extensions_valid := check_required_extension_support();
+    extensions_valid := check_required_instance_extension_support();
     assert(extensions_valid, "Not all required extensions were found");
 
     // @PLATFORM_CALL
@@ -79,33 +92,39 @@ create_vulkan_instance :: () {
     app_info.apiVersion         = VK_API_VERSION_1_0;
 
     // Create Vulkan Instance
-    create_info : VkInstanceCreateInfo;
-    create_info.sType                   = .INSTANCE_CREATE_INFO;
-    create_info.pApplicationInfo        = *app_info;
-    create_info.enabledExtensionCount   = cast (u32) extensions.count;
-    create_info.ppEnabledExtensionNames = extensions.data;
-
-    if (ENABLE_VALIDATION_LAYERS) {
-        create_info.enabledLayerCount   = REQUIRED_VALIDATION_LAYERS.count;
-        create_info.ppEnabledLayerNames = REQUIRED_VALIDATION_LAYERS.data;
-    } else {
-        create_info.enabledLayerCount   = 0;
+    vulkan_instance_create_info : VkInstanceCreateInfo = .{};
+    {   
+        using vulkan_instance_create_info;
+        
+        sType                   = .INSTANCE_CREATE_INFO;
+        pApplicationInfo        = *app_info;
+        enabledExtensionCount   = cast (u32) extensions.count;
+        ppEnabledExtensionNames = extensions.data;
+    
+        if (ENABLE_VALIDATION_LAYERS) {
+            enabledLayerCount   = REQUIRED_VALIDATION_LAYERS.count;
+            ppEnabledLayerNames = REQUIRED_VALIDATION_LAYERS.data;
+        } else {
+            enabledLayerCount   = 0;
+        }
     }
-
-    result = vkCreateInstance(*create_info, null, *game_state.render_handle.instance);
+    
+    result = vkCreateInstance(*vulkan_instance_create_info, null, *game_state.render_handle.instance);
 
     assert(result == .VK_SUCCESS);
-
-
+    
+    
     if (ENABLE_VALIDATION_LAYERS) {
         CreateDebugUtilsMessengerEXT = xx vkGetInstanceProcAddr(game_state.render_handle.instance, "vkCreateDebugUtilsMessengerEXT");
         DestroyDebugUtilsMessengerEXT = xx vkGetInstanceProcAddr(game_state.render_handle.instance, "vkDestroyDebugUtilsMessengerEXT");
     }
 
+
     return;
 }
 
 cleanup_vulkan_instance :: () {
+    vkDestroySwapchainKHR(game_state.render_handle.logical_device, game_state.render_handle.swap_chain, null);
     vkDestroyDevice(game_state.render_handle.logical_device, null);
     vkDestroySurfaceKHR(game_state.render_handle.instance, game_state.render_handle.surface, null);
     
@@ -127,23 +146,145 @@ debug_callback :: (severity : VkDebugUtilsMessageSeverityFlagBitsEXT, type : VkD
     return VK_FALSE;
 }
 
+query_swap_chain_support :: (device : VkPhysicalDevice) -> SwapChainSupportDetails {
+    details : SwapChainSupportDetails = .{};
+    
+    vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, game_state.render_handle.surface, *details.capabilities);
+    
+    format_count : u32 = 0;
+    vkGetPhysicalDeviceSurfaceFormatsKHR(device, game_state.render_handle.surface, *format_count, null);
+    if (format_count > 0) {
+        array_resize(*details.formats, format_count);
+        vkGetPhysicalDeviceSurfaceFormatsKHR(device, game_state.render_handle.surface, *format_count, details.formats.data);
+    }
+    
+    present_mode_count : u32 = 0;
+    vkGetPhysicalDeviceSurfacePresentModesKHR(device, game_state.render_handle.surface, *present_mode_count, null);
+    if (present_mode_count > 0) {
+        array_resize(*details.present_modes, present_mode_count);
+        vkGetPhysicalDeviceSurfacePresentModesKHR(device, game_state.render_handle.surface, *present_mode_count, details.present_modes.data);
+    }
+    
+    return details;
+}
+
+choose_swap_surface_format :: (available_formats : [..] VkSurfaceFormatKHR) -> VkSurfaceFormatKHR {
+    for available_format : available_formats {
+        if (available_format.format == .B8G8R8A8_SRGB && available_format.colorSpace == .COLOR_SPACE_SRGB_NONLINEAR_KHR) {
+            return available_format;
+        }
+    }   
+    
+    return available_formats[0];
+}
+
+choose_swap_present_mode :: (available_present_modes : [..] VkPresentModeKHR) -> VkPresentModeKHR {
+    for available_present_mode : available_present_modes {
+        if (available_present_mode == .MAILBOX_KHR) {
+            return available_present_mode;
+        }
+    }   
+    
+    return .FIFO_KHR;
+}
+
+choose_swap_extent :: (capabilities : VkSurfaceCapabilitiesKHR) -> VkExtent2D {
+    extent : VkExtent2D;
+
+    if (capabilities.currentExtent.width != U32_MAX) {
+        extent = capabilities.currentExtent;
+    } else {
+        extent.width  = cast (u32) clamp(WindowCreationInfo.width, cast (s32) capabilities.minImageExtent.width, cast (s32) capabilities.maxImageExtent.width);
+        extent.height = cast (u32) clamp(WindowCreationInfo.height, cast (s32) capabilities.minImageExtent.height, cast (s32) capabilities.maxImageExtent.height);
+    }
+    
+    return extent;
+}
+
+create_swap_chain :: () {
+    using game_state.render_handle;
+
+    swap_chain_support : SwapChainSupportDetails = query_swap_chain_support(physical_device);
+    surface_format     : VkSurfaceFormatKHR      =             choose_swap_surface_format(swap_chain_support.formats);
+    present_mode       : VkPresentModeKHR        =         choose_swap_present_mode(swap_chain_support.present_modes);
+    extent             : VkExtent2D              =                choose_swap_extent(swap_chain_support.capabilities);
+    image_count        : u32                     =                  swap_chain_support.capabilities.minImageCount + 1;
+    
+    indices : QueueFamilyIndices = find_queue_families(physical_device);
+    unique_queue_families : [..] u32;
+    
+    gfx_present_families_same : bool = indices.graphics_family == indices.present_family;
+
+    // @TODO: Clean this up a bit.
+    if (gfx_present_families_same) {
+        array_add(*unique_queue_families, indices.graphics_family);
+    } else {
+        array_add(*unique_queue_families, indices.graphics_family);
+        array_add(*unique_queue_families, indices.present_family);
+    }
+
+    
+    if swap_chain_support.capabilities.maxImageCount > 0 && image_count > swap_chain_support.capabilities.maxImageCount {
+        image_count = swap_chain_support.capabilities.maxImageCount;
+    }
+    
+    swapchain_create_info : VkSwapchainCreateInfoKHR = .{};
+    // Thanks for the tip, tsoding!
+    {
+        using swapchain_create_info;
+        
+        sType            =       .SWAPCHAIN_CREATE_INFO_KHR;
+        surface          = game_state.render_handle.surface;
+        minImageCount    =                      image_count;
+        imageFormat      =            surface_format.format;
+        imageColorSpace  =        surface_format.colorSpace;
+        imageExtent      =                           extent;
+        imageArrayLayers =                                1;
+        imageUsage       =            .COLOR_ATTACHMENT_BIT;
+        
+        if (!gfx_present_families_same) {
+            imageSharingMode      =                .CONCURRENT;
+            queueFamilyIndexCount =                          2;
+            pQueueFamilyIndices   = unique_queue_families.data;
+        } else {
+            imageSharingMode      =                 .EXCLUSIVE;
+            queueFamilyIndexCount =                          0;
+            pQueueFamilyIndices   =                       null;
+        }
+        
+        preTransform   = swap_chain_support.capabilities.currentTransform;
+        compositeAlpha =                                  .OPAQUE_BIT_KHR;
+        presentMode    =                                     present_mode;
+        clipped        =                                          VK_TRUE;
+        oldSwapchain   =                                   VK_NULL_HANDLE;
+    }
+    
+    result := vkCreateSwapchainKHR(logical_device, *swapchain_create_info, null, *swap_chain);
+    
+    assert(result == .SUCCESS, "Failed to create swapchain.");
+            
+    vkGetSwapchainImagesKHR(logical_device, swap_chain, *image_count, null);
+    array_resize(*swap_chain_images, image_count);
+    vkGetSwapchainImagesKHR(logical_device, swap_chain, *image_count, swap_chain_images.data);
+    
+    swap_chain_image_format = surface_format.format;
+    swap_chain_extent       = extent;
+
+}
+
 get_available_vulkan_extensions :: () -> [] VkExtensionProperties {
     extension_count: u32;
     extension_array : [] VkExtensionProperties;
 
     vkEnumerateInstanceExtensionProperties(null, *extension_count, null);
-
-    assert(extension_count != 0);
-
     array_resize(*extension_array, extension_count);
-
     vkEnumerateInstanceExtensionProperties(null, *extension_count, extension_array.data);
 
     return extension_array;
 }
 
 //This function makes sure the user defined, platform specific required extensions are supported by your hardware vendor.
-check_required_extension_support :: () -> bool {
+check_required_instance_extension_support :: () -> bool {
     extensions := load_platform_extensions();
     for required_extension : extensions {
         found : bool = false;
@@ -212,13 +353,15 @@ setup_debug_messenger :: () {
     instance := game_state.render_handle.instance;
 
     if CreateDebugUtilsMessengerEXT {
-
         debug_callback_create_info: VkDebugUtilsMessengerCreateInfoEXT;
-        debug_callback_create_info.sType = .DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
-        debug_callback_create_info.messageSeverity = .VERBOSE_BIT_EXT | .WARNING_BIT_EXT | .ERROR_BIT_EXT;
-        debug_callback_create_info.messageType = .GENERAL_BIT_EXT | .VALIDATION_BIT_EXT | .PERFORMANCE_BIT_EXT;
-        debug_callback_create_info.pfnUserCallback = debug_callback;
-
+        {
+            using debug_callback_create_info;
+            
+            sType           = .DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
+            messageSeverity = .VERBOSE_BIT_EXT | .WARNING_BIT_EXT | .ERROR_BIT_EXT;
+            messageType     = .GENERAL_BIT_EXT | .VALIDATION_BIT_EXT | .PERFORMANCE_BIT_EXT;
+            pfnUserCallback = debug_callback;
+        }
         CreateDebugUtilsMessengerEXT(instance, *debug_callback_create_info, null, *game_state.render_handle.debug_messenger);
     }
 }
@@ -229,11 +372,43 @@ create_surface :: () {
     assert(result == .VK_SUCCESS, "Failed to create surface");
 }
 
+check_required_device_extension_support :: (device : VkPhysicalDevice) -> bool {
+    available_extension_count : u32 = 0;
+    available_extension_array : [] VkExtensionProperties;
+        
+    vkEnumerateDeviceExtensionProperties(device, null, *available_extension_count, null);
+    array_resize(*available_extension_array, available_extension_count);
+    vkEnumerateDeviceExtensionProperties(device, null, *available_extension_count, available_extension_array.data);
+    
+    for required_extension : REQUIRED_DEVICE_EXTENSIONS {
+        found : bool = false;
+
+        for available_extension : available_extension_array {
+            available_extension_name := cast(string) available_extension.extensionName;
+            required_extension_string := to_string(required_extension);
+            available_extension_name.count = required_extension_string.count;
+
+            //print("comparing: % to %\n", layer_name_string, layer_property_name);
+            if compare(required_extension_string, available_extension_name) == 0 {
+                found = true;
+                break;
+            }
+        }
+
+        if (!found) {
+            return false;
+        }
+    }
+    
+    return true;
+}
+
 generate_physical_device_score :: (device : VkPhysicalDevice) -> int {
     score := 1;
 
-    device_properties : VkPhysicalDeviceProperties;
-    device_features : VkPhysicalDeviceFeatures;
+    device_properties  : VkPhysicalDeviceProperties;
+    device_features    :   VkPhysicalDeviceFeatures;
+    swap_chain_support :               bool = false;
 
     vkGetPhysicalDeviceProperties(device, *device_properties);
     vkGetPhysicalDeviceFeatures(device, *device_features);
@@ -253,6 +428,18 @@ generate_physical_device_score :: (device : VkPhysicalDevice) -> int {
     
     // Supporting the graphics queue family is required.
     if !find_queue_families(device).graphics_family_valid then return 0;
+    
+    // Supporting the required graphics extensions is required (fork found in kitchen)
+    if !check_required_device_extension_support(device) {
+        return 0;
+    } else {
+        swap_chain_details : SwapChainSupportDetails = query_swap_chain_support(device);
+        swap_chain_support = swap_chain_details.formats.count != 0 && swap_chain_details.present_modes.count != 0;
+        
+        if !swap_chain_support {
+            return 0;
+        }
+    }
 
     return score;
 }
@@ -318,23 +505,25 @@ find_queue_families :: (physical_device : VkPhysicalDevice) -> QueueFamilyIndice
     return indices;
 }
 
-
-
 create_logical_device :: () {
     indices : QueueFamilyIndices = find_queue_families(game_state.render_handle.physical_device);
     queue_creation_infos : [..] VkDeviceQueueCreateInfo;
     device_features : VkPhysicalDeviceFeatures = .{};
     
     unique_queue_families : [..] u32;
+    
+    gfx_present_families_same : bool = indices.graphics_family == indices.present_family;
 
     // @TODO: Clean this up a bit.
-    if (indices.graphics_family == indices.present_family) {
+    if (gfx_present_families_same) {
         array_add(*unique_queue_families, indices.graphics_family);
     } else {
         array_add(*unique_queue_families, indices.graphics_family);
         array_add(*unique_queue_families, indices.present_family);
     }
     
+    // There are 2 queues, present and graphics. We need to create both of them and bind them
+    // to a viable family. There is a chance this family is the same between both of them.
     queue_priority : float = 1.0;
     for family : unique_queue_families {
         queue_create_info : VkDeviceQueueCreateInfo = .{};
@@ -345,21 +534,27 @@ create_logical_device :: () {
         array_add(*queue_creation_infos, queue_create_info);
     }
     
-    device_create_info : VkDeviceCreateInfo = .{};
-    device_create_info.sType = .DEVICE_CREATE_INFO;
-    device_create_info.queueCreateInfoCount = cast (u32) queue_creation_infos.count;
-    device_create_info.pQueueCreateInfos = queue_creation_infos.data;
-    device_create_info.pEnabledFeatures = *device_features;
-    device_create_info.enabledExtensionCount = 0;
-    
-    if (ENABLE_VALIDATION_LAYERS) {
-        device_create_info.enabledLayerCount = cast (u32) REQUIRED_VALIDATION_LAYERS.count;
-        device_create_info.ppEnabledLayerNames = REQUIRED_VALIDATION_LAYERS.data;
-    } else {
-        device_create_info.enabledLayerCount = 0;
+    // Logical Device Creation
+    logical_device_create_info : VkDeviceCreateInfo = .{};
+    {
+        using logical_device_create_info;
+        
+        sType = .DEVICE_CREATE_INFO;
+        queueCreateInfoCount    =       cast (u32) queue_creation_infos.count;
+        pQueueCreateInfos       =                   queue_creation_infos.data;
+        pEnabledFeatures        =                            *device_features;
+        enabledExtensionCount   =            REQUIRED_DEVICE_EXTENSIONS.count;
+        ppEnabledExtensionNames =             REQUIRED_DEVICE_EXTENSIONS.data;
+        
+        if (ENABLE_VALIDATION_LAYERS) {
+            enabledLayerCount   = cast (u32) REQUIRED_VALIDATION_LAYERS.count;
+            ppEnabledLayerNames =             REQUIRED_VALIDATION_LAYERS.data;
+        } else {
+            enabledLayerCount = 0;
+        }
     }
     
-    result := vkCreateDevice(game_state.render_handle.physical_device, *device_create_info, null, *game_state.render_handle.logical_device);
+    result := vkCreateDevice(game_state.render_handle.physical_device, *logical_device_create_info, null, *game_state.render_handle.logical_device);
     
     assert(result == .VK_SUCCESS, "Failed to create logical device!");
     

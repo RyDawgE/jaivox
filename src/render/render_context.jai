@@ -10,10 +10,12 @@ REQUIRED_VALIDATION_LAYERS :: (*u8).["VK_LAYER_KHRONOS_validation"];
 RenderHandle :: struct {
     window            : *void                       =               null;
     instance          : VkInstance                  =               null;
+    surface           : VkSurfaceKHR                =     VK_NULL_HANDLE;
     debug_messenger   : VkDebugUtilsMessengerEXT    =               null;
     physical_device   : VkPhysicalDevice            =     VK_NULL_HANDLE;
     logical_device    : VkDevice                    =     VK_NULL_HANDLE;
     graphics_queue    : VkQueue                     =               null;
+    present_queue     : VkQueue                     =               null;
 }
 
 WindowCreationInfo :: struct {
@@ -25,6 +27,8 @@ WindowCreationInfo :: struct {
 QueueFamilyIndices :: struct {
     graphics_family       : u32  =     0;
     graphics_family_valid : bool = false;
+    present_family       : u32  =     0;
+    present_family_valid : bool = false;
 }
 
 create_game_window :: () {
@@ -42,6 +46,7 @@ initialize_render :: (render_handle : *RenderHandle) {
     create_game_window();     // Create Game Window
     create_vulkan_instance(); // Create Vulkan API Instance
     setup_debug_messenger();  // Create Vulkan Debug Messenger
+    create_surface();         // Create Vulkan Surface to render to Game Window
     pick_physical_device();   // Select GPU for rendering
     create_logical_device();  // Create Vulkan Logic Profile on GPU
 }
@@ -102,6 +107,7 @@ create_vulkan_instance :: () {
 
 cleanup_vulkan_instance :: () {
     vkDestroyDevice(game_state.render_handle.logical_device, null);
+    vkDestroySurfaceKHR(game_state.render_handle.instance, game_state.render_handle.surface, null);
     
     if ENABLE_VALIDATION_LAYERS {
         DestroyDebugUtilsMessengerEXT(game_state.render_handle.instance, game_state.render_handle.debug_messenger, null);
@@ -205,7 +211,6 @@ setup_debug_messenger :: () {
 
     instance := game_state.render_handle.instance;
 
-    // stole this shit from the vulkan example lmao
     if CreateDebugUtilsMessengerEXT {
 
         debug_callback_create_info: VkDebugUtilsMessengerCreateInfoEXT;
@@ -218,6 +223,11 @@ setup_debug_messenger :: () {
     }
 }
 
+create_surface :: () {
+    // Platform Specific Call
+    result := create_platform_surface();
+    assert(result == .VK_SUCCESS, "Failed to create surface");
+}
 
 generate_physical_device_score :: (device : VkPhysicalDevice) -> int {
     score := 1;
@@ -283,16 +293,21 @@ find_queue_families :: (physical_device : VkPhysicalDevice) -> QueueFamilyIndice
     queue_families : [..] VkQueueFamilyProperties;
     
     vkGetPhysicalDeviceQueueFamilyProperties(physical_device, *queue_family_count, null);
-    
     array_resize(*queue_families, queue_family_count);
-    
     vkGetPhysicalDeviceQueueFamilyProperties(physical_device, *queue_family_count, queue_families.data);
 
     for queue_family : queue_families {
+        present_support : VkBool32 = 0;
+        vkGetPhysicalDeviceSurfaceSupportKHR(physical_device, cast (u32) it_index, game_state.render_handle.surface, *present_support);    
     
         if (queue_family.queueFlags & .GRAPHICS_BIT) {
             indices.graphics_family = cast (u32) it_index;
             indices.graphics_family_valid = true;
+        }
+        
+        if (present_support) {
+            indices.present_family = cast (u32) it_index;
+            indices.present_family_valid = true;
         }
         
         if (indices.graphics_family_valid) {
@@ -303,23 +318,37 @@ find_queue_families :: (physical_device : VkPhysicalDevice) -> QueueFamilyIndice
     return indices;
 }
 
+
+
 create_logical_device :: () {
     indices : QueueFamilyIndices = find_queue_families(game_state.render_handle.physical_device);
-    
+    queue_creation_infos : [..] VkDeviceQueueCreateInfo;
     device_features : VkPhysicalDeviceFeatures = .{};
     
-    queue_create_info : VkDeviceQueueCreateInfo = .{};
-    queue_create_info.sType = .DEVICE_QUEUE_CREATE_INFO;
-    queue_create_info.queueFamilyIndex = indices.graphics_family;
-    queue_create_info.queueCount = 1;
+    unique_queue_families : [..] u32;
+
+    // @TODO: Clean this up a bit.
+    if (indices.graphics_family == indices.present_family) {
+        array_add(*unique_queue_families, indices.graphics_family);
+    } else {
+        array_add(*unique_queue_families, indices.graphics_family);
+        array_add(*unique_queue_families, indices.present_family);
+    }
     
     queue_priority : float = 1.0;
-    queue_create_info.pQueuePriorities = *queue_priority;
+    for family : unique_queue_families {
+        queue_create_info : VkDeviceQueueCreateInfo = .{};
+        queue_create_info.sType = .DEVICE_QUEUE_CREATE_INFO;
+        queue_create_info.queueFamilyIndex = family;
+        queue_create_info.queueCount = 1;
+        queue_create_info.pQueuePriorities = *queue_priority;
+        array_add(*queue_creation_infos, queue_create_info);
+    }
     
     device_create_info : VkDeviceCreateInfo = .{};
     device_create_info.sType = .DEVICE_CREATE_INFO;
-    device_create_info.pQueueCreateInfos = *queue_create_info;
-    device_create_info.queueCreateInfoCount = 1;
+    device_create_info.queueCreateInfoCount = cast (u32) queue_creation_infos.count;
+    device_create_info.pQueueCreateInfos = queue_creation_infos.data;
     device_create_info.pEnabledFeatures = *device_features;
     device_create_info.enabledExtensionCount = 0;
     

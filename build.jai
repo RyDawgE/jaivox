@@ -1,3 +1,4 @@
+#run compile_shaders("shaders");
 #run build();
 
 build :: () {
@@ -69,3 +70,5 @@ build :: () {
 #import "Compiler";
 #import "Basic";
 #import "File";
+
+#load "./compile_shaders.jai";

@@ -53,6 +53,7 @@ initialize_render :: (render_handle : *RenderHandle) {
     create_logical_device();  // Create Vulkan Logic Profile on GPU
     create_swap_chain();      // Create Image Chain Buffer
     create_image_views();     // Create Views for each Image
+    create_render_pipeline(); // Create Render Pipeline
 }
 
 create_game_window :: () {
@@ -600,6 +601,10 @@ create_image_views :: () {
 
         assert(result == .SUCCESS, "Could not create image view %\n", i);
     }
+}
+
+create_render_pipeline :: () {
+    
 }
 
 #scope_file

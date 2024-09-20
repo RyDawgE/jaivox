@@ -20,6 +20,7 @@ RenderHandle :: struct {
     present_queue           : VkQueue                     =               null;
     swap_chain              : VkSwapchainKHR              =               null;
     swap_chain_images       : [..] VkImage;
+    swap_chain_image_views  : [..] VkImageView;
     swap_chain_image_format : VkFormat;
     swap_chain_extent       : VkExtent2D;
 }
@@ -62,6 +63,7 @@ initialize_render :: (render_handle : *RenderHandle) {
     pick_physical_device();   // Select GPU for rendering
     create_logical_device();  // Create Vulkan Logic Profile on GPU
     create_swap_chain();      // Create Image Chain Buffer
+    create_image_views();     // Create Views for each Image
 }
 
 // Proxy Functions. These get real values in setup_debug_messenger()
@@ -124,15 +126,21 @@ create_vulkan_instance :: () {
 }
 
 cleanup_vulkan_instance :: () {
-    vkDestroySwapchainKHR(game_state.render_handle.logical_device, game_state.render_handle.swap_chain, null);
-    vkDestroyDevice(game_state.render_handle.logical_device, null);
-    vkDestroySurfaceKHR(game_state.render_handle.instance, game_state.render_handle.surface, null);
-    
-    if ENABLE_VALIDATION_LAYERS {
-        DestroyDebugUtilsMessengerEXT(game_state.render_handle.instance, game_state.render_handle.debug_messenger, null);
+    using game_state.render_handle;
+
+    for image_view : swap_chain_image_views {
+        vkDestroyImageView(logical_device, image_view, null);
     }
 
-    vkDestroyInstance(game_state.render_handle.instance, null);
+    vkDestroySwapchainKHR(logical_device, game_state.render_handle.swap_chain, null);
+    vkDestroyDevice(logical_device, null);
+    vkDestroySurfaceKHR(instance, surface, null);
+    
+    if ENABLE_VALIDATION_LAYERS {
+        DestroyDebugUtilsMessengerEXT(instance, debug_messenger, null);
+    }
+
+    vkDestroyInstance(instance, null);
 
 }
 
@@ -559,6 +567,40 @@ create_logical_device :: () {
     assert(result == .VK_SUCCESS, "Failed to create logical device!");
     
     vkGetDeviceQueue(game_state.render_handle.logical_device, indices.graphics_family, 0, *game_state.render_handle.graphics_queue);
+}
+
+create_image_views :: () {
+    using game_state.render_handle;
+    
+    array_resize(*swap_chain_image_views, swap_chain_images.count);
+    
+    for i: 0..swap_chain_images.count - 1 {
+        image_view_create_info : VkImageViewCreateInfo = .{};
+        
+        {
+            using image_view_create_info;
+            
+            sType           =     .IMAGE_VIEW_CREATE_INFO;
+            image           =        swap_chain_images[i];
+            viewType        =                        ._2D;
+            format          =     swap_chain_image_format;
+            
+            components.r    = .IDENTITY;
+            components.g    = .IDENTITY;
+            components.b    = .IDENTITY;
+            components.a    = .IDENTITY;
+            
+            subresourceRange.aspectMask     = .COLOR_BIT;
+            subresourceRange.baseMipLevel   =          0;  
+            subresourceRange.levelCount     =          1;
+            subresourceRange.baseArrayLayer =          0;
+            subresourceRange.layerCount     =          1;
+        }
+        
+        result := vkCreateImageView(logical_device, *image_view_create_info, null, *swap_chain_image_views[i]);
+        
+        assert(result == .SUCCESS, "Could not create image view %\n", i);
+    }
 }
 
 #scope_file

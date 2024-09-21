@@ -261,10 +261,10 @@ create_swap_chain :: () {
         }
 
         preTransform   = swap_chain_support.capabilities.currentTransform;
-        compositeAlpha =                                  .OPAQUE_BIT_KHR;
-        presentMode    =                                     present_mode;
-        clipped        =                                          VK_TRUE;
-        oldSwapchain   =                                   VK_NULL_HANDLE;
+        compositeAlpha = .OPAQUE_BIT_KHR;
+        presentMode    = present_mode;
+        clipped        = VK_TRUE;
+        oldSwapchain   = VK_NULL_HANDLE;
     }
 
     result := vkCreateSwapchainKHR(logical_device, *swapchain_create_info, null, *swap_chain);
@@ -603,10 +603,66 @@ create_image_views :: () {
     }
 }
 
-create_render_pipeline :: () {
+read_shader_file :: (file_path : string) -> string {
+    return read_entire_file(file_path);
+}
+
+create_shader_module :: (code : string) -> VkShaderModule {
+    using game_state.render_handle;
+
+    shader_module      : VkShaderModule;
     
+    module_create_info : VkShaderModuleCreateInfo = .{};
+    {
+        using module_create_info;
+        sType    = .SHADER_MODULE_CREATE_INFO;
+        codeSize = cast (u64)  code.count;
+        pCode    = cast (*u32) code.data;
+    }
+    
+    result := vkCreateShaderModule(logical_device, *module_create_info, null, *shader_module);
+    
+    assert(result == .SUCCESS, "Could not create shader module");
+    
+    return shader_module;
+    
+}
+
+create_render_pipeline :: () {
+    using game_state.render_handle;
+
+    vert := read_shader_file("C:\\Users\\RyDaw\\Documents\\jaivox\\shaders\\mono\\shader.vert.spv");
+    frag := read_shader_file("C:\\Users\\RyDaw\\Documents\\jaivox\\shaders\\mono\\shader.frag.spv");
+
+    vert_shader_module := create_shader_module(vert);
+    frag_shader_module := create_shader_module(frag);
+    
+    vert_shader_stage_info : VkPipelineShaderStageCreateInfo = .{};
+    {
+        using vert_shader_stage_info;
+        sType  = .PIPELINE_SHADER_STAGE_CREATE_INFO;
+        stage  = .VERTEX_BIT;
+        module = vert_shader_module;
+        pName  = "main";
+    }
+    
+    frag_shader_stage_info : VkPipelineShaderStageCreateInfo = .{};
+    {
+        using frag_shader_stage_info;
+        sType  = .PIPELINE_SHADER_STAGE_CREATE_INFO;
+        stage  = .VERTEX_BIT;
+        module = frag_shader_module;
+        pName  = "main";
+    }
+    
+    shader_stages := VkPipelineShaderStageCreateInfo.[vert_shader_stage_info, 
+                                                      frag_shader_stage_info];
+    
+    vkDestroyShaderModule(logical_device, frag_shader_module, null);
+    vkDestroyShaderModule(logical_device, vert_shader_module, null);
 }
 
 #scope_file
 #import "Vulkan";
+#import "File";
 #import "Window_Creation";

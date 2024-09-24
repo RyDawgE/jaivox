@@ -23,6 +23,10 @@ RenderHandle :: struct {
     swap_chain_image_views  : [..] VkImageView;
     swap_chain_image_format : VkFormat;
     swap_chain_extent       : VkExtent2D;
+    render_pass             : VkRenderPass;
+    pipeline_layout         : VkPipelineLayout;
+    graphics_pipeline       : VkPipeline;
+    swap_chain_framebuffers : [..] VkFramebuffer;
 }
 
 WindowCreationInfo :: struct {
@@ -53,7 +57,9 @@ initialize_render :: (render_handle : *RenderHandle) {
     create_logical_device();  // Create Vulkan Logic Profile on GPU
     create_swap_chain();      // Create Image Chain Buffer
     create_image_views();     // Create Views for each Image
+    create_render_pass();     // Create Render Pass for Pipeline Config
     create_render_pipeline(); // Create Render Pipeline
+    create_framebuffers();    // Create Frame Buffers
 }
 
 create_game_window :: () {
@@ -127,6 +133,14 @@ create_vulkan_instance :: () {
 
 cleanup_vulkan_instance :: () {
     using game_state.render_handle;
+    
+    for framebuffer : swap_chain_framebuffers {
+        vkDestroyFramebuffer(logical_device, framebuffer, null);
+    }
+    
+    vkDestroyPipeline(logical_device, graphics_pipeline, null);
+    vkDestroyPipelineLayout(logical_device, pipeline_layout, null);
+    vkDestroyRenderPass(logical_device, render_pass, null);
 
     for image_view : swap_chain_image_views {
         vkDestroyImageView(logical_device, image_view, null);
@@ -603,11 +617,53 @@ create_image_views :: () {
     }
 }
 
-read_shader_file :: (file_path : string) -> string {
-    return read_entire_file(file_path);
+create_render_pass :: () {
+    using game_state.render_handle;
+
+    color_attachment : VkAttachmentDescription = .{};
+    {
+        using color_attachment;
+        format         = swap_chain_image_format;
+        samples        = ._1_BIT;
+        loadOp         = .CLEAR;
+        storeOp        = .STORE;
+        stencilLoadOp  = .DONT_CARE;
+        stencilStoreOp = .DONT_CARE;
+        initialLayout  = .UNDEFINED;
+        finalLayout    = .PRESENT_SRC_KHR;
+    }
+    
+    color_attachment_reference : VkAttachmentReference = .{};
+    {
+        using color_attachment_reference;
+        attachment = 0;
+        layout     = .COLOR_ATTACHMENT_OPTIMAL;
+    }
+    
+    subpass : VkSubpassDescription = .{};
+    {
+        using subpass;
+        pipelineBindPoint    = .GRAPHICS;
+        colorAttachmentCount = 1;
+        pColorAttachments    = *color_attachment_reference;
+    }
+    
+    render_pass_create_info : VkRenderPassCreateInfo = .{};
+    {
+        using render_pass_create_info;
+        sType = .RENDER_PASS_CREATE_INFO;
+        attachmentCount = 1;
+        pAttachments    = *color_attachment;
+        subpassCount    = 1;
+        pSubpasses      = *subpass;
+    }
+    
+    result := vkCreateRenderPass(logical_device, *render_pass_create_info, null, *render_pass);
+    
+    assert (result == .SUCCESS, "Could not create render pass.");
 }
 
-create_shader_module :: (code : string) -> VkShaderModule {
+create_shader_module :: (code : [] u8) -> VkShaderModule {
     using game_state.render_handle;
 
     shader_module      : VkShaderModule;
@@ -616,26 +672,25 @@ create_shader_module :: (code : string) -> VkShaderModule {
     {
         using module_create_info;
         sType    = .SHADER_MODULE_CREATE_INFO;
-        codeSize = cast (u64)  code.count;
+        codeSize = xx code.count;
         pCode    = cast (*u32) code.data;
     }
-    
+        
     result := vkCreateShaderModule(logical_device, *module_create_info, null, *shader_module);
     
     assert(result == .SUCCESS, "Could not create shader module");
     
     return shader_module;
-    
 }
 
 create_render_pipeline :: () {
     using game_state.render_handle;
 
-    vert := read_shader_file("C:\\Users\\RyDaw\\Documents\\jaivox\\shaders\\mono\\shader.vert.spv");
-    frag := read_shader_file("C:\\Users\\RyDaw\\Documents\\jaivox\\shaders\\mono\\shader.frag.spv");
+    vert, vert_loaded := read_entire_file("C:/Users/RyDaw/Documents/jaivox/shaders/mono/shader.vert.spv");
+    frag, frag_loaded := read_entire_file("C:/Users/RyDaw/Documents/jaivox/shaders/mono/shader.frag.spv");
 
-    vert_shader_module := create_shader_module(vert);
-    frag_shader_module := create_shader_module(frag);
+    vert_shader_module := create_shader_module(cast ([] u8)vert);
+    frag_shader_module := create_shader_module(cast ([] u8)frag);
     
     vert_shader_stage_info : VkPipelineShaderStageCreateInfo = .{};
     {
@@ -650,16 +705,194 @@ create_render_pipeline :: () {
     {
         using frag_shader_stage_info;
         sType  = .PIPELINE_SHADER_STAGE_CREATE_INFO;
-        stage  = .VERTEX_BIT;
+        stage  = .FRAGMENT_BIT;
         module = frag_shader_module;
         pName  = "main";
     }
     
     shader_stages := VkPipelineShaderStageCreateInfo.[vert_shader_stage_info, 
                                                       frag_shader_stage_info];
+                                                      
+    dynamic_states := VkDynamicState.[.VIEWPORT, .SCISSOR];
+    dynamic_state : VkPipelineDynamicStateCreateInfo = .{};
+    {
+        using dynamic_state;
+        sType             = .PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+        dynamicStateCount = cast (u32) dynamic_states.count;
+        pDynamicStates    = dynamic_states.data;
+    }
+    
+    vertex_input_info : VkPipelineVertexInputStateCreateInfo = .{};
+    {
+        using vertex_input_info;
+        sType = .PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+        vertexBindingDescriptionCount   = 0;
+        pVertexBindingDescriptions      = null;
+        vertexAttributeDescriptionCount = 0;
+        pVertexAttributeDescriptions    = null;
+    }
+    
+    input_assembly : VkPipelineInputAssemblyStateCreateInfo = .{};
+    {
+        using input_assembly;
+        sType                  = .PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
+        topology               = .TRIANGLE_LIST;
+        primitiveRestartEnable = VK_FALSE;
+    }
+    
+    viewport : VkViewport = .{};
+    {
+        using viewport;
+        x = 0.0;
+        y = 0.0;
+        width  = cast (float) swap_chain_extent.width;
+        height = cast (float) swap_chain_extent.height;
+        minDepth = 0.0;
+        maxDepth = 1.0;
+    }
+    
+    scissor : VkRect2D = .{};
+    {
+        using scissor;
+        offset = .{0, 0};
+        extent = swap_chain_extent;
+    }
+    
+    viewport_state : VkPipelineViewportStateCreateInfo = .{};
+    {
+        using viewport_state;
+        sType         = .PIPELINE_VIEWPORT_STATE_CREATE_INFO;
+        viewportCount = 1;
+        scissorCount  = 1;
+        pViewports    = *viewport;
+        pScissors     = *scissor;
+    }
+    
+    rasterizer : VkPipelineRasterizationStateCreateInfo = .{};
+    {
+        using rasterizer;
+        sType                   = .PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
+        depthClampEnable        = VK_FALSE;
+        rasterizerDiscardEnable = VK_FALSE;
+        polygonMode             = .FILL;
+        lineWidth               = 1.0;
+        cullMode                = .BACK_BIT;
+        frontFace               = .CLOCKWISE;
+        depthBiasEnable         = VK_FALSE;
+        depthBiasConstantFactor = 0.0;
+        depthBiasClamp          = 0.0;
+        depthBiasSlopeFactor    = 0.0;
+    }
+    
+    multisampling : VkPipelineMultisampleStateCreateInfo = .{};
+    {
+        using multisampling;
+        sType = .PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
+        sampleShadingEnable   = VK_FALSE;
+        rasterizationSamples  = ._1_BIT;
+        minSampleShading      = 1.0;
+        pSampleMask           = null;
+        alphaToCoverageEnable = VK_FALSE;
+        alphaToOneEnable      = VK_FALSE;
+    }
+    
+    color_blend_attachment : VkPipelineColorBlendAttachmentState = .{};
+    {
+        using color_blend_attachment;
+        colorWriteMask      = .R_BIT | .G_BIT | .B_BIT | .A_BIT;
+        blendEnable         = VK_TRUE;
+        srcColorBlendFactor = .SRC_ALPHA;
+        dstColorBlendFactor = .ONE_MINUS_SRC_ALPHA;
+        colorBlendOp        = .ADD;
+        srcAlphaBlendFactor = .ONE;
+        dstAlphaBlendFactor = .ZERO;
+        alphaBlendOp        = .ADD;
+    }
+    
+    color_blending : VkPipelineColorBlendStateCreateInfo = .{};
+    {
+        using color_blending;
+        sType = .PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+        logicOpEnable      = VK_FALSE;
+        logicOp            = .COPY;
+        attachmentCount    = 1;
+        pAttachments       = *color_blend_attachment;
+        blendConstants [0] = 0.0;
+        blendConstants [1] = 0.0;
+        blendConstants [2] = 0.0;
+        blendConstants [3] = 0.0;        
+    }
+     
+    pipeline_layout_create_info : VkPipelineLayoutCreateInfo = .{};
+    {
+        using pipeline_layout_create_info;
+        sType = .PIPELINE_LAYOUT_CREATE_INFO;
+        setLayoutCount         = 0;
+        pSetLayouts            = null;
+        pushConstantRangeCount = 0;
+        pPushConstantRanges    = null;
+    }
+    result := vkCreatePipelineLayout(logical_device, *pipeline_layout_create_info, null, *pipeline_layout);
+    
+    assert(result == .SUCCESS, "Could not create Vulkan Pipeline Layout");
+    
+    pipeline_creation_info : VkGraphicsPipelineCreateInfo = .{};
+    {
+        using pipeline_creation_info;
+        sType = .GRAPHICS_PIPELINE_CREATE_INFO;
+        stageCount          = 2;
+        pStages             = shader_stages.data;
+        pVertexInputState   = *vertex_input_info;
+        pInputAssemblyState = *input_assembly;
+        pViewportState      = *viewport_state;
+        pRasterizationState = *rasterizer;
+        pMultisampleState   = *multisampling;
+        pDepthStencilState  = null;
+        pColorBlendState    = *color_blending;
+        pDynamicState       = *dynamic_state;
+        layout              = pipeline_layout;
+        renderPass          = render_pass;
+        subpass             = 0;
+        basePipelineHandle  = VK_NULL_HANDLE;
+        basePipelineIndex   = -1;
+    }
+    
+    result = vkCreateGraphicsPipelines(logical_device, VK_NULL_HANDLE, 1, *pipeline_creation_info, null, *graphics_pipeline);
+    
+    assert(result == .SUCCESS, "Failed to create graphics pipeline");
     
     vkDestroyShaderModule(logical_device, frag_shader_module, null);
     vkDestroyShaderModule(logical_device, vert_shader_module, null);
+}
+
+create_framebuffers :: () {
+    using game_state.render_handle;
+    
+    array_resize(*swap_chain_framebuffers, swap_chain_image_views.count);
+    
+    for * swap_chain_image_views {
+        attachments := VkImageView.[
+            swap_chain_image_views[it_index]
+        ];
+            
+        
+        frame_buffer_create_info : VkFramebufferCreateInfo = .{};
+        {
+            using frame_buffer_create_info;
+            
+            sType = .FRAMEBUFFER_CREATE_INFO;
+            renderPass      = render_pass;
+            attachmentCount = 1;
+            pAttachments    = attachments.data;
+            width           = swap_chain_extent.width;
+            height          = swap_chain_extent.height;
+            layers          = 1;
+        }
+        
+        result := vkCreateFramebuffer(logical_device, *frame_buffer_create_info, null, *swap_chain_framebuffers[it_index]);
+        
+        assert(result == .SUCCESS, "Could not create framebuffer");
+    }
 }
 
 #scope_file

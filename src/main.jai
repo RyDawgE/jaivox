@@ -13,6 +13,7 @@ main :: () {
     // @MainLoop
     while !game_state.should_close {
         poll_events();
+        draw_frame();
     }
     cleanup();
 }

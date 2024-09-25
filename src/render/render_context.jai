@@ -10,23 +10,28 @@ REQUIRED_DEVICE_EXTENSIONS :: (*u8).[VK_KHR_SWAPCHAIN_EXTENSION_NAME];
 REQUIRED_VALIDATION_LAYERS :: (*u8).["VK_LAYER_KHRONOS_validation"];
 
 RenderHandle :: struct {
-    window                  : *void                    = null;
-    instance                : VkInstance               = null;
-    surface                 : VkSurfaceKHR             = VK_NULL_HANDLE;
-    debug_messenger         : VkDebugUtilsMessengerEXT = null;
-    physical_device         : VkPhysicalDevice         = VK_NULL_HANDLE;
-    logical_device          : VkDevice                 = VK_NULL_HANDLE;
-    graphics_queue          : VkQueue                  = null;
-    present_queue           : VkQueue                  = null;
-    swap_chain              : VkSwapchainKHR           = null;
-    swap_chain_images       : [..] VkImage;
-    swap_chain_image_views  : [..] VkImageView;
-    swap_chain_image_format : VkFormat;
-    swap_chain_extent       : VkExtent2D;
-    render_pass             : VkRenderPass;
-    pipeline_layout         : VkPipelineLayout;
-    graphics_pipeline       : VkPipeline;
-    swap_chain_framebuffers : [..] VkFramebuffer;
+    window                    : *void                    = null;
+    instance                  : VkInstance               = null;
+    surface                   : VkSurfaceKHR             = VK_NULL_HANDLE;
+    debug_messenger           : VkDebugUtilsMessengerEXT = null;
+    physical_device           : VkPhysicalDevice         = VK_NULL_HANDLE;
+    logical_device            : VkDevice                 = VK_NULL_HANDLE;
+    graphics_queue            : VkQueue                  = null;
+    present_queue             : VkQueue                  = null;
+    swap_chain                : VkSwapchainKHR           = null;
+    swap_chain_images         : [..] VkImage;
+    swap_chain_image_views    : [..] VkImageView;
+    swap_chain_image_format   : VkFormat;
+    swap_chain_extent         : VkExtent2D;
+    render_pass               : VkRenderPass;
+    pipeline_layout           : VkPipelineLayout;
+    graphics_pipeline         : VkPipeline;
+    swap_chain_framebuffers   : [..] VkFramebuffer;
+    command_pool              : VkCommandPool;
+    command_buffer            : VkCommandBuffer;
+    image_available_semaphore : VkSemaphore;
+    render_finished_semaphore : VkSemaphore;
+    in_flight_fence           : VkFence;
 }
 
 WindowCreationInfo :: struct {
@@ -60,6 +65,9 @@ initialize_render :: (render_handle : *RenderHandle) {
     create_render_pass();     // Create Render Pass for Pipeline Config
     create_render_pipeline(); // Create Render Pipeline
     create_framebuffers();    // Create Frame Buffers
+    create_command_pool();    // Create Command Pool
+    create_command_buffer();  // Create Command Buffer
+    create_sync_objects();    // Create Sync Objects for Control Flow
 }
 
 create_game_window :: () {
@@ -133,6 +141,12 @@ create_vulkan_instance :: () {
 
 cleanup_vulkan_instance :: () {
     using game_state.render_handle;
+    vkDestroySemaphore(logical_device, image_available_semaphore, null);
+    vkDestroySemaphore(logical_device, render_finished_semaphore, null);
+    vkDestroyFence(logical_device, in_flight_fence, null);
+    
+    
+    vkDestroyCommandPool(logical_device, command_pool, null);
     
     for framebuffer : swap_chain_framebuffers {
         vkDestroyFramebuffer(logical_device, framebuffer, null);
@@ -750,6 +764,7 @@ create_render_pipeline :: () {
         minDepth = 0.0;
         maxDepth = 1.0;
     }
+    vkCmdSetViewport(command_buffer, 0, 1, *viewport);
     
     scissor : VkRect2D = .{};
     {
@@ -757,6 +772,8 @@ create_render_pipeline :: () {
         offset = .{0, 0};
         extent = swap_chain_extent;
     }
+    vkCmdSetScissor(command_buffer, 0, 1, *scissor);
+
     
     viewport_state : VkPipelineViewportStateCreateInfo = .{};
     {
@@ -893,6 +910,142 @@ create_framebuffers :: () {
         
         assert(result == .SUCCESS, "Could not create framebuffer");
     }
+}
+
+create_command_pool :: () {
+    using game_state.render_handle;
+
+    indices : QueueFamilyIndices = find_queue_families(physical_device);
+    
+    command_pool_create_info : VkCommandPoolCreateInfo = .{};
+    {
+        using command_pool_create_info;
+        sType = .COMMAND_POOL_CREATE_INFO;
+        flags = .RESET_COMMAND_BUFFER_BIT;
+        queueFamilyIndex = indices.graphics_family;
+    }
+    
+    result := vkCreateCommandPool(logical_device, *command_pool_create_info, null, *command_pool);
+    
+    assert (result == .SUCCESS, "Could not create command pool");
+}
+
+create_command_buffer :: () {
+    using game_state.render_handle;
+
+    command_buffer_alloc_info : VkCommandBufferAllocateInfo = .{};
+    {
+        using command_buffer_alloc_info;
+        
+        sType = .COMMAND_BUFFER_ALLOCATE_INFO;
+        commandPool        = command_pool;
+        level              = .PRIMARY;
+        commandBufferCount = 1;
+    }
+    
+    result := vkAllocateCommandBuffers(logical_device, *command_buffer_alloc_info, *command_buffer);
+    
+    assert(result == .SUCCESS, "Could not allocate command buffer.");
+}
+
+record_command_buffer :: (in_command_buffer : VkCommandBuffer, image_index : u32) {
+    using game_state.render_handle;
+    
+    clear_value : VkClearValue = .{.{float.[0, 0, 0, 1]}};
+    
+    command_buffer_begin_info : VkCommandBufferBeginInfo = .{};
+    {
+        using command_buffer_begin_info;
+        sType = .COMMAND_BUFFER_BEGIN_INFO;
+        flags = 0;
+        pInheritanceInfo = null;
+    }
+    
+    result := vkBeginCommandBuffer(command_buffer, *command_buffer_begin_info);
+    
+    assert(result == .SUCCESS, "Failed to begin recording command buffer.");
+    
+    render_pass_begin_info : VkRenderPassBeginInfo = .{};
+    {
+        using render_pass_begin_info;
+        sType = .RENDER_PASS_BEGIN_INFO;
+        renderPass        = render_pass;
+        framebuffer       = swap_chain_framebuffers[image_index];
+        renderArea.offset = .{0, 0};
+        renderArea.extent = swap_chain_extent;
+        clearValueCount   = 1;
+        pClearValues      = *clear_value;
+    }
+    
+    vkCmdBeginRenderPass(command_buffer, *render_pass_begin_info, .INLINE);
+    vkCmdBindPipeline(command_buffer, .GRAPHICS, graphics_pipeline);
+    
+    vkCmdDraw(command_buffer, 3, 1, 0, 0);
+    
+    vkCmdEndRenderPass(command_buffer);
+    
+    result = vkEndCommandBuffer(command_buffer);
+    
+    assert(result == .SUCCESS, "Failed to record command buffer.");
+}
+
+create_sync_objects :: () {
+    using game_state.render_handle;
+
+    semaphore_create_info : VkSemaphoreCreateInfo = .{};
+    {
+        using semaphore_create_info;
+        
+        sType = .SEMAPHORE_CREATE_INFO;
+    }
+    
+    fence_create_info : VkFenceCreateInfo = .{};
+    {
+        using fence_create_info;
+        
+        sType = .FENCE_CREATE_INFO;
+        flags = .SIGNALED_BIT;
+    }
+    
+    vkCreateSemaphore(logical_device, *semaphore_create_info, null, *image_available_semaphore);
+    vkCreateSemaphore(logical_device, *semaphore_create_info, null, *render_finished_semaphore);
+    vkCreateFence(logical_device, *fence_create_info, null, *in_flight_fence);
+}
+
+draw_frame :: () {
+    using game_state.render_handle;
+    
+    image_index : u32;
+    vkAcquireNextImageKHR(logical_device, swap_chain, U64_MAX, image_available_semaphore, VK_NULL_HANDLE, *image_index);
+    
+    vkWaitForFences(logical_device, 1, *in_flight_fence, VK_TRUE, U64_MAX);
+    vkResetFences(logical_device, 1, *in_flight_fence);
+    
+    vkResetCommandBuffer(command_buffer, 0);
+    record_command_buffer(command_buffer, image_index);
+    
+    submit_info : VkSubmitInfo = .{};
+    {
+        using submit_info;
+        
+        sType =.SUBMIT_INFO;
+        
+        wait_semaphores   := VkSemaphore.[image_available_semaphore];
+        wait_stages       := VkPipelineStageFlags.[.COLOR_ATTACHMENT_OUTPUT_BIT];
+        signal_semaphores := VkSemaphore.[render_finished_semaphore];
+        
+        waitSemaphoreCount   = 1;
+        pWaitSemaphores      = wait_semaphores.data;
+        pWaitDstStageMask    = wait_stages.data;
+        commandBufferCount   = 1;
+        pCommandBuffers      = *command_buffer;
+        signalSemaphoreCount = 1;
+        pSignalSemaphores    = signal_semaphores.data;
+    }
+    
+    result := vkQueueSubmit(graphics_queue, 1, *submit_info, in_flight_fence);
+    
+    assert(result == .SUCCESS, "Failed to submit draw command buffer");
 }
 
 #scope_file

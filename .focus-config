@@ -21,6 +21,7 @@ auto_jump_to_error:     false
 
 [Debug]
 build_command: jai build.jai
+key_binding: F5
 
 [Debug Macos]
 build_command: arch -x86_64 jai-macos build.jai

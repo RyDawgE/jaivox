@@ -1,4 +1,5 @@
-#run compile_shaders("shaders");
+DEBUG := true;
+
 #run build();
 
 build :: () {
@@ -20,14 +21,12 @@ build :: () {
     set_build_options_dc(.{do_output=false});
     set_working_directory(#filepath);
 
-
-    optimized := false;
     set_optimization(*options, .DEBUG);
 
     for arg: args {
         if arg == {
             case "release";
-                optimized = true;
+                DEBUG = false;
                 build_dir = "build_release";
                 set_optimization(*options, .VERY_OPTIMIZED);
                 options.llvm_options.enable_split_modules = false;
@@ -60,11 +59,13 @@ build :: () {
     build_constants := tprint(#string STRING
         DEBUG :: %;
     STRING,
-        ifx optimized then "false" else "true",
+        ifx DEBUG then "true" else "false",
     );
 
     add_build_string(build_constants, w);
     add_build_file(tprint("%src/main.jai", #filepath), w);
+
+    compile_shaders(tprint("%/shaders", build_dir));
 }
 
 #import "Compiler";

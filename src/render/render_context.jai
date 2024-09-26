@@ -144,20 +144,20 @@ create_vulkan_instance :: () {
 
 cleanup_vulkan_instance :: () {
     using game_state.render_handle;
-    
+
     for i: 0..(MAX_FRAMES_IN_FLIGHT - 1) {
         vkDestroySemaphore(logical_device, image_available_semaphores[i], null);
         vkDestroySemaphore(logical_device, render_finished_semaphores[i], null);
         vkDestroyFence(logical_device, in_flight_fences[i], null);
     }
-    
-    
+
+
     vkDestroyCommandPool(logical_device, command_pool, null);
-    
+
     for framebuffer : swap_chain_framebuffers {
         vkDestroyFramebuffer(logical_device, framebuffer, null);
     }
-    
+
     vkDestroyPipeline(logical_device, graphics_pipeline, null);
     vkDestroyPipelineLayout(logical_device, pipeline_layout, null);
     vkDestroyRenderPass(logical_device, render_pass, null);
@@ -641,11 +641,11 @@ create_image_views :: () {
 
 create_render_pass :: () {
     using game_state.render_handle;
-    
+
     subpass_dependency : VkSubpassDependency = .{};
     {
         using subpass_dependency;
-        
+
         srcSubpass       = VK_SUBPASS_EXTERNAL;
         dstSubpass       = 0;
         srcStageMask     = .COLOR_ATTACHMENT_OUTPUT_BIT;
@@ -666,14 +666,14 @@ create_render_pass :: () {
         initialLayout  = .UNDEFINED;
         finalLayout    = .PRESENT_SRC_KHR;
     }
-    
+
     color_attachment_reference : VkAttachmentReference = .{};
     {
         using color_attachment_reference;
         attachment = 0;
         layout     = .COLOR_ATTACHMENT_OPTIMAL;
     }
-    
+
     subpass : VkSubpassDescription = .{};
     {
         using subpass;
@@ -681,7 +681,7 @@ create_render_pass :: () {
         colorAttachmentCount = 1;
         pColorAttachments    = *color_attachment_reference;
     }
-    
+
     render_pass_create_info : VkRenderPassCreateInfo = .{};
     {
         using render_pass_create_info;
@@ -693,9 +693,9 @@ create_render_pass :: () {
         dependencyCount  = 1;
         pDependencies    = *subpass_dependency;
     }
-    
+
     result := vkCreateRenderPass(logical_device, *render_pass_create_info, null, *render_pass);
-    
+
     assert (result == .SUCCESS, "Could not create render pass.");
 }
 
@@ -703,7 +703,7 @@ create_shader_module :: (code : [] u8) -> VkShaderModule {
     using game_state.render_handle;
 
     shader_module      : VkShaderModule;
-    
+
     module_create_info : VkShaderModuleCreateInfo = .{};
     {
         using module_create_info;
@@ -711,23 +711,26 @@ create_shader_module :: (code : [] u8) -> VkShaderModule {
         codeSize = xx code.count;
         pCode    = cast (*u32) code.data;
     }
-        
+
     result := vkCreateShaderModule(logical_device, *module_create_info, null, *shader_module);
-    
+
     assert(result == .SUCCESS, "Could not create shader module");
-    
+
     return shader_module;
 }
 
 create_render_pipeline :: () {
     using game_state.render_handle;
 
-    vert, vert_loaded := read_entire_file("C:/Users/RyDaw/Documents/jaivox/shaders/mono/shader.vert.spv");
-    frag, frag_loaded := read_entire_file("C:/Users/RyDaw/Documents/jaivox/shaders/mono/shader.frag.spv");
+    vert_file_location := tprint("%/shaders/mono/shader.vert.spv", get_program_data_dir());
+    frag_file_location := tprint("%/shaders/mono/shader.frag.spv", get_program_data_dir());
+
+    vert, vert_loaded := read_entire_file(vert_file_location);
+    frag, frag_loaded := read_entire_file(frag_file_location);
 
     vert_shader_module := create_shader_module(cast ([] u8)vert);
     frag_shader_module := create_shader_module(cast ([] u8)frag);
-    
+
     vert_shader_stage_info : VkPipelineShaderStageCreateInfo = .{};
     {
         using vert_shader_stage_info;
@@ -736,7 +739,7 @@ create_render_pipeline :: () {
         module = vert_shader_module;
         pName  = "main";
     }
-    
+
     frag_shader_stage_info : VkPipelineShaderStageCreateInfo = .{};
     {
         using frag_shader_stage_info;
@@ -745,10 +748,10 @@ create_render_pipeline :: () {
         module = frag_shader_module;
         pName  = "main";
     }
-    
-    shader_stages := VkPipelineShaderStageCreateInfo.[vert_shader_stage_info, 
+
+    shader_stages := VkPipelineShaderStageCreateInfo.[vert_shader_stage_info,
                                                       frag_shader_stage_info];
-                                                      
+
     dynamic_states := VkDynamicState.[.VIEWPORT, .SCISSOR];
     dynamic_state : VkPipelineDynamicStateCreateInfo = .{};
     {
@@ -757,7 +760,7 @@ create_render_pipeline :: () {
         dynamicStateCount = cast (u32) dynamic_states.count;
         pDynamicStates    = dynamic_states.data;
     }
-    
+
     vertex_input_info : VkPipelineVertexInputStateCreateInfo = .{};
     {
         using vertex_input_info;
@@ -767,7 +770,7 @@ create_render_pipeline :: () {
         vertexAttributeDescriptionCount = 0;
         pVertexAttributeDescriptions    = null;
     }
-    
+
     input_assembly : VkPipelineInputAssemblyStateCreateInfo = .{};
     {
         using input_assembly;
@@ -775,7 +778,7 @@ create_render_pipeline :: () {
         topology               = .TRIANGLE_LIST;
         primitiveRestartEnable = VK_FALSE;
     }
-    
+
     viewport_state : VkPipelineViewportStateCreateInfo = .{};
     {
         using viewport_state;
@@ -783,7 +786,7 @@ create_render_pipeline :: () {
         viewportCount = 1;
         scissorCount  = 1;
     }
-    
+
     rasterizer : VkPipelineRasterizationStateCreateInfo = .{};
     {
         using rasterizer;
@@ -799,7 +802,7 @@ create_render_pipeline :: () {
         depthBiasClamp          = 0.0;
         depthBiasSlopeFactor    = 0.0;
     }
-    
+
     multisampling : VkPipelineMultisampleStateCreateInfo = .{};
     {
         using multisampling;
@@ -811,7 +814,7 @@ create_render_pipeline :: () {
         alphaToCoverageEnable = VK_FALSE;
         alphaToOneEnable      = VK_FALSE;
     }
-    
+
     color_blend_attachment : VkPipelineColorBlendAttachmentState = .{};
     {
         using color_blend_attachment;
@@ -824,7 +827,7 @@ create_render_pipeline :: () {
         dstAlphaBlendFactor = .ZERO;
         alphaBlendOp        = .ADD;
     }
-    
+
     color_blending : VkPipelineColorBlendStateCreateInfo = .{};
     {
         using color_blending;
@@ -836,9 +839,9 @@ create_render_pipeline :: () {
         blendConstants [0] = 0.0;
         blendConstants [1] = 0.0;
         blendConstants [2] = 0.0;
-        blendConstants [3] = 0.0;        
+        blendConstants [3] = 0.0;
     }
-     
+
     pipeline_layout_create_info : VkPipelineLayoutCreateInfo = .{};
     {
         using pipeline_layout_create_info;
@@ -849,9 +852,9 @@ create_render_pipeline :: () {
         pPushConstantRanges    = null;
     }
     result := vkCreatePipelineLayout(logical_device, *pipeline_layout_create_info, null, *pipeline_layout);
-    
+
     assert(result == .SUCCESS, "Could not create Vulkan Pipeline Layout");
-    
+
     pipeline_creation_info : VkGraphicsPipelineCreateInfo = .{};
     {
         using pipeline_creation_info;
@@ -872,30 +875,30 @@ create_render_pipeline :: () {
         basePipelineHandle  = VK_NULL_HANDLE;
         basePipelineIndex   = -1;
     }
-    
+
     result = vkCreateGraphicsPipelines(logical_device, VK_NULL_HANDLE, 1, *pipeline_creation_info, null, *graphics_pipeline);
-    
+
     assert(result == .SUCCESS, "Failed to create graphics pipeline");
-    
+
     vkDestroyShaderModule(logical_device, frag_shader_module, null);
     vkDestroyShaderModule(logical_device, vert_shader_module, null);
 }
 
 create_framebuffers :: () {
     using game_state.render_handle;
-    
+
     array_resize(*swap_chain_framebuffers, swap_chain_image_views.count);
-    
+
     for * swap_chain_image_views {
         attachments := VkImageView.[
             swap_chain_image_views[it_index]
         ];
-            
-        
+
+
         frame_buffer_create_info : VkFramebufferCreateInfo = .{};
         {
             using frame_buffer_create_info;
-            
+
             sType = .FRAMEBUFFER_CREATE_INFO;
             renderPass      = render_pass;
             attachmentCount = 1;
@@ -904,9 +907,9 @@ create_framebuffers :: () {
             height          = swap_chain_extent.height;
             layers          = 1;
         }
-        
+
         result := vkCreateFramebuffer(logical_device, *frame_buffer_create_info, null, *swap_chain_framebuffers[it_index]);
-        
+
         assert(result == .SUCCESS, "Could not create framebuffer");
     }
 }
@@ -915,7 +918,7 @@ create_command_pool :: () {
     using game_state.render_handle;
 
     indices : QueueFamilyIndices = find_queue_families(physical_device);
-    
+
     command_pool_create_info : VkCommandPoolCreateInfo = .{};
     {
         using command_pool_create_info;
@@ -923,37 +926,37 @@ create_command_pool :: () {
         flags = .RESET_COMMAND_BUFFER_BIT;
         queueFamilyIndex = indices.graphics_family;
     }
-    
+
     result := vkCreateCommandPool(logical_device, *command_pool_create_info, null, *command_pool);
-    
+
     assert (result == .SUCCESS, "Could not create command pool");
 }
 
 create_command_buffers :: () {
     using game_state.render_handle;
-    
+
     array_resize(*command_buffers, MAX_FRAMES_IN_FLIGHT);
 
     command_buffer_alloc_info : VkCommandBufferAllocateInfo = .{};
     {
         using command_buffer_alloc_info;
-        
+
         sType = .COMMAND_BUFFER_ALLOCATE_INFO;
         commandPool        = command_pool;
         level              = .PRIMARY;
         commandBufferCount = xx command_buffers.count;
     }
-    
+
     result := vkAllocateCommandBuffers(logical_device, *command_buffer_alloc_info, command_buffers.data);
-    
+
     assert(result == .SUCCESS, "Could not allocate command buffer.");
 }
 
 record_command_buffer :: (in_command_buffer : VkCommandBuffer, image_index : u32) {
     using game_state.render_handle;
-    
+
     clear_value : VkClearValue = .{.{float.[0, 0, 0, 1]}};
-    
+
     command_buffer_begin_info : VkCommandBufferBeginInfo = .{};
     {
         using command_buffer_begin_info;
@@ -961,11 +964,11 @@ record_command_buffer :: (in_command_buffer : VkCommandBuffer, image_index : u32
         flags = 0;
         pInheritanceInfo = null;
     }
-    
+
     result := vkBeginCommandBuffer(in_command_buffer, *command_buffer_begin_info);
-    
+
     assert(result == .SUCCESS, "Failed to begin recording command buffer.");
-    
+
     render_pass_begin_info : VkRenderPassBeginInfo = .{};
     {
         using render_pass_begin_info;
@@ -977,10 +980,10 @@ record_command_buffer :: (in_command_buffer : VkCommandBuffer, image_index : u32
         clearValueCount   = 1;
         pClearValues      = *clear_value;
     }
-    
+
     vkCmdBeginRenderPass(in_command_buffer, *render_pass_begin_info, .INLINE);
     vkCmdBindPipeline(in_command_buffer, .GRAPHICS, graphics_pipeline);
-    
+
     viewport : VkViewport = .{};
     {
         using viewport;
@@ -992,7 +995,7 @@ record_command_buffer :: (in_command_buffer : VkCommandBuffer, image_index : u32
         maxDepth = 1.0;
     }
     vkCmdSetViewport(in_command_buffer, 0, 1, *viewport);
-    
+
     scissor : VkRect2D = .{};
     {
         using scissor;
@@ -1000,13 +1003,13 @@ record_command_buffer :: (in_command_buffer : VkCommandBuffer, image_index : u32
         extent = swap_chain_extent;
     }
     vkCmdSetScissor(in_command_buffer, 0, 1, *scissor);
-    
+
     vkCmdDraw(in_command_buffer, 3, 1, 0, 0);
-    
+
     vkCmdEndRenderPass(in_command_buffer);
-    
+
     result = vkEndCommandBuffer(in_command_buffer);
-    
+
     assert(result == .SUCCESS, "Failed to record command buffer.");
 }
 
@@ -1020,49 +1023,49 @@ create_sync_objects :: () {
     semaphore_create_info : VkSemaphoreCreateInfo = .{};
     {
         using semaphore_create_info;
-        
+
         sType = .SEMAPHORE_CREATE_INFO;
     }
-    
+
     fence_create_info : VkFenceCreateInfo = .{};
     {
         using fence_create_info;
-        
+
         sType = .FENCE_CREATE_INFO;
         flags = .SIGNALED_BIT;
     }
-    
+
     for i: 0..(MAX_FRAMES_IN_FLIGHT - 1) {
         vkCreateSemaphore(logical_device, *semaphore_create_info, null, *image_available_semaphores[i]);
         vkCreateSemaphore(logical_device, *semaphore_create_info, null, *render_finished_semaphores[i]);
         vkCreateFence(logical_device, *fence_create_info, null, *in_flight_fences[i]);
     }
-    
+
 }
 
 draw_frame :: () {
     using game_state.render_handle;
     image_index : u32;
-    
+
     vkWaitForFences(logical_device, 1, *in_flight_fences[current_frame], VK_TRUE, U64_MAX);
     vkResetFences(logical_device, 1, *in_flight_fences[current_frame]);
-    
+
     vkAcquireNextImageKHR(logical_device, swap_chain, U64_MAX, image_available_semaphores[current_frame], VK_NULL_HANDLE, *image_index);
-    
+
     wait_semaphores   := VkSemaphore.[image_available_semaphores[current_frame]];
     wait_stages       := VkPipelineStageFlags.[.COLOR_ATTACHMENT_OUTPUT_BIT];
     signal_semaphores := VkSemaphore.[render_finished_semaphores[current_frame]];
     swap_chains       := VkSwapchainKHR.[swap_chain];
-    
+
     vkResetCommandBuffer(command_buffers[current_frame], 0);
     record_command_buffer(command_buffers[current_frame], image_index);
-    
+
     submit_info : VkSubmitInfo = .{};
     {
         using submit_info;
-        
+
         sType =.SUBMIT_INFO;
-        
+
         waitSemaphoreCount   = 1;
         pWaitSemaphores      = wait_semaphores.data;
         pWaitDstStageMask    = wait_stages.data;
@@ -1071,16 +1074,16 @@ draw_frame :: () {
         signalSemaphoreCount = 1;
         pSignalSemaphores    = signal_semaphores.data;
     }
-    
+
     result := vkQueueSubmit(graphics_queue, 1, *submit_info, in_flight_fences[current_frame]);
-    
+
     assert(result == .SUCCESS, "Failed to submit draw command buffer");
-    
+
     present_info : VkPresentInfoKHR = .{};
     {
         using present_info;
         sType = .PRESENT_INFO_KHR;
-        
+
         waitSemaphoreCount = 1;
         pWaitSemaphores    = signal_semaphores.data;
         swapchainCount     = 1;
@@ -1088,9 +1091,9 @@ draw_frame :: () {
         pImageIndices      = *image_index;
         pResults           = null;
     }
-    
+
     vkQueuePresentKHR(present_queue, *present_info);
-    
+
     current_frame = (current_frame + 1) % xx MAX_FRAMES_IN_FLIGHT;
 }
 

@@ -1,12 +1,11 @@
 // This is not currently loaded by the Render module but is instead a utility file
 // that can be separately loaded by metaprograms to build shaders
 
-
 compile_shaders :: (output_directory: string) -> bool {
-    base_directory := tprint("%shaders", #filepath);
+    base_directory := tprint("%src/shaders", #filepath);
 
     #if OS == .WINDOWS {
-        shader_compiler := tprint("glslc.exe");
+        shader_compiler := "glslc.exe";
     } else #if OS == .LINUX {
         // TODO
     } else #if OS == .MACOS {
@@ -16,20 +15,20 @@ compile_shaders :: (output_directory: string) -> bool {
     }
 
     mono_output_directory := tprint("%/mono", output_directory);
-    stereo_output_directory := tprint("%/stereo", output_directory);
+    // stereo_output_directory := tprint("%/stereo", output_directory);
     if file_exists(mono_output_directory)   delete_directory(mono_output_directory);
-    if file_exists(stereo_output_directory) delete_directory(stereo_output_directory);
+    // if file_exists(stereo_output_directory) delete_directory(stereo_output_directory);
     make_directory_if_it_does_not_exist(mono_output_directory, recursive = true);
-    make_directory_if_it_does_not_exist(stereo_output_directory, recursive = true);
+    // make_directory_if_it_does_not_exist(stereo_output_directory, recursive = true);
 
-    for file_list(tprint("%/source", base_directory)) {
+    for file_list(tprint("%", base_directory)) {
         if ends_with(it, ".vert") || ends_with(it, ".frag") {
             if !compile_shader(shader_compiler, it, "-DIS_STEREO=0", mono_output_directory) {
                 return false;
             }
-            if !compile_shader(shader_compiler, it, "-DIS_STEREO=1", stereo_output_directory) {
-                return false;
-            }
+            // if !compile_shader(shader_compiler, it, "-DIS_STEREO=1", stereo_output_directory) {
+            //     return false;
+            // }
         }
     }
 

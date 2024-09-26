@@ -5,7 +5,7 @@ main :: () {
     game_state.input_handle  = New(InputHandle);
 
     initialize_render(game_state.render_handle);
-    
+
     entity := create_entity(Entity);
     subscribe_entity_to_input(entity, game_state.input_handle);
     create_input_binding(entity, 65, test_binding);
@@ -29,6 +29,7 @@ cleanup :: () {
 #load "./entity/entity.jai";
 #load "./render/render_context.jai";
 #load "./input/input.jai";
+#load "./file_utilities.jai";
 
 // platform dependent file inclusion
 #if OS ==  {
@@ -45,3 +46,4 @@ cleanup :: () {
 #import "Compiler";
 #import "Hash_Table";
 #import "String";
+#import "System";

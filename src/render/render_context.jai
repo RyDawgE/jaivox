@@ -595,6 +595,8 @@ create_logical_device :: () {
     assert(result == .VK_SUCCESS, "Failed to create logical device!");
 
     vkGetDeviceQueue(game_state.render_handle.logical_device, indices.graphics_family, 0, *game_state.render_handle.graphics_queue);
+    vkGetDeviceQueue(game_state.render_handle.logical_device, indices.present_family, 0, *game_state.render_handle.present_queue);
+
 }
 
 create_image_views :: () {
@@ -633,6 +635,18 @@ create_image_views :: () {
 
 create_render_pass :: () {
     using game_state.render_handle;
+    
+    subpass_dependency : VkSubpassDependency = .{};
+    {
+        using subpass_dependency;
+        
+        srcSubpass       = VK_SUBPASS_EXTERNAL;
+        dstSubpass       = 0;
+        srcStageMask     = .COLOR_ATTACHMENT_OUTPUT_BIT;
+        srcAccessMask    = 0;
+        dstStageMask     = .COLOR_ATTACHMENT_OUTPUT_BIT;
+        dstAccessMask    = .COLOR_ATTACHMENT_WRITE_BIT;
+    }
 
     color_attachment : VkAttachmentDescription = .{};
     {
@@ -666,10 +680,12 @@ create_render_pass :: () {
     {
         using render_pass_create_info;
         sType = .RENDER_PASS_CREATE_INFO;
-        attachmentCount = 1;
-        pAttachments    = *color_attachment;
-        subpassCount    = 1;
-        pSubpasses      = *subpass;
+        attachmentCount  = 1;
+        pAttachments     = *color_attachment;
+        subpassCount     = 1;
+        pSubpasses       = *subpass;
+        dependencyCount  = 1;
+        pDependencies    = *subpass_dependency;
     }
     
     result := vkCreateRenderPass(logical_device, *render_pass_create_info, null, *render_pass);
@@ -754,35 +770,12 @@ create_render_pipeline :: () {
         primitiveRestartEnable = VK_FALSE;
     }
     
-    viewport : VkViewport = .{};
-    {
-        using viewport;
-        x = 0.0;
-        y = 0.0;
-        width  = cast (float) swap_chain_extent.width;
-        height = cast (float) swap_chain_extent.height;
-        minDepth = 0.0;
-        maxDepth = 1.0;
-    }
-    vkCmdSetViewport(command_buffer, 0, 1, *viewport);
-    
-    scissor : VkRect2D = .{};
-    {
-        using scissor;
-        offset = .{0, 0};
-        extent = swap_chain_extent;
-    }
-    vkCmdSetScissor(command_buffer, 0, 1, *scissor);
-
-    
     viewport_state : VkPipelineViewportStateCreateInfo = .{};
     {
         using viewport_state;
         sType         = .PIPELINE_VIEWPORT_STATE_CREATE_INFO;
         viewportCount = 1;
         scissorCount  = 1;
-        pViewports    = *viewport;
-        pScissors     = *scissor;
     }
     
     rasterizer : VkPipelineRasterizationStateCreateInfo = .{};
@@ -980,6 +973,26 @@ record_command_buffer :: (in_command_buffer : VkCommandBuffer, image_index : u32
     vkCmdBeginRenderPass(command_buffer, *render_pass_begin_info, .INLINE);
     vkCmdBindPipeline(command_buffer, .GRAPHICS, graphics_pipeline);
     
+    viewport : VkViewport = .{};
+    {
+        using viewport;
+        x = 0.0;
+        y = 0.0;
+        width  = cast (float) swap_chain_extent.width;
+        height = cast (float) swap_chain_extent.height;
+        minDepth = 0.0;
+        maxDepth = 1.0;
+    }
+    vkCmdSetViewport(command_buffer, 0, 1, *viewport);
+    
+    scissor : VkRect2D = .{};
+    {
+        using scissor;
+        offset = .{0, 0};
+        extent = swap_chain_extent;
+    }
+    vkCmdSetScissor(command_buffer, 0, 1, *scissor);
+    
     vkCmdDraw(command_buffer, 3, 1, 0, 0);
     
     vkCmdEndRenderPass(command_buffer);
@@ -1015,11 +1028,16 @@ create_sync_objects :: () {
 draw_frame :: () {
     using game_state.render_handle;
     
-    image_index : u32;
-    vkAcquireNextImageKHR(logical_device, swap_chain, U64_MAX, image_available_semaphore, VK_NULL_HANDLE, *image_index);
-    
     vkWaitForFences(logical_device, 1, *in_flight_fence, VK_TRUE, U64_MAX);
     vkResetFences(logical_device, 1, *in_flight_fence);
+    
+    wait_semaphores   := VkSemaphore.[image_available_semaphore];
+    wait_stages       := VkPipelineStageFlags.[.COLOR_ATTACHMENT_OUTPUT_BIT];
+    signal_semaphores := VkSemaphore.[render_finished_semaphore];
+    swap_chains       := VkSwapchainKHR.[swap_chain];
+    
+    image_index : u32;
+    vkAcquireNextImageKHR(logical_device, swap_chain, U64_MAX, image_available_semaphore, VK_NULL_HANDLE, *image_index);
     
     vkResetCommandBuffer(command_buffer, 0);
     record_command_buffer(command_buffer, image_index);
@@ -1029,10 +1047,6 @@ draw_frame :: () {
         using submit_info;
         
         sType =.SUBMIT_INFO;
-        
-        wait_semaphores   := VkSemaphore.[image_available_semaphore];
-        wait_stages       := VkPipelineStageFlags.[.COLOR_ATTACHMENT_OUTPUT_BIT];
-        signal_semaphores := VkSemaphore.[render_finished_semaphore];
         
         waitSemaphoreCount   = 1;
         pWaitSemaphores      = wait_semaphores.data;
@@ -1046,6 +1060,22 @@ draw_frame :: () {
     result := vkQueueSubmit(graphics_queue, 1, *submit_info, in_flight_fence);
     
     assert(result == .SUCCESS, "Failed to submit draw command buffer");
+    
+    present_info : VkPresentInfoKHR = .{};
+    {
+        using present_info;
+        sType = .PRESENT_INFO_KHR;
+        
+        waitSemaphoreCount = 1;
+        pWaitSemaphores    = signal_semaphores.data;
+        swapchainCount     = 1;
+        pSwapchains        = swap_chains.data;
+        pImageIndices      = *image_index;
+        pResults           = null;
+    }
+    
+    vkQueuePresentKHR(present_queue, *present_info);
+    
 }
 
 #scope_file

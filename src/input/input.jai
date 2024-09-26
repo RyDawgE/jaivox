@@ -10,9 +10,9 @@ poll_events :: () {
             game_state.should_close = true;
         } else if it.type == .KEYBOARD && it.repeat == false {
             if it.key_pressed == 1 {
+                //print("%\n", cast (u32) it.key_code);
                 for entity : game_state.input_handle.subscribed_entities {
                     callback, success := table_find(entity.input_bindings, cast (u32) it.key_code);
-    
                     if success {
                         callback(entity, *it);
                     }

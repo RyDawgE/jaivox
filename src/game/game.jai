@@ -10,3 +10,7 @@ game_state : GameState = .{};
 test_binding :: (entity: *Entity, event : *Event) {
     print("works!\n");
 }
+
+close_game_binding :: (entity: *Entity, event : *Event) {
+    game_state.should_close = true;
+}

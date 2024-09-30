@@ -34,6 +34,7 @@ RenderHandle :: struct {
     image_available_semaphores : [..] VkSemaphore;
     render_finished_semaphores : [..] VkSemaphore;
     in_flight_fences           : [..] VkFence;
+    framebuffer_resized        : bool                     = false;
     current_frame              : u32                      = 0;
 }
 
@@ -78,9 +79,9 @@ create_game_window :: () {
     window_height : s32    : WindowCreationInfo.height;
     window_title  : string : WindowCreationInfo.title;
 
-    game_state.render_handle.window = create_window(window_width, window_height,
+    game_state.render_handle.window = xx create_window(window_width, window_height,
                                                     window_title, wanted_msaa = 0);
-
+                                                    
     return;
 }
 
@@ -144,6 +145,12 @@ create_vulkan_instance :: () {
 
 cleanup_vulkan_instance :: () {
     using game_state.render_handle;
+    
+    cleanup_swap_chain();
+    
+    vkDestroyPipeline(logical_device, graphics_pipeline, null);
+    vkDestroyPipelineLayout(logical_device, pipeline_layout, null);
+    vkDestroyRenderPass(logical_device, render_pass, null);
 
     for i: 0..(MAX_FRAMES_IN_FLIGHT - 1) {
         vkDestroySemaphore(logical_device, image_available_semaphores[i], null);
@@ -151,29 +158,15 @@ cleanup_vulkan_instance :: () {
         vkDestroyFence(logical_device, in_flight_fences[i], null);
     }
 
-
     vkDestroyCommandPool(logical_device, command_pool, null);
 
-    for framebuffer : swap_chain_framebuffers {
-        vkDestroyFramebuffer(logical_device, framebuffer, null);
-    }
-
-    vkDestroyPipeline(logical_device, graphics_pipeline, null);
-    vkDestroyPipelineLayout(logical_device, pipeline_layout, null);
-    vkDestroyRenderPass(logical_device, render_pass, null);
-
-    for image_view : swap_chain_image_views {
-        vkDestroyImageView(logical_device, image_view, null);
-    }
-
-    vkDestroySwapchainKHR(logical_device, game_state.render_handle.swap_chain, null);
     vkDestroyDevice(logical_device, null);
-    vkDestroySurfaceKHR(instance, surface, null);
 
     if ENABLE_VALIDATION_LAYERS {
         DestroyDebugUtilsMessengerEXT(instance, debug_messenger, null);
     }
 
+    vkDestroySurfaceKHR(instance, surface, null);
     vkDestroyInstance(instance, null);
 
 }
@@ -236,8 +229,8 @@ choose_swap_extent :: (capabilities : VkSurfaceCapabilitiesKHR) -> VkExtent2D {
     if (capabilities.currentExtent.width != U32_MAX) {
         extent = capabilities.currentExtent;
     } else {
-        extent.width  = cast (u32) clamp(WindowCreationInfo.width, cast (s32) capabilities.minImageExtent.width, cast (s32) capabilities.maxImageExtent.width);
-        extent.height = cast (u32) clamp(WindowCreationInfo.height, cast (s32) capabilities.minImageExtent.height, cast (s32) capabilities.maxImageExtent.height);
+        extent.width  = xx clamp(WindowCreationInfo.width, cast (s32) capabilities.minImageExtent.width, cast (s32) capabilities.maxImageExtent.width);
+        extent.height = xx clamp(WindowCreationInfo.height, cast (s32) capabilities.minImageExtent.height, cast (s32) capabilities.maxImageExtent.height);
     }
 
     return extent;
@@ -312,6 +305,41 @@ create_swap_chain :: () {
     swap_chain_image_format = surface_format.format;
     swap_chain_extent       = extent;
 
+}
+
+cleanup_swap_chain :: () {
+    using game_state.render_handle;
+
+    for buffer : swap_chain_framebuffers {
+        vkDestroyFramebuffer(logical_device, buffer, null);
+    }
+    
+    for image : swap_chain_image_views {
+        vkDestroyImageView(logical_device, image, null);
+    }
+    
+    vkDestroySwapchainKHR(logical_device, swap_chain, null);
+}
+
+recreate_swap_chain :: () {
+    using game_state.render_handle;
+    
+    width, height := get_window_dimensions(xx window);
+	
+	if width == 0 || height == 0 {
+        return;
+	}
+	
+    vkDeviceWaitIdle(logical_device);
+    
+	swap_chain_extent.width = xx width;
+	swap_chain_extent.height == xx height;
+    
+    cleanup_swap_chain();
+    
+    create_swap_chain();
+    create_image_views();
+    create_framebuffers();
 }
 
 get_available_vulkan_extensions :: () -> [] VkExtensionProperties {
@@ -1050,7 +1078,16 @@ draw_frame :: () {
     vkWaitForFences(logical_device, 1, *in_flight_fences[current_frame], VK_TRUE, U64_MAX);
     vkResetFences(logical_device, 1, *in_flight_fences[current_frame]);
 
-    vkAcquireNextImageKHR(logical_device, swap_chain, U64_MAX, image_available_semaphores[current_frame], VK_NULL_HANDLE, *image_index);
+    result := vkAcquireNextImageKHR(logical_device, swap_chain, U64_MAX, image_available_semaphores[current_frame], VK_NULL_HANDLE, *image_index);
+
+    if result == .ERROR_OUT_OF_DATE_KHR {
+        recreate_swap_chain();
+        return;
+    } else if result != .SUCCESS && result != .SUBOPTIMAL_KHR {
+        assert(false, "Failed to acquire swap chain image");
+    }
+    
+    vkResetFences(logical_device, 1, *in_flight_fences[current_frame]);
 
     wait_semaphores   := VkSemaphore.[image_available_semaphores[current_frame]];
     wait_stages       := VkPipelineStageFlags.[.COLOR_ATTACHMENT_OUTPUT_BIT];
@@ -1075,7 +1112,7 @@ draw_frame :: () {
         pSignalSemaphores    = signal_semaphores.data;
     }
 
-    result := vkQueueSubmit(graphics_queue, 1, *submit_info, in_flight_fences[current_frame]);
+    result = vkQueueSubmit(graphics_queue, 1, *submit_info, in_flight_fences[current_frame]);
 
     assert(result == .SUCCESS, "Failed to submit draw command buffer");
 
@@ -1092,8 +1129,13 @@ draw_frame :: () {
         pResults           = null;
     }
 
-    vkQueuePresentKHR(present_queue, *present_info);
+    result = vkQueuePresentKHR(present_queue, *present_info);
 
+    if result == .ERROR_OUT_OF_DATE_KHR || result == .SUBOPTIMAL_KHR || framebuffer_resized {
+        framebuffer_resized = false;
+        recreate_swap_chain();
+    }
+    
     current_frame = (current_frame + 1) % xx MAX_FRAMES_IN_FLIGHT;
 }
 

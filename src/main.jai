@@ -29,6 +29,7 @@ cleanup :: () {
 #load "./render/render_context.jai";
 #load "./input/input.jai";
 #load "./file_utilities.jai";
+#load "./render/render.jai";
 
 // platform dependent file inclusion
 #if OS ==  {

@@ -27,9 +27,10 @@ cleanup :: () {
 #load "./game/game.jai";
 #load "./entity/entity.jai";
 #load "./render/render_context.jai";
+#load "./render/render.jai";
 #load "./input/input.jai";
 #load "./file_utilities.jai";
-#load "./render/render.jai";
+#load "./memory_utilities.jai";
 
 // platform dependent file inclusion
 #if OS ==  {

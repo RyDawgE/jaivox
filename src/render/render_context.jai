@@ -36,6 +36,8 @@ RenderHandle :: struct {
     in_flight_fences           : [..] VkFence;
     framebuffer_resized        : bool                     = false;
     current_frame              : u32                      = 0;
+    vertex_buffer              : VkBuffer;
+    vertex_buffer_memory       : VkDeviceMemory;
 }
 
 WindowCreationInfo :: struct {
@@ -70,6 +72,7 @@ initialize_render :: (render_handle : *RenderHandle) {
     create_render_pipeline(); // Create Render Pipeline
     create_framebuffers();    // Create Frame Buffers
     create_command_pool();    // Create Command Pools
+    create_vertex_buffer();   // Allocate Memory to transfer to GPU
     create_command_buffers(); // Create Command Buffer
     create_sync_objects();    // Create Sync Objects for Control Flow
 }
@@ -147,6 +150,10 @@ cleanup_vulkan_instance :: () {
     using game_state.render_handle;
     
     cleanup_swap_chain();
+    
+    vkDestroyBuffer(logical_device, vertex_buffer, null);
+    vkFreeMemory(logical_device, vertex_buffer_memory, null);
+    
     
     vkDestroyPipeline(logical_device, graphics_pipeline, null);
     vkDestroyPipelineLayout(logical_device, pipeline_layout, null);
@@ -788,15 +795,18 @@ create_render_pipeline :: () {
         dynamicStateCount = cast (u32) dynamic_states.count;
         pDynamicStates    = dynamic_states.data;
     }
-
+    
+    binding_description    := get_binding_description(Vertex);
+    attribute_descriptions := get_attribute_descriptions(Vertex);
+    
     vertex_input_info : VkPipelineVertexInputStateCreateInfo = .{};
     {
         using vertex_input_info;
         sType = .PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-        vertexBindingDescriptionCount   = 0;
-        pVertexBindingDescriptions      = null;
-        vertexAttributeDescriptionCount = 0;
-        pVertexAttributeDescriptions    = null;
+        vertexBindingDescriptionCount   = 1;
+        pVertexBindingDescriptions      = *binding_description;
+        vertexAttributeDescriptionCount = xx attribute_descriptions.count;
+        pVertexAttributeDescriptions    = attribute_descriptions.data;
     }
 
     input_assembly : VkPipelineInputAssemblyStateCreateInfo = .{};
@@ -1011,6 +1021,12 @@ record_command_buffer :: (in_command_buffer : VkCommandBuffer, image_index : u32
 
     vkCmdBeginRenderPass(in_command_buffer, *render_pass_begin_info, .INLINE);
     vkCmdBindPipeline(in_command_buffer, .GRAPHICS, graphics_pipeline);
+    
+    vertex_buffers := VkBuffer.[vertex_buffer];
+    offsets        := VkDeviceSize.[0];
+    
+    vkCmdBindVertexBuffers(in_command_buffer, 0, 1, vertex_buffers.data, offsets.data);
+
 
     viewport : VkViewport = .{};
     {
@@ -1137,6 +1153,64 @@ draw_frame :: () {
     }
     
     current_frame = (current_frame + 1) % xx MAX_FRAMES_IN_FLIGHT;
+}
+
+find_memory_type :: (filter : u32, properties : VkMemoryPropertyFlags) -> u32 {
+    using game_state.render_handle;
+    
+    memory_properties : VkPhysicalDeviceMemoryProperties;
+    vkGetPhysicalDeviceMemoryProperties(physical_device, *memory_properties);
+    
+    for i: 0..memory_properties.memoryTypeCount -1 {
+        if (filter & (1 << i) && (memory_properties.memoryTypes[i].propertyFlags & properties) == properties) {
+            return i;
+        }
+    }
+    
+    assert(false, "Could not find suitable memory type");
+    return 0;
+}
+
+create_vertex_buffer :: () {
+    using game_state.render_handle;
+    
+    buffer_create_info : VkBufferCreateInfo = .{};
+    {
+        using buffer_create_info;
+        
+        
+        sType       = .BUFFER_CREATE_INFO;
+        size        = cast (u64) (size_of(Vertex) * VERTS.count);
+        usage       = .VERTEX_BUFFER_BIT;
+        sharingMode = .EXCLUSIVE;  
+    }
+    
+    result := vkCreateBuffer(logical_device, *buffer_create_info, null, *vertex_buffer);
+    
+    assert(result == .SUCCESS, "Failed to create Vertex Buffer");
+    
+    memory_requirements : VkMemoryRequirements;   
+    vkGetBufferMemoryRequirements(logical_device, vertex_buffer, *memory_requirements);
+
+    allocate_info : VkMemoryAllocateInfo = .{};
+    {
+        using allocate_info;
+        
+        sType = .MEMORY_ALLOCATE_INFO;
+        allocationSize = memory_requirements.size;
+        memoryTypeIndex = find_memory_type(memory_requirements.memoryTypeBits, .HOST_VISIBLE_BIT | .HOST_COHERENT_BIT);
+    }
+    
+    result = vkAllocateMemory(logical_device, *allocate_info, null, *vertex_buffer_memory);
+    
+    assert(result == .SUCCESS, "Failed to allocate VBuffer Memory");
+    
+    vkBindBufferMemory(logical_device, vertex_buffer, vertex_buffer_memory, 0);
+    
+    data : *void;    
+    vkMapMemory(logical_device, vertex_buffer_memory, 0, buffer_create_info.size, 0, *data);
+    memcpy(data, VERTS.data, xx buffer_create_info.size);
+    vkUnmapMemory(logical_device, vertex_buffer_memory);
 }
 
 #scope_file

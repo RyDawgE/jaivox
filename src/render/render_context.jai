@@ -952,6 +952,109 @@ create_framebuffers :: () {
     }
 }
 
+create_buffer :: (size : VkDeviceSize, usage  : VkBufferUsageFlags, properties : VkMemoryPropertyFlags,
+                                       buffer : *VkBuffer,        buffer_memory : *VkDeviceMemory)     {
+    using game_state.render_handle;
+    
+    buffer_create_info : VkBufferCreateInfo = .{};
+    buffer_create_info.sType       = .BUFFER_CREATE_INFO;
+    buffer_create_info.size        = size;
+    buffer_create_info.usage       = usage;
+    buffer_create_info.sharingMode = .EXCLUSIVE;  
+    
+    result := vkCreateBuffer(logical_device, *buffer_create_info, null, buffer);
+    
+    assert(result == .SUCCESS, "Failed to create Vertex Buffer");
+    
+    memory_requirements : VkMemoryRequirements;   
+    vkGetBufferMemoryRequirements(logical_device, <<buffer, *memory_requirements);
+
+    allocate_info : VkMemoryAllocateInfo = .{};
+    {
+        using allocate_info;
+        
+        sType = .MEMORY_ALLOCATE_INFO;
+        allocationSize = memory_requirements.size;
+        memoryTypeIndex = find_memory_type(memory_requirements.memoryTypeBits, properties);
+    }
+    
+    result = vkAllocateMemory(logical_device, *allocate_info, null, buffer_memory);
+    
+    assert(result == .SUCCESS, "Failed to allocate VBuffer Memory");
+    
+    vkBindBufferMemory(logical_device, <<buffer, <<buffer_memory, 0);
+}
+
+copy_buffer :: (src_buffer : VkBuffer, dst_buffer : VkBuffer, size : VkDeviceSize) {
+    using game_state.render_handle;
+
+    allocate_info : VkCommandBufferAllocateInfo = .{};
+    {
+        using allocate_info;
+        
+        sType = .COMMAND_BUFFER_ALLOCATE_INFO;
+        level = .PRIMARY;
+        commandPool = command_pool;
+        commandBufferCount = 1;
+    }
+    
+    command_buffer : VkCommandBuffer;
+    vkAllocateCommandBuffers(logical_device, *allocate_info, *command_buffer);
+    
+    begin_info : VkCommandBufferBeginInfo = .{};
+    {
+        using begin_info;
+        
+        sType = .COMMAND_BUFFER_BEGIN_INFO;
+        flags = .ONE_TIME_SUBMIT_BIT;
+    }
+    
+    vkBeginCommandBuffer(command_buffer, *begin_info);
+    
+    copy_region : VkBufferCopy = .{};
+    copy_region.size = size;
+    vkCmdCopyBuffer(command_buffer, src_buffer, dst_buffer, 1, *copy_region);
+    
+    vkEndCommandBuffer(command_buffer);
+    
+    submit_info : VkSubmitInfo = .{};
+    {
+        using submit_info;
+        
+        sType = .SUBMIT_INFO;
+        commandBufferCount = 1;
+        pCommandBuffers = *command_buffer;
+    }
+    
+    vkQueueSubmit(graphics_queue, 1, *submit_info, VK_NULL_HANDLE);
+    vkQueueWaitIdle(graphics_queue);
+    
+    vkFreeCommandBuffers(logical_device, command_pool, 1, *command_buffer);
+}
+
+create_vertex_buffer :: () {
+    using game_state.render_handle;
+    
+    buffer_size : VkDeviceSize = cast (u64) (size_of(Vertex) * VERTS.count);
+    
+    staging_buffer : VkBuffer;
+    staging_buffer_memory : VkDeviceMemory;
+    
+    create_buffer(buffer_size, .TRANSFER_SRC_BIT, .HOST_VISIBLE_BIT | .HOST_COHERENT_BIT, *staging_buffer, *staging_buffer_memory);
+
+    data : *void;    
+    vkMapMemory(logical_device, staging_buffer_memory, 0, buffer_size, 0, *data);
+    memcpy(data, VERTS.data, xx buffer_size);
+    vkUnmapMemory(logical_device, staging_buffer_memory);
+    
+    create_buffer(buffer_size, .TRANSFER_DST_BIT | .VERTEX_BUFFER_BIT, .DEVICE_LOCAL_BIT, *vertex_buffer, *vertex_buffer_memory);
+    
+    copy_buffer(staging_buffer, vertex_buffer, buffer_size);
+    
+    vkDestroyBuffer(logical_device, staging_buffer, null);
+    vkFreeMemory(logical_device, staging_buffer_memory, null);
+}
+
 create_command_pool :: () {
     using game_state.render_handle;
 
@@ -1171,47 +1274,6 @@ find_memory_type :: (filter : u32, properties : VkMemoryPropertyFlags) -> u32 {
     return 0;
 }
 
-create_vertex_buffer :: () {
-    using game_state.render_handle;
-    
-    buffer_create_info : VkBufferCreateInfo = .{};
-    {
-        using buffer_create_info;
-        
-        
-        sType       = .BUFFER_CREATE_INFO;
-        size        = cast (u64) (size_of(Vertex) * VERTS.count);
-        usage       = .VERTEX_BUFFER_BIT;
-        sharingMode = .EXCLUSIVE;  
-    }
-    
-    result := vkCreateBuffer(logical_device, *buffer_create_info, null, *vertex_buffer);
-    
-    assert(result == .SUCCESS, "Failed to create Vertex Buffer");
-    
-    memory_requirements : VkMemoryRequirements;   
-    vkGetBufferMemoryRequirements(logical_device, vertex_buffer, *memory_requirements);
-
-    allocate_info : VkMemoryAllocateInfo = .{};
-    {
-        using allocate_info;
-        
-        sType = .MEMORY_ALLOCATE_INFO;
-        allocationSize = memory_requirements.size;
-        memoryTypeIndex = find_memory_type(memory_requirements.memoryTypeBits, .HOST_VISIBLE_BIT | .HOST_COHERENT_BIT);
-    }
-    
-    result = vkAllocateMemory(logical_device, *allocate_info, null, *vertex_buffer_memory);
-    
-    assert(result == .SUCCESS, "Failed to allocate VBuffer Memory");
-    
-    vkBindBufferMemory(logical_device, vertex_buffer, vertex_buffer_memory, 0);
-    
-    data : *void;    
-    vkMapMemory(logical_device, vertex_buffer_memory, 0, buffer_create_info.size, 0, *data);
-    memcpy(data, VERTS.data, xx buffer_create_info.size);
-    vkUnmapMemory(logical_device, vertex_buffer_memory);
-}
 
 #scope_file
 #import "Vulkan";

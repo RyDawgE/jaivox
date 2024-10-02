@@ -38,6 +38,8 @@ RenderHandle :: struct {
     current_frame              : u32                      = 0;
     vertex_buffer              : VkBuffer;
     vertex_buffer_memory       : VkDeviceMemory;
+    index_buffer               : VkBuffer;
+    index_buffer_memory        : VkDeviceMemory;
 }
 
 WindowCreationInfo :: struct {
@@ -73,6 +75,7 @@ initialize_render :: (render_handle : *RenderHandle) {
     create_framebuffers();    // Create Frame Buffers
     create_command_pool();    // Create Command Pools
     create_vertex_buffer();   // Allocate Memory to transfer to GPU
+    create_index_buffer();
     create_command_buffers(); // Create Command Buffer
     create_sync_objects();    // Create Sync Objects for Control Flow
 }
@@ -151,9 +154,11 @@ cleanup_vulkan_instance :: () {
     
     cleanup_swap_chain();
     
+    vkDestroyBuffer(logical_device, index_buffer, null);
+    vkFreeMemory(logical_device, index_buffer_memory, null);
+    
     vkDestroyBuffer(logical_device, vertex_buffer, null);
     vkFreeMemory(logical_device, vertex_buffer_memory, null);
-    
     
     vkDestroyPipeline(logical_device, graphics_pipeline, null);
     vkDestroyPipelineLayout(logical_device, pipeline_layout, null);
@@ -1055,6 +1060,29 @@ create_vertex_buffer :: () {
     vkFreeMemory(logical_device, staging_buffer_memory, null);
 }
 
+create_index_buffer :: () {
+    using game_state.render_handle;
+    
+    buffer_size : VkDeviceSize = cast (u64) (size_of(u16) * INDICES.count);
+    
+    staging_buffer : VkBuffer;
+    staging_buffer_memory : VkDeviceMemory;
+    
+    create_buffer(buffer_size, .TRANSFER_SRC_BIT, .HOST_VISIBLE_BIT | .HOST_COHERENT_BIT, *staging_buffer, *staging_buffer_memory);
+
+    data : *void;    
+    vkMapMemory(logical_device, staging_buffer_memory, 0, buffer_size, 0, *data);
+    memcpy(data, INDICES.data, xx buffer_size);
+    vkUnmapMemory(logical_device, staging_buffer_memory);
+    
+    create_buffer(buffer_size, .TRANSFER_DST_BIT | .INDEX_BUFFER_BIT, .DEVICE_LOCAL_BIT, *index_buffer, *index_buffer_memory);
+    
+    copy_buffer(staging_buffer, index_buffer, buffer_size);
+    
+    vkDestroyBuffer(logical_device, staging_buffer, null);
+    vkFreeMemory(logical_device, staging_buffer_memory, null);
+}
+
 create_command_pool :: () {
     using game_state.render_handle;
 
@@ -1130,6 +1158,7 @@ record_command_buffer :: (in_command_buffer : VkCommandBuffer, image_index : u32
     
     vkCmdBindVertexBuffers(in_command_buffer, 0, 1, vertex_buffers.data, offsets.data);
 
+    vkCmdBindIndexBuffer(in_command_buffer, index_buffer, 0, .UINT16);
 
     viewport : VkViewport = .{};
     {
@@ -1151,7 +1180,7 @@ record_command_buffer :: (in_command_buffer : VkCommandBuffer, image_index : u32
     }
     vkCmdSetScissor(in_command_buffer, 0, 1, *scissor);
 
-    vkCmdDraw(in_command_buffer, 3, 1, 0, 0);
+    vkCmdDrawIndexed(in_command_buffer, xx INDICES.count, 1, 0, 0, 0);
 
     vkCmdEndRenderPass(in_command_buffer);
 

@@ -4,7 +4,9 @@ Vertex :: struct {
 }
 
 UniformBufferObject :: struct {
-    model, view, proj : Matrix4;
+    model : Matrix4;
+    view  : Matrix4;
+    proj  : Matrix4;
 }
 
 Camera :: struct {

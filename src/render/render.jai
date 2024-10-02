@@ -3,6 +3,17 @@ Vertex :: struct {
     color    : Vector3;
 }
 
+UniformBufferObject :: struct {
+    model, view, proj : Matrix4;
+}
+
+Camera :: struct {
+    using game_state.render_handle;
+
+    view : Matrix4;
+    proj : Matrix4;
+}
+
 VERTS : [..] Vertex = xx Vertex.[
     .{.{-.5, -.5}, .{1, 0, 0}},
     .{.{ .5, -.5}, .{0, 1, 0}},

@@ -26,6 +26,7 @@ RenderHandle :: struct {
     swap_chain_image_format    : VkFormat;
     swap_chain_extent          : VkExtent2D;
     render_pass                : VkRenderPass;
+    descriptor_set_layout      : VkDescriptorSetLayout;
     pipeline_layout            : VkPipelineLayout;
     graphics_pipeline          : VkPipeline;
     swap_chain_framebuffers    : [..] VkFramebuffer;
@@ -40,6 +41,11 @@ RenderHandle :: struct {
     vertex_buffer_memory       : VkDeviceMemory;
     index_buffer               : VkBuffer;
     index_buffer_memory        : VkDeviceMemory;
+    uniform_buffers            : [..] VkBuffer;
+    uniform_buffers_memory     : [..] VkDeviceMemory;
+    uniform_buffers_mapped     : [..] *void;
+    descriptor_pool            : VkDescriptorPool;
+    descriptor_sets            : [..] VkDescriptorSet;
 }
 
 WindowCreationInfo :: struct {
@@ -62,22 +68,26 @@ SwapChainSupportDetails :: struct {
 }
 
 initialize_render :: (render_handle : *RenderHandle) {
-    create_game_window();     // Create Game Window
-    create_vulkan_instance(); // Create Vulkan API Instance
-    setup_debug_messenger();  // Create Vulkan Debug Messenger
-    create_surface();         // Create Vulkan Surface to render to Game Window
-    pick_physical_device();   // Select GPU for rendering
-    create_logical_device();  // Create Vulkan Logic Profile on GPU
-    create_swap_chain();      // Create Image Chain Buffer
-    create_image_views();     // Create Views for each Image
-    create_render_pass();     // Create Render Pass for Pipeline Config
-    create_render_pipeline(); // Create Render Pipeline
-    create_framebuffers();    // Create Frame Buffers
-    create_command_pool();    // Create Command Pools
-    create_vertex_buffer();   // Allocate Memory to transfer to GPU
-    create_index_buffer();
-    create_command_buffers(); // Create Command Buffer
-    create_sync_objects();    // Create Sync Objects for Control Flow
+    create_game_window();           // Create Game Window
+    create_vulkan_instance();       // Create Vulkan API Instance
+    setup_debug_messenger();        // Create Vulkan Debug Messenger
+    create_surface();               // Create Vulkan Surface to render to Game Window
+    pick_physical_device();         // Select GPU for rendering
+    create_logical_device();        // Create Vulkan Logic Profile on GPU
+    create_swap_chain();            // Create Image Chain Buffer
+    create_image_views();           // Create Views for each Image
+    create_render_pass();           // Create Render Pass for Pipeline Config
+    create_descriptor_set_layout(); // Create Buffer Layout
+    create_render_pipeline();       // Create Render Pipeline
+    create_framebuffers();          // Create Frame Buffers
+    create_command_pool();          // Create Command Pools
+    create_vertex_buffer();         // Create Buffer to transfer Verts to GPU
+    create_index_buffer();          // Create Buffer to manage Vertex transfer
+    create_uniform_buffers();       // Create uniform data for draw calls
+    create_descriptor_pool();       // Create descriptor pool info
+    create_descriptor_sets();       // Create descriptor set for each buffer
+    create_command_buffers();       // Create Command Buffer
+    create_sync_objects();          // Create Sync Objects for Control Flow
 }
 
 create_game_window :: () {
@@ -92,7 +102,7 @@ create_game_window :: () {
 }
 
 // Proxy Functions. These get real values in setup_debug_messenger()
-CreateDebugUtilsMessengerEXT  : PFN_vkCreateDebugUtilsMessengerEXT;
+CreateDebugUtilsMessengerEXT   : PFN_vkCreateDebugUtilsMessengerEXT;
 DestroyDebugUtilsMessengerEXT  : PFN_vkDestroyDebugUtilsMessengerEXT;
 
 create_vulkan_instance :: () {
@@ -153,6 +163,15 @@ cleanup_vulkan_instance :: () {
     using game_state.render_handle;
     
     cleanup_swap_chain();
+    
+    for i: 0..MAX_FRAMES_IN_FLIGHT - 1 {
+        vkDestroyBuffer(logical_device, uniform_buffers[i], null);
+        vkFreeMemory(logical_device, uniform_buffers_memory[i], null);
+    }
+    
+    vkDestroyDescriptorPool(logical_device, descriptor_pool, null);
+    
+    vkDestroyDescriptorSetLayout(logical_device, descriptor_set_layout, null);
     
     vkDestroyBuffer(logical_device, index_buffer, null);
     vkFreeMemory(logical_device, index_buffer_memory, null);
@@ -759,6 +778,34 @@ create_shader_module :: (code : [] u8) -> VkShaderModule {
     return shader_module;
 }
 
+create_descriptor_set_layout :: () {
+    using game_state.render_handle;
+
+    ubo_layout_binding : VkDescriptorSetLayoutBinding = .{};
+    {
+        using ubo_layout_binding;
+        
+        binding             = 0;
+        descriptorType      = .UNIFORM_BUFFER;
+        descriptorCount     = 1;
+        stageFlags          = .VERTEX_BIT;
+        pImmutableSamplers  = null;
+    }
+    
+    layout_create_info : VkDescriptorSetLayoutCreateInfo = .{};
+    {
+        using layout_create_info;
+        
+        sType = .DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+        bindingCount = 1;
+        pBindings    = *ubo_layout_binding;
+    }
+    
+    result := vkCreateDescriptorSetLayout(logical_device, *layout_create_info, null, *descriptor_set_layout);
+    
+    assert(result == .SUCCESS, "Could not create descriptor set layout");
+}
+
 create_render_pipeline :: () {
     using game_state.render_handle;
 
@@ -839,7 +886,7 @@ create_render_pipeline :: () {
         polygonMode             = .FILL;
         lineWidth               = 1.0;
         cullMode                = .BACK_BIT;
-        frontFace               = .CLOCKWISE;
+        frontFace               = .COUNTER_CLOCKWISE;
         depthBiasEnable         = VK_FALSE;
         depthBiasConstantFactor = 0.0;
         depthBiasClamp          = 0.0;
@@ -889,8 +936,8 @@ create_render_pipeline :: () {
     {
         using pipeline_layout_create_info;
         sType = .PIPELINE_LAYOUT_CREATE_INFO;
-        setLayoutCount         = 0;
-        pSetLayouts            = null;
+        setLayoutCount         = 1;
+        pSetLayouts            = *descriptor_set_layout;
         pushConstantRangeCount = 0;
         pPushConstantRanges    = null;
     }
@@ -1083,6 +1130,101 @@ create_index_buffer :: () {
     vkFreeMemory(logical_device, staging_buffer_memory, null);
 }
 
+create_uniform_buffers :: () {
+    using game_state.render_handle;
+
+    buffer_size : VkDeviceSize = #run size_of(UniformBufferObject);
+    
+    array_resize(*uniform_buffers, MAX_FRAMES_IN_FLIGHT);
+    array_resize(*uniform_buffers_memory, MAX_FRAMES_IN_FLIGHT);
+    array_resize(*uniform_buffers_mapped, MAX_FRAMES_IN_FLIGHT);
+    
+    for i: 0..MAX_FRAMES_IN_FLIGHT - 1 {
+        create_buffer(buffer_size, .UNIFORM_BUFFER_BIT, .HOST_VISIBLE_BIT | .HOST_COHERENT_BIT, *uniform_buffers[i], *uniform_buffers_memory[i]);
+        vkMapMemory(logical_device, uniform_buffers_memory[i], 0, buffer_size, 0, *uniform_buffers_mapped[i]);
+    }
+    
+}
+
+create_descriptor_pool :: () {
+    using game_state.render_handle;
+    
+    pool_size : VkDescriptorPoolSize = .{};
+    {
+        using pool_size;
+        
+        type = .UNIFORM_BUFFER;
+        descriptorCount = xx MAX_FRAMES_IN_FLIGHT;
+    }
+    
+    pool_create_info : VkDescriptorPoolCreateInfo = .{};
+    {
+        using pool_create_info;
+        
+        sType = .DESCRIPTOR_POOL_CREATE_INFO;
+        poolSizeCount   = 1;
+        pPoolSizes      = *pool_size;
+        maxSets         = xx MAX_FRAMES_IN_FLIGHT;
+    }
+    
+    result := vkCreateDescriptorPool(logical_device, *pool_create_info, null, *descriptor_pool);
+    
+    assert (result == .SUCCESS, "Could not create descriptor pool");
+}
+
+create_descriptor_sets :: () {
+    using game_state.render_handle;
+
+    layouts : [..] VkDescriptorSetLayout;
+    for i: 0..MAX_FRAMES_IN_FLIGHT - 1 {
+        array_add(*layouts, descriptor_set_layout);
+    }
+    
+    allocate_info : VkDescriptorSetAllocateInfo = .{};
+    {
+        using allocate_info;
+        
+        sType = .DESCRIPTOR_SET_ALLOCATE_INFO;
+        descriptorPool = descriptor_pool;
+        descriptorSetCount = xx MAX_FRAMES_IN_FLIGHT;
+        pSetLayouts = layouts.data;
+    }
+    
+    array_resize(*descriptor_sets, MAX_FRAMES_IN_FLIGHT);
+    result := vkAllocateDescriptorSets(logical_device, *allocate_info, descriptor_sets.data);
+    
+    assert(result == .SUCCESS, "Could not allocate descriptor sets"); 
+    
+    for i: 0..MAX_FRAMES_IN_FLIGHT - 1 {
+        buffer_info : VkDescriptorBufferInfo = .{};
+        {
+            using buffer_info;
+            
+            buffer = uniform_buffers[i];
+            offset = 0;
+            range  = #run size_of(UniformBufferObject);
+        }
+        
+        descriptor_write : VkWriteDescriptorSet = .{};
+        {
+            using descriptor_write;
+            
+            sType = .WRITE_DESCRIPTOR_SET;
+            dstSet           = descriptor_sets[i];
+            dstBinding       = 0;
+            dstArrayElement  = 0;
+            descriptorType   = .UNIFORM_BUFFER;
+            descriptorCount  = 1;
+            pBufferInfo      = *buffer_info;
+            pImageInfo       = null;
+            pTexelBufferView = null;
+        }
+        
+        vkUpdateDescriptorSets(logical_device, 1, *descriptor_write, 0, null);
+    }
+    
+}
+
 create_command_pool :: () {
     using game_state.render_handle;
 
@@ -1179,7 +1321,8 @@ record_command_buffer :: (in_command_buffer : VkCommandBuffer, image_index : u32
         extent = swap_chain_extent;
     }
     vkCmdSetScissor(in_command_buffer, 0, 1, *scissor);
-
+    
+    vkCmdBindDescriptorSets(in_command_buffer, .GRAPHICS, pipeline_layout, 0, 1, *descriptor_sets[current_frame], 0, null);
     vkCmdDrawIndexed(in_command_buffer, xx INDICES.count, 1, 0, 0, 0);
 
     vkCmdEndRenderPass(in_command_buffer);
@@ -1219,6 +1362,26 @@ create_sync_objects :: () {
 
 }
 
+update_uniform_buffer :: (current_image : u32) {
+    using game_state.render_handle;
+
+    model_rotate : Quaternion;
+    set_from_axis_and_angle(*model_rotate, 0, 0, 1, 45);
+
+    ubo : UniformBufferObject = .{};
+    {
+        using ubo;
+        
+        model = rotate(Matrix4_Identity, model_rotate);
+        view  = make_look_at_matrix(Vector3.{2, 2, 2}, Vector3.{0, 0, 0}, Vector3.{0, 0, 1});
+        proj  = make_projection_matrix(.785, xx (swap_chain_extent.width / swap_chain_extent.height), .1, 10);
+    }
+    
+    ubo.proj._11 *= -1;
+    
+    memcpy(uniform_buffers_mapped[current_image], *ubo, size_of(UniformBufferObject));
+}
+
 draw_frame :: () {
     using game_state.render_handle;
     image_index : u32;
@@ -1244,6 +1407,8 @@ draw_frame :: () {
 
     vkResetCommandBuffer(command_buffers[current_frame], 0);
     record_command_buffer(command_buffers[current_frame], image_index);
+    
+    update_uniform_buffer(current_frame);
 
     submit_info : VkSubmitInfo = .{};
     {

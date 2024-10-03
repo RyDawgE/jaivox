@@ -1366,15 +1366,15 @@ update_uniform_buffer :: (current_image : u32) {
     using game_state.render_handle;
 
     model_rotate : Quaternion;
-    set_from_axis_and_angle(*model_rotate, 0, 0, 1, 1.5);
+    set_from_axis_and_angle(*model_rotate, 0, 0, 1, square_rotation);
 
     ubo : UniformBufferObject = .{};
     {
         using ubo;
         
-        model = transpose(Matrix4_Identity);
-        view = transpose(make_look_at_matrix(.{2, 2, 2}, .{}, .{0, 0, 1}, false));
-        proj = transpose(make_projection_matrix(45.0 * PI / 180.0, xx (swap_chain_extent.width / swap_chain_extent.height), 0.1, 100.0));
+        model = transpose(rotation_matrix(Matrix4, model_rotate));
+        view  = transpose(make_look_at_matrix(.{2, 2, 2}, .{}, .{0, 0, 1}, false));
+        proj  = transpose(make_projection_matrix(45.0 * PI / 180.0, xx (swap_chain_extent.width / swap_chain_extent.height), 0.1, 100.0));
     }
     
     ubo.proj.coef[1][1] *= -1;

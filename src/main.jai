@@ -10,7 +10,8 @@ main :: () {
     subscribe_entity_to_input(entity, game_state.input_handle);
     create_input_binding(entity, 65, test_binding);
     create_input_binding(entity, 27, close_game_binding);
-
+    create_input_binding(entity, 130, rotate_left);
+    create_input_binding(entity, 131, rotate_right);
     // @MainLoop
     while !game_state.should_close {
         poll_events();

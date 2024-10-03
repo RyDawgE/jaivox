@@ -10,10 +10,13 @@ UniformBufferObject :: struct {
 }
 
 Camera :: struct {
-    using game_state.render_handle;
-
     view : Matrix4;
     proj : Matrix4;
+}
+
+Model :: struct {
+    vertices : [..] Vertex;
+    indices  : [..] u16;
 }
 
 VERTS : [..] Vertex = xx Vertex.[

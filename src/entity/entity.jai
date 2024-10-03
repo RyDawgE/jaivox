@@ -1,12 +1,14 @@
 Entity :: struct @entity {
     id : u64;
     
-    active : bool = false;
-    subscribed_to_input : bool = false;
+    active              : bool    = false;
+    subscribed_to_input : bool    = false;
     
-    position : Vector3 = .{0, 0, 0};
+    position            : Vector3 = .{0, 0, 0};
+    rotation            : Vector3 = .{0, 0, 0};
+    scale               : Vector3 = .{1, 1, 1};
     
-    input_bindings : *Table(u32, INPUT_BINDING_PROCEDURE_SIGNATURE);
+    input_bindings      : *Table(u32, INPUT_BINDING_PROCEDURE_SIGNATURE);
 }
 
 EntityBlock :: struct {

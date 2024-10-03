@@ -2,6 +2,13 @@ InputHandle :: struct {
     subscribed_entities : [..] *Entity;
 }
 
+// @TODO: Incorporate this and make more tables
+InputBindType :: enum u8 {
+    KEYDOWN :: 0;
+    KEYUP   :: 1;
+    HOLD    :: 2;
+}
+
 poll_events :: () {
     update_window_events();
 
@@ -18,8 +25,7 @@ poll_events :: () {
                     }
                 }
             } else if it.key_pressed == 0 {
-                //@TODO
-                //handle keyup
+                // @TODO: handle keyup
             }
         }
     }
@@ -33,8 +39,9 @@ poll_events :: () {
     Make sure to subscribe the entity to input first using subscribe_entity_to_input.
 */
 
+// @TODO: Implement the InputBindType argument
 INPUT_BINDING_PROCEDURE_SIGNATURE :: #type (entity: *Entity, event : *Event);
-create_input_binding :: (entity : *Entity, key_code : u32, proc_callback : INPUT_BINDING_PROCEDURE_SIGNATURE) {
+create_input_binding :: (entity : *Entity, key_code : u32, proc_callback : INPUT_BINDING_PROCEDURE_SIGNATURE, type : InputBindType = 0) {
     table_add(entity.input_bindings, key_code, proc_callback);
     return;
 }

@@ -848,8 +848,8 @@ create_render_pipeline :: () {
         pDynamicStates    = dynamic_states.data;
     }
     
-    binding_description    := get_binding_description(Vertex);
-    attribute_descriptions := get_attribute_descriptions(Vertex);
+    binding_description    := get_binding_description();
+    attribute_descriptions := get_attribute_descriptions();
     
     vertex_input_info : VkPipelineVertexInputStateCreateInfo = .{};
     {
@@ -1373,7 +1373,7 @@ update_uniform_buffer :: (current_image : u32) {
         using ubo;
         
         model = transpose(rotation_matrix(Matrix4, model_rotate));
-        view  = transpose(make_look_at_matrix(.{2, 2, 2}, .{}, .{0, 0, 1}, false));
+        view  = transpose(make_look_at_matrix(.{2, 2, 2}, .{0, 0, 0}, .{0, 0, 1}, false));
         proj  = transpose(make_projection_matrix(45.0 * PI / 180.0, xx (swap_chain_extent.width / swap_chain_extent.height), 0.1, 100.0));
     }
     
@@ -1450,6 +1450,42 @@ draw_frame :: () {
     }
     
     current_frame = (current_frame + 1) % xx MAX_FRAMES_IN_FLIGHT;
+}
+
+get_binding_description :: () -> VkVertexInputBindingDescription {
+    binding_description : VkVertexInputBindingDescription = .{};
+    {
+        using binding_description;
+        
+        binding = 0;
+        stride  = size_of(Vertex);
+        inputRate = .VERTEX;
+    }
+    
+    return binding_description;
+}
+
+get_attribute_descriptions :: () -> [2] VkVertexInputAttributeDescription {
+    attribute_descriptions : [2] VkVertexInputAttributeDescription;
+    {
+        using attribute_descriptions[0];
+        
+        binding  = 0;
+        location = 0;
+        format   = .R32G32_SFLOAT;
+        offset   = #run offset_of(Vertex, "position");
+    }
+    
+    {
+        using attribute_descriptions[1];
+        
+        binding  = 0;
+        location = 1;
+        format   = .R32G32B32_SFLOAT;
+        offset   = #run offset_of(Vertex, "color");
+    }
+    
+    return attribute_descriptions;
 }
 
 find_memory_type :: (filter : u32, properties : VkMemoryPropertyFlags) -> u32 {

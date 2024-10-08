@@ -16,16 +16,12 @@ poll_events :: () {
         if it.type == .QUIT {
             game_state.should_close = true;
         } else if it.type == .KEYBOARD && it.repeat == false {
-            if it.key_pressed == 1 {
-                //print("%\n", cast (u32) it.key_code);
-                for entity : game_state.input_handle.subscribed_entities {
-                    callback, success := table_find(entity.input_bindings, cast (u32) it.key_code);
-                    if success {
-                        callback(entity, *it);
-                    }
+            //print("%\n", cast (u32) it.key_code);
+            for entity : game_state.input_handle.subscribed_entities {
+                callback, success := table_find(entity.input_bindings, cast (u32) it.key_code);
+                if success {
+                    callback(entity, *it);
                 }
-            } else if it.key_pressed == 0 {
-                // @TODO: handle keyup
             }
         }
     }
@@ -41,7 +37,7 @@ poll_events :: () {
 
 // @TODO: Implement the InputBindType argument
 INPUT_BINDING_PROCEDURE_SIGNATURE :: #type (entity: *Entity, event : *Event);
-create_input_binding :: (entity : *Entity, key_code : u32, proc_callback : INPUT_BINDING_PROCEDURE_SIGNATURE, type : InputBindType = 0) {
+create_input_binding :: (entity : *Entity, key_code : u32, proc_callback : INPUT_BINDING_PROCEDURE_SIGNATURE) {
     table_add(entity.input_bindings, key_code, proc_callback);
     return;
 }

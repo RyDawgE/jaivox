@@ -10,11 +10,15 @@ game_state : GameState = .{};
 square_rotation : float = 0;
 
 test_binding :: (entity: *Entity, event : *Event) {
-    print("works!\n");
+    if event.key_pressed == 1 {
+        print("works!\n");
+    }
 }
 
 close_game_binding :: (entity: *Entity, event : *Event) {
-    game_state.should_close = true;
+    if event.key_pressed == 1 {
+        game_state.should_close = true;
+    }
 }
 
 rotate_left :: (entity: *Entity, event : *Event) {

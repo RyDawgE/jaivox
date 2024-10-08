@@ -459,7 +459,7 @@ setup_debug_messenger :: () {
             using debug_callback_create_info;
 
             sType           = .DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
-            messageSeverity = .VERBOSE_BIT_EXT | .WARNING_BIT_EXT | .ERROR_BIT_EXT;
+            messageSeverity = .VERBOSE_BIT_EXT | .WARNING_BIT_EXT    | .ERROR_BIT_EXT;
             messageType     = .GENERAL_BIT_EXT | .VALIDATION_BIT_EXT | .PERFORMANCE_BIT_EXT;
             pfnUserCallback = debug_callback;
         }

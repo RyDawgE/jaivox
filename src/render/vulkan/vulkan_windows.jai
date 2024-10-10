@@ -25,6 +25,5 @@ get_window_dimensions :: (window : *void) -> s32, s32 {
 }
 
 #scope_file
-#import "Vulkan";
 #import "Windows";
 #import "Window_Creation";

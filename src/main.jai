@@ -4,8 +4,8 @@ main :: () {
     game_state.render_handle = New(RenderHandle);
     game_state.input_handle  = New(InputHandle);
 
-    initialize_render(game_state.render_handle);
-
+    create_render_engine();
+    
     entity := create_entity(Entity);
     subscribe_entity_to_input(entity, game_state.input_handle);
     create_input_binding(entity, 65, test_binding);
@@ -17,17 +17,15 @@ main :: () {
         poll_events();
         draw_frame();
     }
-    vkDeviceWaitIdle(game_state.render_handle.logical_device);
     cleanup();
 }
 
 cleanup :: () {
-    cleanup_vulkan_instance();
+    cleanup_render_engine();
 }
 
 #load "./game/game.jai";
 #load "./entity/entity.jai";
-#load "./render/vulkan_engine.jai";
 #load "./render/render.jai";
 #load "./input/input.jai";
 #load "./file_utilities.jai";
@@ -36,7 +34,6 @@ cleanup :: () {
 // platform dependent file inclusion
 #if OS ==  {
     case .WINDOWS;
-        #load "./render/platforms/windows.jai";
 
     case .MACOS; #assert false "MacOS is not supported at this time.";
     case .LINUX; #assert false "Linux is not supported at this time.";

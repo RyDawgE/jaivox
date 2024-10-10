@@ -48,12 +48,6 @@ RenderHandle :: struct {
     descriptor_sets            : [..] VkDescriptorSet;
 }
 
-WindowCreationInfo :: struct {
-    width  : s32    :  640;
-    height : s32    :  480;
-    title  : string : "Jaivox";
-}
-
 QueueFamilyIndices :: struct {
     graphics_family       : u32  = 0;
     graphics_family_valid : bool = false;
@@ -88,17 +82,6 @@ initialize_render :: (render_handle : *RenderHandle) {
     create_descriptor_sets();       // Create descriptor set for each buffer
     create_command_buffers();       // Create Command Buffer
     create_sync_objects();          // Create Sync Objects for Control Flow
-}
-
-create_game_window :: () {
-    window_width  : s32    : WindowCreationInfo.width;
-    window_height : s32    : WindowCreationInfo.height;
-    window_title  : string : WindowCreationInfo.title;
-
-    game_state.render_handle.window = xx create_window(window_width, window_height,
-                                                    window_title, wanted_msaa = 0);
-                                                    
-    return;
 }
 
 // Proxy Functions. These get real values in setup_debug_messenger()
@@ -159,7 +142,7 @@ create_vulkan_instance :: () {
     return;
 }
 
-cleanup_vulkan_instance :: () {
+cleanup_render :: () {
     using game_state.render_handle;
     
     cleanup_swap_chain();
@@ -1450,6 +1433,8 @@ draw_frame :: () {
     }
     
     current_frame = (current_frame + 1) % xx MAX_FRAMES_IN_FLIGHT;
+    
+    vkDeviceWaitIdle(logical_device);
 }
 
 get_binding_description :: () -> VkVertexInputBindingDescription {
@@ -1506,6 +1491,10 @@ find_memory_type :: (filter : u32, properties : VkMemoryPropertyFlags) -> u32 {
 
 
 #scope_file
+#if OS == {
+    case .WINDOWS;
+        #load "vulkan_windows.jai";
+    case;
+}
+
 #import "Vulkan";
-#import "File";
-#import "Window_Creation";

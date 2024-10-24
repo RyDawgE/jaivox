@@ -12,7 +12,7 @@ REQUIRED_DEVICE_EXTENSIONS :: (*u8).[VK_KHR_SWAPCHAIN_EXTENSION_NAME];
 REQUIRED_VALIDATION_LAYERS :: (*u8).["VK_LAYER_KHRONOS_validation"];
 
 RenderHandle :: struct {
-    window                     : *void                    = null;
+    window                     : Window_Type;
     instance                   : VkInstance               = null;
     surface                    : VkSurfaceKHR             = VK_NULL_HANDLE;
     debug_messenger            : VkDebugUtilsMessengerEXT = null;
@@ -62,7 +62,6 @@ SwapChainSupportDetails :: struct {
 }
 
 initialize_render :: (render_handle : *RenderHandle) {
-    create_game_window();           // Create Game Window
     create_vulkan_instance();       // Create Vulkan API Instance
     setup_debug_messenger();        // Create Vulkan Debug Messenger
     create_surface();               // Create Vulkan Surface to render to Game Window
@@ -1457,7 +1456,7 @@ get_attribute_descriptions :: () -> [2] VkVertexInputAttributeDescription {
         
         binding  = 0;
         location = 0;
-        format   = .R32G32_SFLOAT;
+        format   = .R32G32B32_SFLOAT;
         offset   = #run offset_of(Vertex, "position");
     }
     

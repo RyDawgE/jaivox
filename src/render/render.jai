@@ -1,3 +1,8 @@
+RENDER_NAMES := string.[
+    "Vulkan",
+    "OpenGL",
+];  
+
 RenderEngine :: enum u8 {
     VULKAN :: 0;
     OPENGL :: 1;
@@ -6,11 +11,11 @@ RenderEngine :: enum u8 {
 WindowCreationInfo :: struct {
     width  : s32    :  640;
     height : s32    :  480;
-    title  : string : "JaiDawgEngine";
+    title  : string : "JaiDawgEngine - Renderer: %";
 }
 
 Vertex :: struct {
-    position : Vector2;
+    position : Vector3;
     color    : Vector3;
 }
 
@@ -31,14 +36,13 @@ Model :: struct {
 }
 
 VERTS : [..] Vertex = xx Vertex.[
-    .{.{-.5, -.5}, .{1, 0, 0}},
-    .{.{ .5, -.5}, .{0, 1, 0}},
-    .{.{ .5,  .5}, .{0, 0, 1}},
-    .{.{-.5,  .5}, .{1, 1, 1}},
+    .{.{-.5, -.5, 0}, .{1, 0, 0}},
+    .{.{ .5, -.5, 0}, .{0, 1, 0}},
+    .{.{ .5,  .5, 0}, .{0, 0, 1}},
 ];
 
 INDICES : [..] u16 = xx u16.[
-    0, 1, 2, 2, 3, 0,
+    0, 1, 2,
 ];
 
 create_game_window :: () {
@@ -47,12 +51,13 @@ create_game_window :: () {
     window_title  : string : WindowCreationInfo.title;
 
     game_state.render_handle.window = xx create_window(window_width, window_height,
-                                                    window_title, wanted_msaa = 0);
-                                                    
+                                                    tprint(window_title, RENDER_NAMES[RENDERER]), 
+                                                    wanted_msaa = 0);           
     return;
 }
 
 create_render_engine :: () {
+    create_game_window();
     initialize_render(game_state.render_handle);
 }
 

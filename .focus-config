@@ -1,34 +1,79 @@
-[6]  # Version number. Do not delete.
+[5]  # Version number. Do not delete.
 
 [[workspace]]
-# These directories and files will be scanned when a workspace is opened so that search etc. works.
-./
-
-[ignore]
-.git
-build_debug
-.build
-.DS_Store
-jaivox.dSYM
+C:\Users\RyDaw\Documents\jai
+C:\Users\RyDaw\Documents\jaivox
+C:\Users\RyDaw\Documents\voxel-ray-tracer\src
 
 [[build commands]]
-build_working_dir:      ./
-open_panel_on_build:    true
-close_panel_on_success: true
-clear_build_output_before_running: true
-error_regex: ^(?P<file>.*):(?P<line>\d+),(?P<col>\d+): (?P<type>Error|Warning|Info|...):* (?P<msg>.*)|^(?P<msg1>.*error LNK.*)
+build_working_dir:     C:\Users\RyDaw\Documents\jaivox
+open_panel_on_build:    true  #  <- any settings specified here will apply to all commands unless overridden
+close_panel_on_success: false
+# clear_build_output_before_running: false
+error_regex:            ^(?P<file>.*):(?P<line>\d+),(?P<col>\d+): (?P<type>Error|Warning|Info): (?P<msg>.*)|^(?P<msg>.*error LNK.*)  # see examples below
 auto_jump_to_error:     false
 
-[Debug]
-build_command: jai build.jai
-key_binding: F5
+[Debug Build And Run - Vulkan]   # <- command name. Can be arbitrary
+build_command:          jai build.jai - vulkan # should be an executable or a script
+build_working_dir:      C:\Users\RyDaw\Documents\jaivox
+# timeout_in_seconds:     5             # if you don't want a timeout, don't specify it
+run_command:            .\build_debug\jaivox.exe      # will be run if build succeeds
+run_working_dir:        C:\Users\RyDaw\Documents\jaivox     # working dir for the run command
+key_binding:            Ctrl-Shift-Alt-F11
 
-[Debug Macos]
-build_command: arch -x86_64 jai-macos build.jai
-key_binding: Cmd-Shift-B
+[Debug Build And Run - OpenGL]   # <- command name. Can be arbitrary
+build_command:          jai build.jai - opengl # should be an executable or a script
+build_working_dir:      C:\Users\RyDaw\Documents\jaivox
+# timeout_in_seconds:     5             # if you don't want a timeout, don't specify it
+run_command:            .\build_debug\jaivox.exe      # will be run if build succeeds
+run_working_dir:        C:\Users\RyDaw\Documents\jaivox     # working dir for the run command
+key_binding:            Ctrl-Alt-F11
+
+[Build]   # <- command name. Can be arbitrary
+build_command:          jai build.jai  # should be an executable or a script
+build_working_dir:      C:\Users\RyDaw\Documents\jaivox
+# timeout_in_seconds:     5             # if you don't want a timeout, don't specify it
+key_binding:            F5
+
+[Compile Shaders]   # <- command name. Can be arbitrary
+build_command:          compile_shaders.bat  # should be an executable or a script
+# timeout_in_seconds:     5             # if you don't want a timeout, don't specify it
+key_binding:            Shift-F5
+
+[Git Pull]   # <- command name. Can be arbitrary
+build_command:          git pull  # should be an executable or a script
+build_working_dir:      C:\Users\RyDaw\Documents\jaivox
+# timeout_in_seconds:     5             # if you don't want a timeout, don't specify it
+key_binding:            Ctrl-Shift-G
+
+#[Build and Run Current File]   # <- command name. Can be arbitrary
+#build_command:          jai %FILE% -exe %FILE_NAME_NO_EXTENSION% # should be an executable or a script
+#build_working_dir:      C:\Users\RyDaw\Documents\jaivox
+# timeout_in_seconds:     5             # if you don't want a timeout, don't specify it
+#run_command:            %FILE_NAME_NO_EXTENSION%.exe      # will be run if build succeeds
+#run_working_dir:        C:\Users\RyDaw\Documents\jaivox       # working dir for the run command
+#key_binding:            Ctrl-Shift-Alt-F8
+
+# [Run]                   # <- You could have commands that don't build anything and just run something
+# run_command:            test
+# run_working_dir:        /home/user/test
+# key_binding:            Ctrl-F5
+
+# [Release]
+# build_command:          jai first.jai - release
+# key_binding:            F9
 
 
-[[settings]]
-tab_size: 4
-insert_spaces_when_pressing_tab: true
-strip_trailing_whitespace_on_save: except_lines_with_cursor  # options: all, except_lines_with_cursor, disabled
+# Example error regexes:
+# For jai:  ^(?P<file>.*):(?P<line>\d+),(?P<col>\d+): (?P<type>Error|Warning|Info): (?P<msg>.*)|^(?P<msg>.*error LNK.*)
+# For msvc: ^(?P<file>.*)\((?P<line>\d+),(?P<col>\d+)\): (?P<type>error|warning) (?P<msg>.*)$
+# ... let us know what regex works for you and we'll add it here
+
+# NOTE:
+# You can use the following variables in build_command or run_command:
+# %FILE%      - full path to currenly active file
+# %FILE_DIR%  - the directory of the currently active file
+# %FILE_NAME% - current file name, with extension
+# %FILE_NAME_NO_EXTENSION% - current file name, without extension
+# %BUILD_WORKING_DIR% - working dir of the build command
+# %RUN_WORKING_DIR%   - working dir of the run command

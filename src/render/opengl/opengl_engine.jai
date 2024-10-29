@@ -5,6 +5,7 @@ RenderHandle :: struct {
     instance                   : *void                    = null;
     VBO                        : u32                      = 0;
     VAO                        : u32                      = 0;
+    EBO                        : u32                      = 0;
     shader_program             : u32                      = 0;
 
 }
@@ -66,6 +67,7 @@ create_vertex_buffer :: () {
     
     glGenVertexArrays(1, *VAO);
     glGenBuffers(1, *VBO);
+    glGenBuffers(1, *EBO);
     
     glBindVertexArray(VAO);
         
@@ -79,6 +81,9 @@ create_vertex_buffer :: () {
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
     
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, xx INDICES.count * size_of(u16), INDICES.data, GL_STATIC_DRAW);
+    
 }
 
 draw_frame :: () {
@@ -89,7 +94,8 @@ draw_frame :: () {
     
     glUseProgram(shader_program);
     glBindVertexArray(VAO);
-    glDrawArrays(GL_TRIANGLES, 0, 3);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+    glDrawElements(GL_TRIANGLES, xx INDICES.count, GL_UNSIGNED_SHORT, cast(*void) 0);
     
     swap_buffers(window);
 }

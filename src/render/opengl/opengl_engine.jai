@@ -78,6 +78,9 @@ create_vertex_buffer :: () {
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_TRUE, 6 * size_of(float), cast (*void) 0);
     glEnableVertexAttribArray(0);
     
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * size_of(float), cast(*void) (3 * size_of(float)));
+    glEnableVertexAttribArray(1);
+    
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
     
@@ -89,7 +92,7 @@ create_vertex_buffer :: () {
 draw_frame :: () {
     using game_state.render_handle;
 
-    glClearColor(0.5, 0.5, 1, 0);
+    glClearColor(0, 0, 0, 0);
     glClear(GL_COLOR_BUFFER_BIT);
     
     glUseProgram(shader_program);

@@ -19,8 +19,14 @@ Vertex :: struct {
     color    : Vector3;
 }
 
+//@TODO: Depricate.
 UniformBufferObject :: struct {
     model : Matrix4;
+    view  : Matrix4;
+    proj  : Matrix4;
+}
+
+ViewProjection :: struct {
     view  : Matrix4;
     proj  : Matrix4;
 }
@@ -39,10 +45,12 @@ VERTS : [..] Vertex = xx Vertex.[
     .{.{-.5, -.5, 0}, .{1, 0, 0}},
     .{.{ .5, -.5, 0}, .{0, 1, 0}},
     .{.{ .5,  .5, 0}, .{0, 0, 1}},
+    .{.{-.5,  .5, 0}, .{1, 1, 1}},
 ];
 
 INDICES : [..] u16 = xx u16.[
     0, 1, 2,
+    2, 3, 0
 ];
 
 create_game_window :: () {

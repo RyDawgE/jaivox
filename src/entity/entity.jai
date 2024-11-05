@@ -8,6 +8,8 @@ Entity :: struct @entity {
     rotation            : Vector3 = .{0, 0, 0};
     scale               : Vector3 = .{1, 1, 1};
     
+    model               : *Model;
+    
     input_bindings      : *Table(u32, INPUT_BINDING_PROCEDURE_SIGNATURE);
 }
 

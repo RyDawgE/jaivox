@@ -60,6 +60,8 @@ create_shader_programs :: () {
     
     glDeleteShader(vertex_shader);
     glDeleteShader(fragment_shader);
+    
+    glEnable(GL_DEPTH_TEST);
 }
 
 create_vertex_buffer :: () {
@@ -100,32 +102,44 @@ draw_frame :: () {
     using game_state.render_handle;
 
     glClearColor(0, 0, 0, 0);
-    glClear(GL_COLOR_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     
     glUseProgram(shader_program);
     glBindVertexArray(VAO);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
     
     model_rotate : Quaternion;
-    set_from_axis_and_angle(*model_rotate, 0, 0, 1, square_rotation);
 
-    ubo : UniformBufferObject = .{};
-    {
-        using ubo;
-        
-        model = transpose(rotation_matrix(Matrix4, model_rotate));
-        view  = transpose(make_look_at_matrix(.{2, 2, 2}, .{0, 0, 0}, .{0, 0, 1}, false));
-        proj  = transpose(make_projection_matrix(45.0 * PI / 180.0, xx (640/480), 0.1, 100.0));
-    }
-    
-    m_loc := glGetUniformLocation(shader_program, "model");
-    glUniformMatrix4fv(m_loc, 1, GL_FALSE, *ubo.model.coef[0][0]);
+    model := transpose(rotation_matrix(Matrix4, model_rotate));
+    view  := transpose(make_look_at_matrix(.{2, 2, 2}, .{0, 0, 0}, .{0, 0, 1}, false));
+    proj  := transpose(make_projection_matrix(45.0 * PI / 180.0, xx (640/480), 0.1, 100.0));
+
     v_loc := glGetUniformLocation(shader_program, "view");
-    glUniformMatrix4fv(v_loc, 1, GL_FALSE, *ubo.view.coef[0][0]);
-    p_loc := glGetUniformLocation(shader_program, "proj");
-    glUniformMatrix4fv(p_loc, 1, GL_FALSE, *ubo.proj.coef[0][0]);
+    glUniformMatrix4fv(v_loc, 1, GL_FALSE, *view.coef[0][0]);
     
-    glDrawElements(GL_TRIANGLES, xx INDICES.count, GL_UNSIGNED_SHORT, cast(*void) 0);
+    p_loc := glGetUniformLocation(shader_program, "proj");
+    glUniformMatrix4fv(p_loc, 1, GL_FALSE, *proj.coef[0][0]);
+    
+    for block : game_state.entity_handle.entity_blocks {
+        for i : 0..64 {
+            entity : *Entity = xx (block.memory + (LARGEST_ENTITY_SIZE * i));
+            
+            //TODO: Swap vertex buffer properly and only do this if the entity actually exists
+            //according to the bitmask.
+            
+            set_from_axis_and_angle(*model_rotate, 0, 0, 1 , square_rotation + (i * 5));
+            model = transpose(rotation_matrix(Matrix4, model_rotate));
+            m_loc := glGetUniformLocation(shader_program, "model");
+            glUniformMatrix4fv(m_loc, 1, GL_FALSE, *model.coef[0][0]);
+            
+            glDrawElements(GL_TRIANGLES, xx INDICES.count, GL_UNSIGNED_SHORT, cast(*void) 0);
+            
+        }
+    }//@TODO: Filter this out by entities that actually need rendering.
+    
+
+    
+    
     
     swap_buffers(window);
 }

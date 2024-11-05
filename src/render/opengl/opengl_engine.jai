@@ -98,6 +98,41 @@ swap_buffers :: (window: Window_Type, vsync := true) {  //@TODO: Implement other
     }
 }
 
+//currently unused.
+draw_entities :: () {
+    using game_state.render_handle;
+
+    //@TODO: Filter this out by entities that actually need rendering.
+    for block : game_state.entity_handle.entity_blocks {
+        mask : u64 = block.member_mask;
+        for i : 0..64 { 
+            forward_bit : u64 = mask >> i;
+            if forward_bit & 1 == 1 {
+                entity : *Entity = xx (block.memory + (LARGEST_ENTITY_SIZE * i));
+                
+                //TODO: Swap vertex buffer properly.
+                model_transform : Matrix4;
+                model_rotate : Quaternion;                
+                
+                //set_from_axis_and_angle(*model_rotate, 0, 0, 1 , entity.rotation);
+                
+                model_transform = transpose(rotation_matrix(Matrix4, model_rotate));
+                
+                m_loc := glGetUniformLocation(shader_program, "model");
+                glUniformMatrix4fv(m_loc, 1, GL_FALSE, *model_transform.coef[0][0]);
+                
+                glDrawElements(GL_TRIANGLES, xx INDICES.count, GL_UNSIGNED_SHORT, cast(*void) 0);
+            
+            }    
+        }
+    }
+}
+
+draw_voxels :: () {
+    
+}
+
+
 draw_frame :: () {
     using game_state.render_handle;
 
@@ -108,38 +143,18 @@ draw_frame :: () {
     glBindVertexArray(VAO);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
     
-    model_rotate : Quaternion;
-
-    model := transpose(rotation_matrix(Matrix4, model_rotate));
     view  := transpose(make_look_at_matrix(.{2, 2, 2}, .{0, 0, 0}, .{0, 0, 1}, false));
-    proj  := transpose(make_projection_matrix(45.0 * PI / 180.0, xx (640/480), 0.1, 100.0));
-
-    v_loc := glGetUniformLocation(shader_program, "view");
-    glUniformMatrix4fv(v_loc, 1, GL_FALSE, *view.coef[0][0]);
+    proj  := transpose(make_projection_matrix(45.0 * PI / 180.0, xx (640 / 480), 0.1, 100.0));
     
-    p_loc := glGetUniformLocation(shader_program, "proj");
-    glUniformMatrix4fv(p_loc, 1, GL_FALSE, *proj.coef[0][0]);
+    view_location := glGetUniformLocation(shader_program, "view");
+    glUniformMatrix4fv(view_location, 1, GL_FALSE, *view.coef[0][0]);
     
-    for block : game_state.entity_handle.entity_blocks {
-        for i : 0..64 {
-            entity : *Entity = xx (block.memory + (LARGEST_ENTITY_SIZE * i));
-            
-            //TODO: Swap vertex buffer properly and only do this if the entity actually exists
-            //according to the bitmask.
-            
-            set_from_axis_and_angle(*model_rotate, 0, 0, 1 , square_rotation + (i * 5));
-            model = transpose(rotation_matrix(Matrix4, model_rotate));
-            m_loc := glGetUniformLocation(shader_program, "model");
-            glUniformMatrix4fv(m_loc, 1, GL_FALSE, *model.coef[0][0]);
-            
-            glDrawElements(GL_TRIANGLES, xx INDICES.count, GL_UNSIGNED_SHORT, cast(*void) 0);
-            
-        }
-    }//@TODO: Filter this out by entities that actually need rendering.
+    projection_location := glGetUniformLocation(shader_program, "proj");
+    glUniformMatrix4fv(projection_location, 1, GL_FALSE, *proj.coef[0][0]);
     
-
+    draw_voxels();
     
-    
+    //draw_entities();
     
     swap_buffers(window);
 }

@@ -24,8 +24,18 @@ cleanup :: () {
     cleanup_render_engine();
 }
 
+print_size_info :: () #compile_time {
+    print("\nDebug size info: \n");
+    print("Largest Entity: % bytes.\n", LARGEST_ENTITY_SIZE);
+    print("Chunk Data: % bytes.\n", size_of(VoxelChunk));
+    print("\n");
+}
+
+#run print_size_info();
+
 #load "./game/game.jai";
 #load "./entity/entity.jai";
+#load "./voxel/voxel.jai";
 #load "./render/render.jai";
 #load "./input/input.jai";
 #load "./file_utilities.jai";

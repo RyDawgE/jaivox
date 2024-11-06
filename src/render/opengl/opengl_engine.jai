@@ -29,7 +29,9 @@ create_model :: (in_vertex_buffer : [..] Vertex, in_index_buffer : [..] u16) -> 
     
     glBufferData(GL_ARRAY_BUFFER, vertex_buffer_size, in_vertex_buffer.data, GL_STATIC_DRAW);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, index_buffer_size, in_index_buffer.data, GL_STATIC_DRAW);
-
+    
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_TRUE,  6 * size_of(float), cast(*void) 0); // Position Attribute
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * size_of(float), cast(*void) (3 * size_of(float))); // Color Attribute  
     
     {
         using model;
@@ -102,6 +104,8 @@ create_attribute_descriptors :: () {
     glGenVertexArrays(1, *entity_vertex_attributes);       
     glGenVertexArrays(1, *voxel_vertex_attributes);
     
+    glBindVertexArray(entity_vertex_attributes);
+    
 }
 
 swap_buffers :: (window: Window_Type, vsync := true) {  //@TODO: Implement other platforms and vsync
@@ -116,9 +120,6 @@ draw_entities :: () {
     
     // Once per frame
     glBindVertexArray(entity_vertex_attributes);
-    
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_TRUE,  6 * size_of(float), cast(*void) 0); // Vertex Attribute
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * size_of(float), cast(*void) (3 * size_of(float))); // Index Attribute  
     
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);

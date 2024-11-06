@@ -5,6 +5,9 @@ RenderHandle :: struct {
     instance                   : *void                    = null;
     shader_program             : u32                      = 0;
     model_registry             : *Table(u32, Model);
+    entity_vertex_attributes   : u32;
+    voxel_vertex_attributes    : u32;
+    
 }
 
 create_model :: (in_vertex_buffer : [..] Vertex, in_index_buffer : [..] u16) -> Model {
@@ -13,10 +16,8 @@ create_model :: (in_vertex_buffer : [..] Vertex, in_index_buffer : [..] u16) -> 
     model : Model = .{};
     
     VBO   : u32 = 0;
-    VAO   : u32 = 0;
     EBO   : u32 = 0;
     
-    glGenVertexArrays(1, *VAO);
     glGenBuffers(1, *VBO);
     glGenBuffers(1, *EBO);
     
@@ -35,7 +36,6 @@ create_model :: (in_vertex_buffer : [..] Vertex, in_index_buffer : [..] u16) -> 
         
         vertices = in_vertex_buffer;
         indices = in_index_buffer;
-        vertex_attributes = VAO;
         vertex_buffer = VBO;
         index_buffer  = EBO;
     }
@@ -46,6 +46,7 @@ create_model :: (in_vertex_buffer : [..] Vertex, in_index_buffer : [..] u16) -> 
 initialize_render :: (render_handle : *RenderHandle) {
     create_opengl_context();
     create_shader_programs();    
+    create_attribute_descriptors();
 }
 
 cleanup_render :: () {
@@ -95,6 +96,14 @@ create_shader_programs :: () {
     glEnable(GL_DEPTH_TEST);
 }
 
+create_attribute_descriptors :: () {
+    using game_state.render_handle;
+    
+    glGenVertexArrays(1, *entity_vertex_attributes);       
+    glGenVertexArrays(1, *voxel_vertex_attributes);
+    
+}
+
 swap_buffers :: (window: Window_Type, vsync := true) {  //@TODO: Implement other platforms and vsync
     #if OS == .WINDOWS {
         dc := GetDC(window);
@@ -105,7 +114,18 @@ swap_buffers :: (window: Window_Type, vsync := true) {  //@TODO: Implement other
 draw_entities :: () {
     using game_state.render_handle;
     
+    // Once per frame
+    glBindVertexArray(entity_vertex_attributes);
+    
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_TRUE,  6 * size_of(float), cast(*void) 0); // Vertex Attribute
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * size_of(float), cast(*void) (3 * size_of(float))); // Index Attribute  
+    
+    glEnableVertexAttribArray(0);
+    glEnableVertexAttribArray(1);
+    
     //@TODO: Filter this out by entities that actually need rendering.
+    
+    // For each entity
     for block : game_state.entity_handle.entity_blocks {
         mask : u64 = block.member_mask;
         for i : 0..64 { 
@@ -128,17 +148,10 @@ draw_entities :: () {
                 glUniformMatrix4fv(model_location, 1, GL_FALSE, *model_transform.coef[0][0]);
                 
                 // Begin Render
-                glBindVertexArray(entity.model.vertex_attributes);
                 
                 glBindBuffer(GL_ARRAY_BUFFER, entity.model.vertex_buffer);
                 glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, entity.model.index_buffer);
-                
-                glVertexAttribPointer(0, 3, GL_FLOAT, GL_TRUE,  6 * size_of(float), cast(*void) 0); // Vertex Attribute
-                glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * size_of(float), cast(*void) (3 * size_of(float))); // Index Attribute                           
-                
-                glEnableVertexAttribArray(0);
-                glEnableVertexAttribArray(1);
-                
+                                
                 glDrawElements(GL_TRIANGLES, xx entity.model.indices.count, GL_UNSIGNED_SHORT, cast(*void) 0);
             }    
         }

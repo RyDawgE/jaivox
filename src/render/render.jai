@@ -91,15 +91,12 @@ cleanup_render_engine :: () {
 register_model :: () {}
 
 #if cast (RenderEngine) RENDERER ==  {
-    case .VULKAN;
-        #load "./vulkan/vulkan_engine.jai";
-
     case .OPENGL;
         #load "./opengl/opengl_engine.jai";
         
     case;
-        print("invalid renderer argument supplied: %\n", RENDERER);
-        assert(false);
+        #run print("invalid renderer argument supplied: %\n", RENDERER);
+        #run assert(false);
 }
 
 #scope_file

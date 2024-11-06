@@ -20,6 +20,16 @@ create_model :: (in_vertex_buffer : [..] Vertex, in_index_buffer : [..] u16) -> 
     glGenBuffers(1, *VBO);
     glGenBuffers(1, *EBO);
     
+    vertex_buffer_size : s64 = in_vertex_buffer.count * size_of(Vertex);
+    index_buffer_size  : s64 = in_index_buffer.count * size_of(u16);
+    
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+    
+    glBufferData(GL_ARRAY_BUFFER, vertex_buffer_size, in_vertex_buffer.data, GL_STATIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, index_buffer_size, in_index_buffer.data, GL_STATIC_DRAW);
+
+    
     {
         using model;
         
@@ -92,7 +102,6 @@ swap_buffers :: (window: Window_Type, vsync := true) {  //@TODO: Implement other
     }
 }
 
-//currently unused.
 draw_entities :: () {
     using game_state.render_handle;
     
@@ -109,34 +118,28 @@ draw_entities :: () {
                     continue;
                 }
                 
-                //TODO: Swap vertex buffer properly.
+                // Begin transformation
                 model_transform : Matrix4;
                 model_rotate : Quaternion;                
                 
-                //set_from_axis_and_angle(*model_rotate, 0, 0, 1 , entity.rotation);
-                
                 model_transform = transpose(rotation_matrix(Matrix4, model_rotate));
                 
-                m_loc := glGetUniformLocation(shader_program, "model");
-                glUniformMatrix4fv(m_loc, 1, GL_FALSE, *model_transform.coef[0][0]);
+                model_location := glGetUniformLocation(shader_program, "model");
+                glUniformMatrix4fv(model_location, 1, GL_FALSE, *model_transform.coef[0][0]);
                 
+                // Begin Render
                 glBindVertexArray(entity.model.vertex_attributes);
                 
-                glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, entity.model.index_buffer);
                 glBindBuffer(GL_ARRAY_BUFFER, entity.model.vertex_buffer);
+                glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, entity.model.index_buffer);
                 
-                vertex_buffer_size : s64 = entity.model.vertices.count * size_of(Vertex);
-                index_buffer_size  : s64 = entity.model.indices.count * size_of(u16);
-                glVertexAttribPointer(0, 3, GL_FLOAT, GL_TRUE,  6 * size_of(float), cast (*void) 0); // Vertex Attribute
-                glBufferData(GL_ARRAY_BUFFER, vertex_buffer_size, entity.model.vertices.data, GL_STATIC_DRAW);
-                
-                glBufferData(GL_ELEMENT_ARRAY_BUFFER, index_buffer_size, entity.model.indices.data, GL_STATIC_DRAW);
+                glVertexAttribPointer(0, 3, GL_FLOAT, GL_TRUE,  6 * size_of(float), cast(*void) 0); // Vertex Attribute
                 glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * size_of(float), cast(*void) (3 * size_of(float))); // Index Attribute                           
                 
                 glEnableVertexAttribArray(0);
                 glEnableVertexAttribArray(1);
-                            
-                glDrawElements(GL_TRIANGLES, xx INDICES.count, GL_UNSIGNED_SHORT, cast(*void) 0);
+                
+                glDrawElements(GL_TRIANGLES, xx entity.model.indices.count, GL_UNSIGNED_SHORT, cast(*void) 0);
             }    
         }
     }

@@ -39,6 +39,9 @@ Camera :: struct {
 Model :: struct {
     vertices : [..] Vertex;
     indices  : [..] u16;
+    vertex_attributes  : u32;
+    vertex_buffer      : u32;
+    index_buffer       : u32;
 }
 
 VERTS : [..] Vertex = xx Vertex.[
@@ -53,6 +56,12 @@ INDICES : [..] u16 = xx u16.[
     2, 3, 0
 ];
 
+create_model_registry :: () {
+    using game_state.render_handle;
+    
+    model_registry = New(Table(u32, Model));
+}
+
 create_game_window :: () {
     window_width  : s32    : WindowCreationInfo.width;
     window_height : s32    : WindowCreationInfo.height;
@@ -65,13 +74,21 @@ create_game_window :: () {
 }
 
 create_render_engine :: () {
+    create_model_registry();
     create_game_window();
     initialize_render(game_state.render_handle);
 }
 
 cleanup_render_engine :: () {
+    using game_state.render_handle;
+    
     cleanup_render();
+    deinit(model_registry);
+    free(model_registry);
+    
 }
+
+register_model :: () {}
 
 #if cast (RenderEngine) RENDERER ==  {
     case .VULKAN;

@@ -46,6 +46,8 @@ RenderHandle :: struct {
     uniform_buffers_mapped     : [..] *void;
     descriptor_pool            : VkDescriptorPool;
     descriptor_sets            : [..] VkDescriptorSet;
+    
+    model_registry             : *Table(u32, Model);
 }
 
 QueueFamilyIndices :: struct {

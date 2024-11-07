@@ -14,9 +14,8 @@ main :: () {
     create_input_binding(entity, 130, rotate_left);
     create_input_binding(entity, 131, rotate_right);
     
-    //@TODO: Remove after testing
-    model : Model = create_model(VERTS, INDICES);
-    entity.model = *model;
+    chunk : VoxelChunk = .{};
+    populate_chunk(*chunk);
     
         
     // @MainLoop

@@ -125,6 +125,8 @@ draw_entities :: () {
     glEnableVertexAttribArray(1);
     
     //@TODO: Filter this out by entities that actually need rendering.
+    //This should be for each model, rather than each entity. Each model would
+    //Have a reference to every entity that uses it, or at least the transform of such.
     
     // For each entity
     for block : game_state.entity_handle.entity_blocks {

@@ -13,9 +13,28 @@ CHUNK_VOLUME       : u32 : CHUNK_SIZE_PADDED * CHUNK_SIZE_PADDED * CHUNK_SIZE_PA
 VoxelChunk :: struct {
     voxels     : [CHUNK_VOLUME] u32;  
     heightmap  : [CHUNK_SURFACE_AREA] u32;
+    location   : Vector2;
 }
 
 VoxelHandle :: struct {
     chunks : [..] VoxelChunk;
+}
+
+populate_chunk :: (chunk : *VoxelChunk) {
+    using chunk;
+    
+    data : *u32 = voxels.data;
+    for i : 0..CHUNK_SURFACE_AREA - 1 {
+        voxel_position : Vector2 = .{ xx (i % CHUNK_SIZE_PADDED), xx (i / CHUNK_SIZE_PADDED) };
+        height : u32 = 6; // Arbitrary, put the noise generator here!
+        
+        index : u32 = (CHUNK_SURFACE_AREA * height) + (CHUNK_SURFACE_AREA - i);
+        while (index / CHUNK_SURFACE_AREA) > 0 {
+            voxels[index] = 1;
+            index -= CHUNK_SURFACE_AREA;
+        }
+    }
+    
+    return;
 }
 

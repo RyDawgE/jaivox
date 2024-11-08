@@ -15,8 +15,12 @@ main :: () {
     create_input_binding(entity, 131, rotate_right);
     
     chunk : VoxelChunk = .{};
+    
     populate_chunk(*chunk);
     
+    model : Model = create_model(VERTS, INDICES);
+    
+    entity.model = *model;
         
     // @MainLoop
     while !game_state.should_close {

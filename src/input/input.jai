@@ -16,7 +16,7 @@ poll_events :: () {
         if it.type == .QUIT {
             game_state.should_close = true;
         } else if it.type == .KEYBOARD && it.repeat == false {
-            //print("%\n", cast (u32) it.key_code);
+            print("%\n", cast (u32) it.key_code);
             for entity : game_state.input_handle.subscribed_entities {
                 callback, success := table_find(entity.input_bindings, cast (u32) it.key_code);
                 if success {

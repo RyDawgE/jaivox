@@ -7,12 +7,20 @@ main :: () {
     create_render_engine();
     
     entity : *Entity = create_entity(Entity);
+    camera : *Entity = create_entity(Entity);
     
     subscribe_entity_to_input(entity, game_state.input_handle);
-    create_input_binding(entity, 65, test_binding);
     create_input_binding(entity, 27, close_game_binding);
     create_input_binding(entity, 130, rotate_left);
     create_input_binding(entity, 131, rotate_right);
+        
+    subscribe_entity_to_input(camera, game_state.input_handle);
+    create_input_binding(camera, 87, move_forward);
+    create_input_binding(camera, 83, move_backward);
+    create_input_binding(camera, 69, move_up);
+    create_input_binding(camera, 81, move_down);
+    
+    game_state.render_handle.bound_camera = camera;
     
     chunk : VoxelChunk = .{};
     
@@ -21,13 +29,29 @@ main :: () {
     model : Model = create_model(VERTS, INDICES);
     
     entity.model = *model;
+    camera.position += .{2, 2, 2};
         
     // @MainLoop
     while !game_state.should_close {
         poll_events();
+        simulate_game();
         draw_frame();
     }
     cleanup();
+}
+
+simulate_game :: () {
+    for block : game_state.entity_handle.entity_blocks {
+        mask : u64 = block.member_mask;
+        for i : 0..64 { 
+            forward_bit : u64 = mask >> i;
+            if forward_bit & 1 == 1 {
+                entity : *Entity = xx (block.memory + (LARGEST_ENTITY_SIZE * i));
+                
+                entity.position += entity.movement * .05;
+            }    
+        }
+    }
 }
 
 cleanup :: () {

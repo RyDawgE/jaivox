@@ -7,7 +7,7 @@ RenderHandle :: struct {
     model_registry             : *Table(u32, Model);
     entity_vertex_attributes   : u32;
     voxel_vertex_attributes    : u32;
-    
+    bound_camera               : *Entity                  = null;
 }
 
 create_model :: (in_vertex_buffer : [..] Vertex, in_index_buffer : [..] u16) -> Model {
@@ -80,7 +80,6 @@ create_shader_programs :: () {
     glShaderSource(vertex_shader, 1, *vert.data, null);
     glCompileShader(vertex_shader);
     
-    
     fragment_shader : u32;
     fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
     glShaderSource(fragment_shader, 1, *frag.data, null);
@@ -143,7 +142,7 @@ draw_entities :: () {
                 
                 // Begin transformation
                 model_transform : Matrix4;
-                model_rotate : Quaternion;                
+                model_rotate : Quaternion = .{entity.rotation.x, entity.rotation.y, entity.rotation.z, 0};                
                 
                 model_transform = transpose(rotation_matrix(Matrix4, model_rotate));
                 
@@ -169,16 +168,24 @@ draw_voxels :: () {
 draw_frame :: () {
     using game_state.render_handle;
 
+    view : Matrix4;
+
     glClearColor(0, 0, 0, 0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     
     glUseProgram(shader_program);
     
-    view  := transpose(make_look_at_matrix(.{2, 2, 2}, .{0, 0, 0}, .{0, 0, 1}, false));
+    if bound_camera {
+        //view = make_translation_matrix4(bound_camera.position);
+        view = make_look_at_matrix(bound_camera.position, .{0, 0, 0}, .{0, 0, 1}, false);
+    } else {
+        view = make_look_at_matrix(.{2, 2, 2}, .{0, 0, 0}, .{0, 0, 1}, false);
+    }
+    
     proj  := transpose(make_projection_matrix(45.0 * PI / 180.0, xx (640 / 480), 0.1, 100.0));
     
     view_location := glGetUniformLocation(shader_program, "view");
-    glUniformMatrix4fv(view_location, 1, GL_FALSE, *view.coef[0][0]);
+    glUniformMatrix4fv(view_location, 1, GL_FALSE, *transpose(view).coef[0][0]);
     
     projection_location := glGetUniformLocation(shader_program, "proj");
     glUniformMatrix4fv(projection_location, 1, GL_FALSE, *proj.coef[0][0]);

@@ -15,10 +15,12 @@ main :: () {
     create_input_binding(entity, 131, rotate_right);
         
     subscribe_entity_to_input(camera, game_state.input_handle);
-    create_input_binding(camera, 87, move_forward);
-    create_input_binding(camera, 83, move_backward);
-    create_input_binding(camera, 69, move_up);
-    create_input_binding(camera, 81, move_down);
+    create_input_binding(camera, .KEY_W, move_forward);
+    create_input_binding(camera, .KEY_S, move_backward);
+    create_input_binding(camera, .KEY_A, move_left);
+    create_input_binding(camera, .KEY_D, move_right);
+    create_input_binding(camera, .KEY_E, move_up);
+    create_input_binding(camera, .KEY_Q, move_down);
     
     game_state.render_handle.bound_camera = camera;
     
@@ -74,6 +76,7 @@ print_size_info :: () #compile_time {
 #load "./input/input.jai";
 #load "./file_utilities.jai";
 #load "./memory_utilities.jai";
+#load "./math_utilities.jai";
 
 // platform dependent file inclusion
 #if OS ==  {

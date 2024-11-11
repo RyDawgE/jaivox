@@ -12,7 +12,7 @@ Entity :: struct @entity {
     
     model               : *Model;
     
-    input_bindings      : *Table(u32, INPUT_BINDING_PROCEDURE_SIGNATURE);
+    input_bindings      : *Table(KeyboardKey, INPUT_BINDING_PROCEDURE_SIGNATURE);
 }
 
 EntityBlock :: struct {
@@ -114,7 +114,7 @@ destroy_entity :: (entity : *Entity) -> bool {
 
 subscribe_entity_to_input :: (entity : *Entity, input_handle : *InputHandle) {
     entity.subscribed_to_input = true;
-    entity.input_bindings = New(Table(u32, INPUT_BINDING_PROCEDURE_SIGNATURE));
+    entity.input_bindings = New(Table(KeyboardKey, INPUT_BINDING_PROCEDURE_SIGNATURE));
     
     array_add(*input_handle.subscribed_entities, entity);
     

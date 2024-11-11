@@ -1,5 +1,5 @@
 InputHandle :: struct {
-    subscribed_entities : [..] *Entity;
+    subscribed_entities : [..] u64;
     mouse_position : Vector2;
     mouse_delta : Vector2;
 }
@@ -21,7 +21,8 @@ poll_events :: () {
             game_state.should_close = true;
         } else if it.type == .KEYBOARD && it.repeat == false {
             print("%\n", cast (KeyboardKey) it.key_code);
-            for entity : game_state.input_handle.subscribed_entities {
+            for id : game_state.input_handle.subscribed_entities {
+                entity : *Entity = cast (*Entity) get_entity(id);
                 callback, success := table_find(entity.input_bindings, cast (KeyboardKey) it.key_code);
                 if success {
                     callback(entity, *it);

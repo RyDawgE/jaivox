@@ -1,3 +1,5 @@
+LARGEST_ENTITY_SIZE :: #run get_entity_slot_size();
+
 Entity :: struct @entity {
     id : u64;
     
@@ -38,7 +40,6 @@ get_entity_slot_size :: () -> s64 #compile_time {
     return largest;
 }
 
-LARGEST_ENTITY_SIZE :: #run get_entity_slot_size();
 
 get_entity_mem_info :: (id : u64) -> u32, u32 { 
     //block, slot
@@ -102,9 +103,9 @@ destroy_entity :: (entity : *Entity) -> bool {
     
     game_state.entity_handle.entity_blocks[block].member_mask &= ~((cast(u64) 1) << slot);
     
-    if entity.subscribed_to_input {
-        input_subscription := *game_state.input_handle.subscribed_entities;
-        array_unordered_remove_by_value(input_subscription, entity);
+    input_subscription := *game_state.input_handle.subscribed_entities;
+    if array_find(<<input_subscription, entity.id) {
+        array_unordered_remove_by_value(input_subscription, entity.id);
         deinit(entity.input_bindings);
         free(entity.input_bindings);
     }    
@@ -112,11 +113,23 @@ destroy_entity :: (entity : *Entity) -> bool {
     return true;
 }
 
+get_entity :: (id : u64) -> *void {
+    using game_state.entity_handle;
+
+    block_index : u64 = (id >> 32) - 1; // only back half
+    slot_index  : u64 = ((~0) >> 32) & id; // only front half
+    
+    memory : *void = entity_blocks[block_index].memory;
+    memory += (bit_scan_forward(slot_index) - 1) * LARGEST_ENTITY_SIZE;
+    
+    return memory;
+}
+
 subscribe_entity_to_input :: (entity : *Entity, input_handle : *InputHandle) {
     entity.subscribed_to_input = true;
     entity.input_bindings = New(Table(KeyboardKey, INPUT_BINDING_PROCEDURE_SIGNATURE));
     
-    array_add(*input_handle.subscribed_entities, entity);
+    array_add(*input_handle.subscribed_entities, entity.id);
     
     return;
 }

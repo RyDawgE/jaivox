@@ -1,5 +1,8 @@
 LARGEST_ENTITY_SIZE :: #run get_entity_slot_size();
 
+ENTITY_TICK_PROCEDURE_SIGNATURE :: #type (entity: *Entity);
+
+
 Entity :: struct @entity {
     id : u64;
     
@@ -9,7 +12,7 @@ Entity :: struct @entity {
     rotation            : Vector3 = .{0, 0, 0};
     scale               : Vector3 = .{1, 1, 1};
     
-    movement            : Vector3 = .{0, 0, 0};
+    velocity            : Vector3 = .{0, 0, 0};
     
     model               : *Model;
     
@@ -23,6 +26,13 @@ EntityBlock :: struct {
 
 EntityHandle :: struct {
     entity_blocks : [..] EntityBlock;
+    tickable_entities : *Table(u64, ENTITY_TICK_PROCEDURE_SIGNATURE);
+}
+
+initialize_entity_handle :: () {
+    using game_state.entity_handle;
+    
+    tickable_entities  = New(Table(u64, ENTITY_TICK_PROCEDURE_SIGNATURE));
 }
 
 get_entity_slot_size :: () -> s64 #compile_time {
@@ -124,13 +134,24 @@ get_entity :: (id : u64) -> *void {
     return memory;
 }
 
-subscribe_entity_to_input :: (entity : *Entity, input_handle : *InputHandle) {
+subscribe_entity_to_input :: (entity : *Entity) {
+    using game_state.input_handle;
+    
     entity.input_bindings = New(Table(KeyboardKey, INPUT_BINDING_PROCEDURE_SIGNATURE));
     
-    array_add(*input_handle.subscribed_entities, entity.id);
+    array_add(*subscribed_entities, entity.id);
     
     return;
 }
 
+subscribe_entity_to_tick :: (entity : *Entity, proc_callback : ENTITY_TICK_PROCEDURE_SIGNATURE = tick_entity) {
+    using game_state.entity_handle;
+    
+    table_add(tickable_entities, entity.id, proc_callback);
+}
+
+tick_entity :: (entity : *Entity) {
+    entity.position += entity.velocity * 0.03;
+}
 
 

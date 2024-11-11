@@ -20,7 +20,7 @@ poll_events :: () {
         if it.type == .QUIT {
             game_state.should_close = true;
         } else if it.type == .KEYBOARD && it.repeat == false {
-            print("%\n", cast (KeyboardKey) it.key_code);
+            //print("%\n", cast (KeyboardKey) it.key_code);
             for id : game_state.input_handle.subscribed_entities {
                 entity : *Entity = cast (*Entity) get_entity(id);
                 callback, success := table_find(entity.input_bindings, cast (KeyboardKey) it.key_code);
@@ -44,7 +44,9 @@ poll_events :: () {
 
 // @TODO: Implement the InputBindType argument
 INPUT_BINDING_PROCEDURE_SIGNATURE :: #type (entity: *Entity, event : *Event);
+
 create_input_binding :: (entity : *Entity, key_code : KeyboardKey, proc_callback : INPUT_BINDING_PROCEDURE_SIGNATURE) {
+
     table_add(entity.input_bindings, key_code, proc_callback);
     return;
 }

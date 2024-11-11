@@ -4,7 +4,6 @@ Entity :: struct @entity {
     id : u64;
     
     active              : bool    = false;
-    subscribed_to_input : bool    = false;
     
     position            : Vector3 = .{0, 0, 0};
     rotation            : Vector3 = .{0, 0, 0};
@@ -126,7 +125,6 @@ get_entity :: (id : u64) -> *void {
 }
 
 subscribe_entity_to_input :: (entity : *Entity, input_handle : *InputHandle) {
-    entity.subscribed_to_input = true;
     entity.input_bindings = New(Table(KeyboardKey, INPUT_BINDING_PROCEDURE_SIGNATURE));
     
     array_add(*input_handle.subscribed_entities, entity.id);

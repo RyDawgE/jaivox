@@ -14,6 +14,17 @@ DebugCamera :: struct @entity {
     speed : float = 0.01;
 }
 
+init_debug_camera :: (camera : *DebugCamera) {
+    subscribe_entity_to_input(camera);
+    subscribe_entity_to_tick(camera, xx tick_debug_camera);
+    create_input_binding(camera, .KEY_W, xx move_forward);
+    create_input_binding(camera, .KEY_A, xx move_left);
+    create_input_binding(camera, .KEY_S, xx move_backward);
+    create_input_binding(camera, .KEY_D, xx move_right);
+    create_input_binding(camera, .KEY_E, xx move_up);
+    create_input_binding(camera, .KEY_Q, xx move_down);
+}
+
 tick_debug_camera :: (camera : *DebugCamera) {
     using camera;
         
@@ -44,7 +55,9 @@ tick_debug_camera :: (camera : *DebugCamera) {
         entity.velocity.z = 0;
     }
         
-    
+    //print("Position: %\nRotation: %\n", entity.position, entity.rotation);
+
+    rotate_from_mouse(camera);
     camera.position += camera.velocity * camera.speed;
 }
 
@@ -82,11 +95,10 @@ move_right :: (camera: *DebugCamera, event : *Event) {
     movement = ifx event.key_pressed then movement | .RGT_BIT else movement & ~.RGT_BIT;
 }
 
-rotate_from_mouse :: (entity: *Entity, event : *Event) {
+rotate_from_mouse :: (entity: *Entity) {
     using game_state.input_handle;
     
-    entity.rotation.x += cos(radians(mouse_delta.x)) * cos(radians(mouse_delta.y));
-    entity.rotation.y += sin(radians(mouse_delta.y));
-    entity.rotation.z += sin(radians(mouse_delta.x)) * cos(radians(mouse_delta.y));
+    entity.rotation.x += mouse_delta.x * .01;
+    entity.rotation.y += mouse_delta.y * .01;
 }
 

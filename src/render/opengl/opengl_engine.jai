@@ -176,8 +176,21 @@ draw_frame :: () {
     glUseProgram(shader_program);
     
     if bound_camera {
-        //view = make_translation_matrix4(bound_camera.position);
-        view = make_look_at_matrix(bound_camera.position, .{0, 0, 0}, .{0, 0, 1}, false);
+        yaw   : Quaternion;
+        pitch : Quaternion;
+        
+        transform : Matrix4 = Matrix4_Identity;
+        
+        set_from_axis_and_angle(*yaw, 0, 0, -1, bound_camera.rotation.x);
+        set_from_axis_and_angle(*pitch, -1, 0, 0, bound_camera.rotation.y);
+        
+        rotation : Quaternion = yaw * pitch;
+        
+        transform = make_translation_matrix4(bound_camera.position) * rotation_matrix(Matrix4, rotation);
+        
+        view = inverse(transform);
+    
+        //view = make_look_at_matrix(bound_camera.position, .{0, 0, 0}, .{0, 0, 1}, false);
     } else {
         view = make_look_at_matrix(.{2, 2, 2}, .{0, 0, 0}, .{0, 0, 1}, false);
     }

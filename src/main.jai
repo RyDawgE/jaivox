@@ -15,14 +15,7 @@ main :: () {
     create_input_binding(entity, 130, rotate_left);
     create_input_binding(entity, 131, rotate_right);
         
-    subscribe_entity_to_input(camera);
-    subscribe_entity_to_tick(camera, xx tick_debug_camera);
-    create_input_binding(camera, .KEY_W, xx move_forward);
-    create_input_binding(camera, .KEY_S, xx move_backward);
-    create_input_binding(camera, .KEY_A, xx move_left);
-    create_input_binding(camera, .KEY_D, xx move_right);
-    create_input_binding(camera, .KEY_E, xx move_up);
-    create_input_binding(camera, .KEY_Q, xx move_down);
+    init_debug_camera(camera);
     
     game_state.render_handle.bound_camera = camera;
     

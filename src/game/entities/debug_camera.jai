@@ -65,10 +65,11 @@ tick_debug_camera :: (camera : *DebugCamera) {
     }
         
     print("Position: %\nRotation: %\n", entity.position, entity.rotation);
-    print("Fwd: %\n", get_forward_vector(camera.rotation));
+    print("Forward: %\n", get_forward_vector(camera.rotation));
+    print("Right: %\n", get_right_vector(camera.rotation));
     
     rotate_from_mouse(camera);
-    camera.position += ((camera.velocity.x * get_forward_vector(camera.rotation)) + (camera.velocity.y * get_right_vector(camera.rotation))) * camera.speed * game_state.delta_time;
+    camera.position += ((camera.velocity.x * get_forward_vector(camera.rotation)) + (camera.velocity.y * get_right_vector(camera.rotation)) + (camera.velocity.z * .{0, 0, 1})) * camera.speed * game_state.delta_time;
 }
 
 move_forward :: (camera: *DebugCamera, event : *Event) {

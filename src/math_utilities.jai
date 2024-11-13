@@ -24,8 +24,15 @@ get_forward_vector :: (rotation : Vector3) -> Vector3 {
 }
 
 get_right_vector :: (rotation : Vector3) -> Vector3 {
-    forward : Vector3 = get_forward_vector(rotation);
+    right   : Vector3 = .{0, 0, 0};
     
-    return cross(forward, .{0, 0, 1});
+    yaw := radians(rotation.x);
+    pitch := radians(rotation.y);
+    
+    right.x = cos(yaw);
+    right.y = -sin(yaw);
+    right.z = 0;
+    
+    return right;
 
 }

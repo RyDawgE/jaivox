@@ -1,5 +1,4 @@
 main :: () {
-    debug_counter : int = 0;
     game_state.entity_handle = New(EntityHandle);
     game_state.render_handle = New(RenderHandle);
     game_state.input_handle  = New(InputHandle);
@@ -26,13 +25,18 @@ main :: () {
     model : Model = create_model(VERTS, INDICES);
     
     entity.model = *model;
-    camera.position += .{-2, -2, 2};
+    camera.position += .{0, -1, 4};
         
     // @MainLoop
     while !game_state.should_close {
+		frame_start := current_time_monotonic ();
+
         poll_events();
         simulate_game();
         draw_frame();
+        
+		frame_end := current_time_monotonic ();
+		game_state.delta_time = cast (float) to_float64_seconds (frame_end - frame_start);
     }
     cleanup();
 }

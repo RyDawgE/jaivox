@@ -1,5 +1,6 @@
 GameState :: struct {
-    should_close  : bool = false;
+    should_close  : bool  = false;
+    delta_time    : float = 0;
     entity_handle : *EntityHandle;
     render_handle : *RenderHandle;
     input_handle  : *InputHandle;

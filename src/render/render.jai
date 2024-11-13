@@ -69,7 +69,8 @@ create_game_window :: () {
 
     game_state.render_handle.window = xx create_window(window_width, window_height,
                                                     tprint(window_title, RENDER_NAMES[RENDERER]), 
-                                                    wanted_msaa = 0);           
+                                                    wanted_msaa = 0); 
+                                                
     return;
 }
 

@@ -11,7 +11,7 @@ DebugCamera :: struct @entity {
     using #as entity : Entity;
     
     movement : Movement = 0;
-    speed : float = 0.01;
+    speed : float = 3;
 }
 
 init_debug_camera :: (camera : *DebugCamera) {
@@ -28,6 +28,15 @@ init_debug_camera :: (camera : *DebugCamera) {
 tick_debug_camera :: (camera : *DebugCamera) {
     using camera;
         
+    // // Forward Backward
+    // if movement & .FWD_BIT {
+    //     entity.velocity = get_forward_vector(camera.rotation);
+    // } else if movement & .BWD_BIT {
+    //     entity.velocity = -get_forward_vector(camera.rotation);
+    // } else {
+    //     entity.velocity = .{0,0,0};
+    // }
+    
     // Forward Backward
     if movement & .FWD_BIT {
         entity.velocity.x = 1;
@@ -39,9 +48,9 @@ tick_debug_camera :: (camera : *DebugCamera) {
     
     // Left Right
     if movement & .RGT_BIT {
-        entity.velocity.y = -1;
-    } else if movement & .LFT_BIT {
         entity.velocity.y = 1;
+    } else if movement & .LFT_BIT {
+        entity.velocity.y = -1;
     } else {
         entity.velocity.y = 0;
     }
@@ -55,10 +64,11 @@ tick_debug_camera :: (camera : *DebugCamera) {
         entity.velocity.z = 0;
     }
         
-    //print("Position: %\nRotation: %\n", entity.position, entity.rotation);
-
+    print("Position: %\nRotation: %\n", entity.position, entity.rotation);
+    print("Fwd: %\n", get_forward_vector(camera.rotation));
+    
     rotate_from_mouse(camera);
-    camera.position += camera.velocity * camera.speed;
+    camera.position += ((camera.velocity.x * get_forward_vector(camera.rotation)) + (camera.velocity.y * get_right_vector(camera.rotation))) * camera.speed * game_state.delta_time;
 }
 
 move_forward :: (camera: *DebugCamera, event : *Event) {
@@ -98,7 +108,9 @@ move_right :: (camera: *DebugCamera, event : *Event) {
 rotate_from_mouse :: (entity: *Entity) {
     using game_state.input_handle;
     
-    entity.rotation.x += mouse_delta.x * .01;
-    entity.rotation.y += mouse_delta.y * .01;
+    dt : float = game_state.delta_time;
+    
+    entity.rotation.x += mouse_delta.x * dt * 100;
+    entity.rotation.y += mouse_delta.y * dt * 100;
 }
 

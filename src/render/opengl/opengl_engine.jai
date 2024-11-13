@@ -181,8 +181,8 @@ draw_frame :: () {
         
         transform : Matrix4 = Matrix4_Identity;
         
-        set_from_axis_and_angle(*yaw, 0, 0, -1, bound_camera.rotation.x);
-        set_from_axis_and_angle(*pitch, -1, 0, 0, bound_camera.rotation.y);
+        set_from_axis_and_angle(*yaw, 0, 0, -1, radians(bound_camera.rotation.x));
+        set_from_axis_and_angle(*pitch, -1, 0, 0, radians(bound_camera.rotation.y));
         
         rotation : Quaternion = yaw * pitch;
         

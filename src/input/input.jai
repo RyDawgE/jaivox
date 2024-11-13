@@ -17,6 +17,7 @@ poll_events :: () {
     game_state.input_handle.mouse_delta = .{xx mouse_delta_x, xx mouse_delta_y};
 
     for events_this_frame {
+            
         if it.type == .QUIT {
             game_state.should_close = true;
         } else if it.type == .KEYBOARD && it.repeat == false {

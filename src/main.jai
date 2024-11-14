@@ -30,6 +30,8 @@ main :: () {
     gen_end = current_time_monotonic ();
     time : float = cast (float) to_float64_seconds (gen_end - gen_start);
     print("Chunk took % seconds to generate.\n", time);
+
+
     
     entity.model = *model;
         
@@ -81,6 +83,7 @@ print_size_info :: () #compile_time {
 #load "./file_utilities.jai";
 #load "./memory_utilities.jai";
 #load "./math_utilities.jai";
+#load "./voxel/noise/perlin_noise.jai";
 
 #load "./game/entities/debug_camera.jai";
 

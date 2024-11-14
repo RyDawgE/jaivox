@@ -111,7 +111,7 @@ binary_greedy_mesh :: (chunk : *VoxelChunk) -> Model {
                         v3 = .{mesh_right, mesh_up, mesh_back};
                         v4 = .{mesh_right, mesh_up, mesh_front};
                         
-                        color = .{255, 0, 0};
+                        color = .{235, 64, 52} / .{255, 255, 255};
                         
                     // Back
                     } else if face == 1 {
@@ -120,7 +120,7 @@ binary_greedy_mesh :: (chunk : *VoxelChunk) -> Model {
                         v3 = .{mesh_right, mesh_up, mesh_front};
                         v4 = .{mesh_right, mesh_up, mesh_back}; 
                     
-                        color = .{255, 0, 0};
+                        color = .{235, 64, 52} / .{255, 255, 255};
     
                     // Right
                     } else if face == 2 {
@@ -129,7 +129,7 @@ binary_greedy_mesh :: (chunk : *VoxelChunk) -> Model {
                         v3 = .{mesh_up, mesh_back, mesh_right};
                         v4 = .{mesh_up, mesh_front, mesh_right};
 
-                        color = .{0, 255, 0};
+                        color = .{52, 235, 143} / .{255, 255, 255};;
                         
                     // Left
                     } else if face == 3 {
@@ -138,7 +138,7 @@ binary_greedy_mesh :: (chunk : *VoxelChunk) -> Model {
                         v3 = .{mesh_up, mesh_front, mesh_right};
                         v4 = .{mesh_up, mesh_back, mesh_right};
                     
-                        color = .{0, 255, 0};
+                        color = .{52, 235, 143} / .{255, 255, 255};;
                         
                     // Top
                     } else if face == 4 {
@@ -147,7 +147,7 @@ binary_greedy_mesh :: (chunk : *VoxelChunk) -> Model {
                         v3 = .{mesh_back, mesh_right, mesh_up};
                         v4 = .{mesh_front, mesh_right, mesh_up};
                     
-                        color = .{0, 0, 255}; 
+                        color = .{52, 110, 235} / .{255, 255, 255};; 
                         
                     // Bottom
                     } else if face == 5 {
@@ -156,7 +156,7 @@ binary_greedy_mesh :: (chunk : *VoxelChunk) -> Model {
                         v3 = .{mesh_front, mesh_right, mesh_up};
                         v4 = .{mesh_back, mesh_right, mesh_up};
                         
-                        color = .{0, 0, 255};
+                        color = .{52, 110, 235} / .{255, 255, 255};;
                     }
                     
                     vert1 = .{v1 * VOXEL_SCALE, color};

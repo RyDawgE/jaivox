@@ -27,23 +27,22 @@ VoxelHandle :: struct {
 populate_chunk :: (chunk : *VoxelChunk) {
     using chunk;
     
-    data : *u32 = voxels.data;
-    // for i : 0..CHUNK_SURFACE_AREA - 1 {
-    //     voxel_position : Vector2 = .{ xx (i % CHUNK_SIZE_PADDED), xx (i / CHUNK_SIZE_PADDED) };
-    //     height : u32 = 6; // Arbitrary, put the noise generator here!
-        
-    //     // This will fill all voxels below the generated height. Should generate a chunk based on a heightmap.
-    //     index : u32 = (CHUNK_SURFACE_AREA * height) + (CHUNK_SURFACE_AREA - i);
-    //     while (index / CHUNK_SURFACE_AREA) > 0 {
-    //         voxels[index] = 1;
-    //         index -= CHUNK_SURFACE_AREA;
-    //     }
-    // }
     
-    for i : 0..CHUNK_VOLUME - 1 {
-        if i % 3 == 0 {
-            voxels[i] = 1;    
-        
+	seed : int = cast (int) to_float64_seconds (current_time_monotonic());
+
+    count : int = 0;
+    for x : 0..CHUNK_SIZE_PADDED - 1 {
+        for y : 0..CHUNK_SIZE_PADDED - 1 {
+            for z : 0..CHUNK_SIZE_PADDED - 1 {
+                //position : Vector3 = .{xx x, xx y, xx z};
+                
+                height : float = get_2d(xx x, xx y, .1, 10, seed) * 32;
+                //print("%\n", height);
+                if xx z <=  height{
+                    voxels[count] = 1;
+                }
+                count += 1;
+            }
         }
     }
     

@@ -13,7 +13,7 @@ get_forward_vector :: (rotation : Vector3) -> Vector3 {
     // x, y, z
     forward : Vector3 = .{0,0,0};
     
-    yaw : float = radians(rotation.x);
+    yaw   : float = radians(rotation.x);
     pitch : float = radians(rotation.y);
     
     forward.x = -sin(pitch) * sin(yaw);
@@ -24,10 +24,12 @@ get_forward_vector :: (rotation : Vector3) -> Vector3 {
 }
 
 get_right_vector :: (rotation : Vector3) -> Vector3 {
+    // yaw, pitch, roll
+    // x, y, z 
     right   : Vector3 = .{0, 0, 0};
     
-    yaw := radians(rotation.x);
-    pitch := radians(rotation.y);
+    yaw   : float = radians(rotation.x);
+    pitch : float = radians(rotation.y);
     
     right.x = cos(yaw);
     right.y = -sin(yaw);

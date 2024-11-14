@@ -38,20 +38,20 @@ Camera :: struct {
 
 Model :: struct {
     vertices : [..] Vertex;
-    indices  : [..] u16;
+    indices  : [..] u32;
     vertex_attributes  : u32;
     vertex_buffer      : u32;
     index_buffer       : u32;
 }
 
-VERTS : [..] Vertex = xx Vertex.[
+SAMPLE_VERTS : [..] Vertex = xx Vertex.[
     .{.{-.5, -.5, 0}, .{1, 0, 0}},
     .{.{ .5, -.5, 0}, .{0, 1, 0}},
     .{.{ .5,  .5, 0}, .{0, 0, 1}},
     .{.{-.5,  .5, 0}, .{1, 1, 1}},
 ];
 
-INDICES : [..] u16 = xx u16.[
+SAMPLE_INDXS : [..] u32 = xx u32.[
     0, 1, 2,
     2, 3, 0
 ];

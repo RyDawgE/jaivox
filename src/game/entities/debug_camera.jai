@@ -11,7 +11,7 @@ DebugCamera :: struct @entity {
     using #as entity : Entity;
     
     movement : Movement = 0;
-    speed : float = 3;
+    speed    : float    = 3;
 }
 
 init_debug_camera :: (camera : *DebugCamera) {
@@ -23,19 +23,11 @@ init_debug_camera :: (camera : *DebugCamera) {
     create_input_binding(camera, .KEY_D, xx move_right);
     create_input_binding(camera, .KEY_E, xx move_up);
     create_input_binding(camera, .KEY_Q, xx move_down);
+    create_input_binding(camera, 141, xx toggle_fast);
 }
 
 tick_debug_camera :: (camera : *DebugCamera) {
     using camera;
-        
-    // // Forward Backward
-    // if movement & .FWD_BIT {
-    //     entity.velocity = get_forward_vector(camera.rotation);
-    // } else if movement & .BWD_BIT {
-    //     entity.velocity = -get_forward_vector(camera.rotation);
-    // } else {
-    //     entity.velocity = .{0,0,0};
-    // }
     
     // Forward Backward
     if movement & .FWD_BIT {
@@ -64,9 +56,9 @@ tick_debug_camera :: (camera : *DebugCamera) {
         entity.velocity.z = 0;
     }
         
-    print("Position: %\nRotation: %\n", entity.position, entity.rotation);
-    print("Forward: %\n", get_forward_vector(camera.rotation));
-    print("Right: %\n", get_right_vector(camera.rotation));
+    // print("Position: %\nRotation: %\n", entity.position, entity.rotation);
+    // print("Forward: %\n", get_forward_vector(camera.rotation));
+    // print("Right: %\n", get_right_vector(camera.rotation));
     
     rotate_from_mouse(camera);
     camera.position += ((camera.velocity.x * get_forward_vector(camera.rotation)) + (camera.velocity.y * get_right_vector(camera.rotation)) + (camera.velocity.z * .{0, 0, 1})) * camera.speed * game_state.delta_time;
@@ -104,6 +96,16 @@ move_right :: (camera: *DebugCamera, event : *Event) {
     using camera;
     
     movement = ifx event.key_pressed then movement | .RGT_BIT else movement & ~.RGT_BIT;
+}
+
+toggle_fast :: (camera: *DebugCamera, event : *Event) {
+    using camera;
+
+    if event.key_pressed {
+        speed = 8;
+    } else {
+        speed = 3;
+    }
 }
 
 rotate_from_mouse :: (entity: *Entity) {

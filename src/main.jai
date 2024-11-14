@@ -1,4 +1,7 @@
 main :: () {
+    gen_start : Apollo_Time;
+    gen_end   : Apollo_Time;
+
     game_state.entity_handle = New(EntityHandle);
     game_state.render_handle = New(RenderHandle);
     game_state.input_handle  = New(InputHandle);
@@ -18,24 +21,33 @@ main :: () {
     
     game_state.render_handle.bound_camera = camera;
     
+    gen_start = current_time_monotonic ();
+
     chunk : VoxelChunk = .{};
-    
     populate_chunk(*chunk);
+    model : Model = binary_greedy_mesh(*chunk);  
     
-    model : Model = create_model(VERTS, INDICES);
+    gen_end = current_time_monotonic ();
+    time : float = cast (float) to_float64_seconds (gen_end - gen_start);
+    print("Chunk took % seconds to generate.\n", time);
     
     entity.model = *model;
-    camera.position += .{0, -1, 4};
         
+    camera.position += .{1, -.2, 8};
+    
+    frame_start : Apollo_Time;
+    frame_end   : Apollo_Time;
+
     // @MainLoop
     while !game_state.should_close {
-		frame_start := current_time_monotonic ();
+		frame_start = current_time_monotonic ();
 
         poll_events();
         simulate_game();
         draw_frame();
         
-		frame_end := current_time_monotonic ();
+		frame_end = current_time_monotonic ();
+		
 		game_state.delta_time = cast (float) to_float64_seconds (frame_end - frame_start);
     }
     cleanup();

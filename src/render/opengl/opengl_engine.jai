@@ -10,7 +10,7 @@ RenderHandle :: struct {
     bound_camera               : *Entity                  = null;
 }
 
-create_model :: (in_vertex_buffer : [..] Vertex, in_index_buffer : [..] u16) -> Model {
+create_model :: (in_vertex_buffer : [..] Vertex, in_index_buffer : [..] u32) -> Model {
     //using game_state.render_handle; 
     
     model : Model = .{};
@@ -22,7 +22,7 @@ create_model :: (in_vertex_buffer : [..] Vertex, in_index_buffer : [..] u16) -> 
     glGenBuffers(1, *EBO);
     
     vertex_buffer_size : s64 = in_vertex_buffer.count * size_of(Vertex);
-    index_buffer_size  : s64 = in_index_buffer.count * size_of(u16);
+    index_buffer_size  : s64 = in_index_buffer.count * size_of(u32);
     
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
@@ -65,6 +65,10 @@ create_opengl_context :: () {
     gl_enable_debug_output(true);
     
     glViewport(0, 0, xx width, xx height);
+    
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_BACK);    
+
 }
 
 create_shader_programs :: () {
@@ -128,6 +132,14 @@ draw_entities :: () {
     //Have a reference to every entity that uses it, or at least the transform of such.
     
     // For each entity
+    yaw   : Quaternion;
+    pitch : Quaternion;
+    roll  : Quaternion; // Unused! Implement me!
+    
+    rotation : Quaternion;
+    
+    transform : Matrix4;
+
     for block : game_state.entity_handle.entity_blocks {
         mask : u64 = block.member_mask;
         for i : 0..64 { 
@@ -141,20 +153,24 @@ draw_entities :: () {
                 }
                 
                 // Begin transformation
-                model_transform : Matrix4;
-                model_rotate : Quaternion = .{entity.rotation.x, entity.rotation.y, entity.rotation.z, 0};                
+                transform = Matrix4_Identity;
                 
-                model_transform = transpose(rotation_matrix(Matrix4, model_rotate));
+                set_from_axis_and_angle(*yaw, 0, 0, -1, radians(entity.rotation.x));
+                set_from_axis_and_angle(*pitch, -1, 0, 0, radians(entity.rotation.y));
                 
-                model_location := glGetUniformLocation(shader_program, "model");
-                glUniformMatrix4fv(model_location, 1, GL_FALSE, *model_transform.coef[0][0]);
+                rotation = yaw * pitch;
+                
+                transform = make_translation_matrix4(entity.position) * rotation_matrix(Matrix4, rotation);
+                
                 
                 // Begin Render
+                model_location := glGetUniformLocation(shader_program, "model");
+                glUniformMatrix4fv(model_location, 1, GL_FALSE, *transform.coef[0][0]);
                 
                 glBindBuffer(GL_ARRAY_BUFFER, entity.model.vertex_buffer);
                 glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, entity.model.index_buffer);
                                 
-                glDrawElements(GL_TRIANGLES, xx entity.model.indices.count, GL_UNSIGNED_SHORT, cast(*void) 0);
+                glDrawElements(GL_TRIANGLES, xx entity.model.indices.count, GL_UNSIGNED_INT, cast(*void) 0);
             }    
         }
     }

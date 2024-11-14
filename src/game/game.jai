@@ -17,10 +17,10 @@ close_game_binding :: (entity: *Entity, event : *Event) {
 }
 
 rotate_left :: (entity: *Entity, event : *Event) {
-    entity.rotation.x += -.1;
+    entity.rotation.x += -1;
 }
 
 rotate_right :: (entity: *Entity, event : *Event) {
-    entity.rotation.x += .1;
+    entity.rotation.x += 1;
 }
 

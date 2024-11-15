@@ -31,14 +31,14 @@ populate_chunk :: (chunk : *VoxelChunk) {
 	seed : int = cast (int) to_float64_seconds (current_time_monotonic());
 
     count : int = 0;
-    for x : 0..CHUNK_SIZE_PADDED - 1 {
-        for y : 0..CHUNK_SIZE_PADDED - 1 {
+    for y : 0..CHUNK_SIZE_PADDED - 1 {
+        for x : 0..CHUNK_SIZE_PADDED - 1 {
             for z : 0..CHUNK_SIZE_PADDED - 1 {
-                //position : Vector3 = .{xx x, xx y, xx z};
+                position : Vector3 = .{xx x, xx y, xx z};
                 
-                height : float = get_2d(xx x, xx y, .1, 10, seed) * 32;
-                //print("%\n", height);
-                if xx z <=  height{
+                height : float = get_2d(xx x, xx z, .1, 10, seed) * 32;
+                print("%\n", position);
+                if xx y <=  height{
                     voxels[count] = 1;
                 }
                 count += 1;

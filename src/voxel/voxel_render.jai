@@ -104,23 +104,23 @@ binary_greedy_mesh :: (chunk : *VoxelChunk) -> Model {
                     
                     color : Vector3;
                     
-                    // Front
+                    // Up
                     if face == 0 {
                         v1 = .{mesh_left, mesh_up, mesh_front};
                         v2 = .{mesh_left, mesh_up, mesh_back};
                         v3 = .{mesh_right, mesh_up, mesh_back};
                         v4 = .{mesh_right, mesh_up, mesh_front};
                         
-                        color = .{235, 64, 52} / .{255, 255, 255};
+                        color = .{52, 235, 143} / .{255, 255, 255};
                         
-                    // Back
+                    // Down
                     } else if face == 1 {
                         v1 = .{mesh_left, mesh_up, mesh_back};
                         v2 = .{mesh_left, mesh_up, mesh_front};
                         v3 = .{mesh_right, mesh_up, mesh_front};
                         v4 = .{mesh_right, mesh_up, mesh_back}; 
                     
-                        color = .{235, 64, 52} / .{255, 255, 255};
+                        color = .{52, 235, 143} / .{255, 255, 255};
     
                     // Right
                     } else if face == 2 {
@@ -129,7 +129,7 @@ binary_greedy_mesh :: (chunk : *VoxelChunk) -> Model {
                         v3 = .{mesh_up, mesh_back, mesh_right};
                         v4 = .{mesh_up, mesh_front, mesh_right};
 
-                        color = .{52, 235, 143} / .{255, 255, 255};;
+                        color = .{235, 64, 52} / .{255, 255, 255};
                         
                     // Left
                     } else if face == 3 {
@@ -138,25 +138,25 @@ binary_greedy_mesh :: (chunk : *VoxelChunk) -> Model {
                         v3 = .{mesh_up, mesh_front, mesh_right};
                         v4 = .{mesh_up, mesh_back, mesh_right};
                     
-                        color = .{52, 235, 143} / .{255, 255, 255};;
+                        color = .{235, 64, 52} / .{255, 255, 255};
                         
-                    // Top
+                    // Front
                     } else if face == 4 {
                         v1 = .{mesh_front, mesh_left, mesh_up};
                         v2 = .{mesh_back, mesh_left, mesh_up};
                         v3 = .{mesh_back, mesh_right, mesh_up};
                         v4 = .{mesh_front, mesh_right, mesh_up};
                     
-                        color = .{52, 110, 235} / .{255, 255, 255};; 
+                        color = .{52, 110, 235} / .{255, 255, 255};
                         
-                    // Bottom
+                    // Back
                     } else if face == 5 {
                         v1 = .{mesh_back, mesh_left, mesh_up};
                         v2 = .{mesh_front, mesh_left, mesh_up};
                         v3 = .{mesh_front, mesh_right, mesh_up};
                         v4 = .{mesh_back, mesh_right, mesh_up};
                         
-                        color = .{52, 110, 235} / .{255, 255, 255};;
+                        color = .{52, 110, 235} / .{255, 255, 255};
                     }
                     
                     vert1 = .{v1 * VOXEL_SCALE, color};

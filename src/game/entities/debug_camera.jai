@@ -31,37 +31,37 @@ tick_debug_camera :: (camera : *DebugCamera) {
     
     // Forward Backward
     if movement & .FWD_BIT {
-        entity.velocity.x = 1;
+        entity.velocity.z = 1;
     } else if movement & .BWD_BIT {
+        entity.velocity.z = -1;
+    } else {
+        entity.velocity.z = 0;
+    }
+    
+    // Left Right
+    if movement & .RGT_BIT {
+        entity.velocity.x = 1;
+    } else if movement & .LFT_BIT {
         entity.velocity.x = -1;
     } else {
         entity.velocity.x = 0;
     }
     
-    // Left Right
-    if movement & .RGT_BIT {
+    // Up Down
+    if movement & .UPD_BIT {
         entity.velocity.y = 1;
-    } else if movement & .LFT_BIT {
+    } else if movement & .DWD_BIT {
         entity.velocity.y = -1;
     } else {
         entity.velocity.y = 0;
     }
-    
-    // Up Down
-    if movement & .UPD_BIT {
-        entity.velocity.z = 1;
-    } else if movement & .DWD_BIT {
-        entity.velocity.z = -1;
-    } else {
-        entity.velocity.z = 0;
-    }
         
-    // print("Position: %\nRotation: %\n", entity.position, entity.rotation);
-    // print("Forward: %\n", get_forward_vector(camera.rotation));
-    // print("Right: %\n", get_right_vector(camera.rotation));
+    print("Position: %\nRotation: %\n", entity.position, entity.rotation);
+    print("Forward: %\n", get_forward_vector(camera.rotation));
+    print("Right: %\n", get_right_vector(camera.rotation));
     
     rotate_from_mouse(camera);
-    camera.position += ((camera.velocity.x * get_forward_vector(camera.rotation)) + (camera.velocity.y * get_right_vector(camera.rotation)) + (camera.velocity.z * .{0, 0, 1})) * camera.speed * game_state.delta_time;
+    camera.position += ((camera.velocity.z * -get_forward_vector(camera.rotation)) + (camera.velocity.x * -get_right_vector(camera.rotation)) + (camera.velocity.y * .{0, 1, 0})) * camera.speed * game_state.delta_time;
 }
 
 move_forward :: (camera: *DebugCamera, event : *Event) {

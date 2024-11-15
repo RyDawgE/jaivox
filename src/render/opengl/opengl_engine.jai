@@ -197,14 +197,14 @@ draw_frame :: () {
         
         transform : Matrix4 = Matrix4_Identity;
         
-        set_from_axis_and_angle(*yaw, 0, 0, -1, radians(bound_camera.rotation.x));
+        set_from_axis_and_angle(*yaw, 0, -1, 0, radians(bound_camera.rotation.x));
         set_from_axis_and_angle(*pitch, -1, 0, 0, radians(bound_camera.rotation.y));
         
         rotation : Quaternion = yaw * pitch;
         
         transform = make_translation_matrix4(bound_camera.position) * rotation_matrix(Matrix4, rotation);
         
-        view = inverse(transform);
+        view = inverse(transform); //type mat4
     
         //view = make_look_at_matrix(bound_camera.position, .{0, 0, 0}, .{0, 0, 1}, false);
     } else {

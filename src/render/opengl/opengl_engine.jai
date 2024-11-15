@@ -152,20 +152,17 @@ draw_entities :: () {
                     continue;
                 }
                 
-                // Begin transformation
-                transform = Matrix4_Identity;
-                
+                // Begin transformation                
                 set_from_axis_and_angle(*yaw, 0, 0, -1, radians(entity.rotation.x));
                 set_from_axis_and_angle(*pitch, -1, 0, 0, radians(entity.rotation.y));
                 
                 rotation = yaw * pitch;
                 
-                transform = make_translation_matrix4(entity.position) * rotation_matrix(Matrix4, rotation);
-                
+                transform = make_translation_matrix4(entity.position) * rotation_matrix(Matrix4, rotation);;
                 
                 // Begin Render
                 model_location := glGetUniformLocation(shader_program, "model");
-                glUniformMatrix4fv(model_location, 1, GL_FALSE, *transform.coef[0][0]);
+                glUniformMatrix4fv(model_location, 1, GL_FALSE, *transpose(transform).coef[0][0]);
                 
                 glBindBuffer(GL_ARRAY_BUFFER, entity.model.vertex_buffer);
                 glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, entity.model.index_buffer);
@@ -176,17 +173,12 @@ draw_entities :: () {
     }
 }
 
-draw_voxels :: () {
-    
-}
-
-
 draw_frame :: () {
     using game_state.render_handle;
 
     view : Matrix4;
 
-    glClearColor(0, 0, 0, 0);
+    glClearColor(.5, .5, 1, 0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     
     glUseProgram(shader_program);
@@ -218,9 +210,7 @@ draw_frame :: () {
     
     projection_location := glGetUniformLocation(shader_program, "proj");
     glUniformMatrix4fv(projection_location, 1, GL_FALSE, *proj.coef[0][0]);
-    
-    draw_voxels();
-    
+        
     draw_entities();
     
     swap_buffers(window);

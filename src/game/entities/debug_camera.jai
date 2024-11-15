@@ -17,13 +17,15 @@ DebugCamera :: struct @entity {
 init_debug_camera :: (camera : *DebugCamera) {
     subscribe_entity_to_input(camera);
     subscribe_entity_to_tick(camera, xx tick_debug_camera);
+    
     create_input_binding(camera, .KEY_W, xx move_forward);
     create_input_binding(camera, .KEY_A, xx move_left);
     create_input_binding(camera, .KEY_S, xx move_backward);
     create_input_binding(camera, .KEY_D, xx move_right);
     create_input_binding(camera, .KEY_E, xx move_up);
     create_input_binding(camera, .KEY_Q, xx move_down);
-    create_input_binding(camera, 141, xx toggle_fast);
+    create_input_binding(camera,  141,   xx toggle_fast);
+    create_input_binding(camera,  27,    xx close_game_binding);
 }
 
 tick_debug_camera :: (camera : *DebugCamera) {
@@ -56,9 +58,9 @@ tick_debug_camera :: (camera : *DebugCamera) {
         entity.velocity.y = 0;
     }
         
-    print("Position: %\nRotation: %\n", entity.position, entity.rotation);
-    print("Forward: %\n", get_forward_vector(camera.rotation));
-    print("Right: %\n", get_right_vector(camera.rotation));
+    //print("Position: %\nRotation: %\n", entity.position, entity.rotation);
+    //print("Forward: %\n", get_forward_vector(camera.rotation));
+    //print("Right: %\n", get_right_vector(camera.rotation));
     
     rotate_from_mouse(camera);
     camera.position += ((camera.velocity.z * -get_forward_vector(camera.rotation)) + (camera.velocity.x * -get_right_vector(camera.rotation)) + (camera.velocity.y * .{0, 1, 0})) * camera.speed * game_state.delta_time;

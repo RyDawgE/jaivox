@@ -1,7 +1,4 @@
 main :: () {
-    gen_start : Apollo_Time;
-    gen_end   : Apollo_Time;
-
     game_state.entity_handle = New(EntityHandle);
     game_state.render_handle = New(RenderHandle);
     game_state.input_handle  = New(InputHandle);
@@ -11,29 +8,22 @@ main :: () {
     
     entity : *Entity = create_entity(Entity);
     camera : *DebugCamera = create_entity(DebugCamera);
-    
-    subscribe_entity_to_input(entity);
-    create_input_binding(entity, 27, close_game_binding);
-    create_input_binding(entity, 130, rotate_left);
-    create_input_binding(entity, 131, rotate_right);
+    chunk1 : *VoxelChunk = create_entity(VoxelChunk);
+    chunk2 : *VoxelChunk = create_entity(VoxelChunk);
+
         
     init_debug_camera(camera);
     
     game_state.render_handle.bound_camera = camera;
     
-    gen_start = current_time_monotonic ();
-
-    chunk : VoxelChunk = .{};
-    populate_chunk(*chunk);
-    model : Model = binary_greedy_mesh(*chunk);  
+    chunk1.position = .{0, 0, 0};
+    create_voxel_chunk(chunk1);
     
-    gen_end = current_time_monotonic ();
-    time : float = cast (float) to_float64_seconds (gen_end - gen_start);
-    print("Chunk took % seconds to generate.\n", time);
+    // chunk2.position = .{1, 0, 0};
+    // create_voxel_chunk(chunk2);
+    // chunk2.position = .{30 * .08, 0, 0};
 
-
-    
-    entity.model = *model;
+    //entity.model = *create_model(SAMPLE_VERTS, SAMPLE_INDXS);
         
     camera.position += .{1, -.2, 8};
     
@@ -69,7 +59,7 @@ cleanup :: () {
 print_size_info :: () #compile_time {
     print("\nDebug size info: \n");
     print("Largest Entity: % bytes.\n", LARGEST_ENTITY_SIZE);
-    print("Chunk Data: % bytes.\n", size_of(VoxelChunk));
+    print("Chunk Data: % bytes.\n", size_of(VoxelChunkData));
     print("\n");
 }
 
@@ -86,6 +76,8 @@ print_size_info :: () #compile_time {
 #load "./voxel/noise/perlin_noise.jai";
 
 #load "./game/entities/debug_camera.jai";
+#load "./game/entities/voxel_chunk.jai";
+
 
 // platform dependent file inclusion
 #if OS ==  {

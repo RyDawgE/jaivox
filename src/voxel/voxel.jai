@@ -7,6 +7,7 @@ ULL1 : u64 : 1;
 
 // derived
 VOXEL_SCALE        : Vector3 : .{xx VOXEL_SIZE, xx VOXEL_SIZE, xx VOXEL_SIZE};
+CHUNK_SCALE        : Vector3 : .{xx CHUNK_SIZE, xx CHUNK_SIZE, xx CHUNK_SIZE};
 CHUNK_SIZE_PADDED  : u32 : CHUNK_SIZE + 2;
 CHUNK_SURFACE_AREA : u32 : CHUNK_SIZE_PADDED * CHUNK_SIZE_PADDED; 
 CHUNK_VOLUME       : u32 : CHUNK_SIZE_PADDED * CHUNK_SIZE_PADDED * CHUNK_SIZE_PADDED;
@@ -14,30 +15,33 @@ CS_LAST_BIT        : int : CHUNK_SIZE_PADDED - 1;
 EDGE_MASK          : u64 : (ULL1 << CS_LAST_BIT) + ULL1;
 
 
-VoxelChunk :: struct {
+VoxelChunkData :: struct {
     voxels     : [CHUNK_VOLUME] u32;  
     heightmap  : [CHUNK_SURFACE_AREA] u32;
     location   : Vector3;
 }
 
 VoxelHandle :: struct {
-    chunks : [..] VoxelChunk;
+    chunks : [..] VoxelChunkData;
 }
 
-populate_chunk :: (chunk : *VoxelChunk) {
+populate_chunk :: (chunk : *VoxelChunkData, position : Vector3, seed : int) {
     using chunk;
-    
-    
-	seed : int = cast (int) to_float64_seconds (current_time_monotonic());
 
     count : int = 0;
     for y : 0..CHUNK_SIZE_PADDED - 1 {
         for x : 0..CHUNK_SIZE_PADDED - 1 {
             for z : 0..CHUNK_SIZE_PADDED - 1 {
-                position : Vector3 = .{xx x, xx y, xx z};
+                pos : Vector3 = .{xx (x + (position.x * CHUNK_SIZE_PADDED)), 
+                                  xx (y + (position.y * CHUNK_SIZE_PADDED)), 
+                                  xx (z + (position.z * CHUNK_SIZE_PADDED)),
+                                  };
+                                  
+                print("%\n", pos);
+    
                 
-                height : float = get_2d(xx x, xx z, .1, 10, seed) * 32;
-                print("%\n", position);
+                height : float = get_2d(pos.x, pos.z, .1, 10, seed) * 32;
+
                 if xx y <=  height{
                     voxels[count] = 1;
                 }

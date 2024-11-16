@@ -119,6 +119,10 @@ destroy_entity :: (entity : *Entity) -> bool {
         free(entity.input_bindings);
     }    
     
+    if entity.model {
+        free(entity.model);
+    }
+    
     return true;
 }
 

@@ -16,19 +16,19 @@ HASH :: u8.[
      58,129,233,142, 39,128,211,118,137,139,255,114, 20,218,113,154,
      27,127,246,250,  1,  8,198,250,209, 92,222,173, 21, 88,102,219
 ];
-noise2d :: (x: float, y: float, seed: int) -> float {
-    noise2 :: (x: int, y: int, seed: int) -> int {
-        y_index := (y + seed) % 256;
-        if y_index < 0 then y_index += 256;
-        x_index := (x + HASH[y_index]) % 256;
-        if x_index < 0 then x_index += 256;
-        return HASH[x_index];
-    }
+noise2 :: (x: int, y: int, seed: int) -> int {
+    y_index := (y + seed) % 256;
+    if y_index < 0 then y_index += 256;
+    x_index := (x + HASH[y_index]) % 256;
+    if x_index < 0 then x_index += 256;
+    return HASH[x_index];
+}
 
-    smooth\_inter :: (x: float, y: float, s: float) -> float {
-        lin_inter :: inline (x: float, y: float, s: float) -> float { return x+s*(y-x); }
-        return lin_inter(x, y, s*s*(3-2*s));
-    }
+smooth\_inter :: (x: float, y: float, s: float) -> float {
+    lin_inter :: inline (x: float, y: float, s: float) -> float { return x+s*(y-x); }
+    return lin_inter(x, y, s*s*(3-2*s));
+}
+noise2d :: (x: float, y: float, seed: int) -> float {
     x_int  :=     cast(int)   floor(x);
     y_int  :=     cast(int)   floor(y);
     x_frac := x - cast(float) x_int;
@@ -57,4 +57,3 @@ get_2d :: (x: float, y: float, freq: float, depth: int, seed := 108) -> float {
 
 }
 
-#import "Math";

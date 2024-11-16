@@ -13,8 +13,8 @@ main :: () {
     
     game_state.render_handle.bound_camera = camera;
     
-    for x : 0..32 {
-        for z : 0..32 {
+    for x : 0..16 {
+        for z : 0..16 {
             chunk1 : *VoxelChunk = create_entity(VoxelChunk);
             chunk1.position = .{xx x, 0, xx z};
             create_voxel_chunk(chunk1);

@@ -38,8 +38,8 @@ populate_chunk :: (chunk : *VoxelChunkData, position : Vector3, seed : int) {
                                   };
                                 
                 
-                height : float = ((sin(pos.z / 10) * cos(pos.x / 10)) + 2) * 10;
-                //height : float = get_2d(pos.x, pos.z, .05, 10, seed) * 32;
+                //height : float = ((sin(pos.z / 10) * cos(pos.x / 10)) + 2) * 10;
+                height : float = get_2d(pos.x, pos.z, .001, 10, seed) * 32;
                 
                 //print("%\n", height);
                 

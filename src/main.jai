@@ -1,4 +1,6 @@
 main :: () {
+    game_state.start_time = cast (float) to_float64_seconds (current_time_monotonic()); 
+
     game_state.entity_handle = New(EntityHandle);
     game_state.render_handle = New(RenderHandle);
     game_state.input_handle  = New(InputHandle);

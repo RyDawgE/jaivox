@@ -9,8 +9,8 @@ RenderEngine :: enum u8 {
 }
 
 WindowCreationInfo :: struct {
-    width  : s32    :  640;
-    height : s32    :  480;
+    width  : s32    :  1280;
+    height : s32    :  720;
     title  : string : "JaiDawgEngine - Renderer: %";
 }
 

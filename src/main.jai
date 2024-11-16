@@ -20,7 +20,7 @@ main :: () {
             chunk1 : *VoxelChunk = create_entity(VoxelChunk);
             chunk1.position = .{xx x, 0, xx z};
             create_voxel_chunk(chunk1);
-            chunk1.position = .{xx (x * CHUNK_SIZE * .08), 0, xx (z * CHUNK_SIZE * .08)};
+            chunk1.position = .{xx (x * CHUNK_SIZE * VOXEL_SIZE), 0, xx (z * CHUNK_SIZE * VOXEL_SIZE)};
         }
     }
     

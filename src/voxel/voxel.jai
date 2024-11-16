@@ -27,22 +27,23 @@ VoxelHandle :: struct {
 
 populate_chunk :: (chunk : *VoxelChunkData, position : Vector3, seed : int) {
     using chunk;
-
+    
     count : int = 0;
     for y : 0..CHUNK_SIZE_PADDED - 1 {
         for x : 0..CHUNK_SIZE_PADDED - 1 {
             for z : 0..CHUNK_SIZE_PADDED - 1 {
-                pos : Vector3 = .{xx (x + (position.x * CHUNK_SIZE_PADDED)), 
-                                  xx (y + (position.y * CHUNK_SIZE_PADDED)), 
-                                  xx (z + (position.z * CHUNK_SIZE_PADDED)),
+                pos : Vector3 = .{xx (x + (position.x * CHUNK_SIZE)), 
+                                  xx (y + (position.y * CHUNK_SIZE)), 
+                                  xx (z + (position.z * CHUNK_SIZE)),
                                   };
-                                  
-                print("%\n", pos);
-    
+                                
                 
-                height : float = get_2d(pos.x, pos.z, .1, 10, seed) * 32;
-
-                if xx y <=  height{
+                height : float = ((sin(pos.z / 10) * cos(pos.x / 10)) + 2) * 10;
+                //height : float = get_2d(pos.x, pos.z, .05, 10, seed) * 32;
+                
+                //print("%\n", height);
+                
+                if xx pos.y <= height{
                     voxels[count] = 1;
                 }
                 count += 1;

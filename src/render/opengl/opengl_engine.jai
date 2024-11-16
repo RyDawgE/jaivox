@@ -10,10 +10,8 @@ RenderHandle :: struct {
     bound_camera               : *Entity                  = null;
 }
 
-create_model :: (in_vertex_buffer : [..] Vertex, in_index_buffer : [..] u32) -> Model {
-    //using game_state.render_handle; 
-    
-    model : Model = .{};
+create_model :: (in_vertex_buffer : [..] Vertex, in_index_buffer : [..] u32) -> *Model {    
+    model : *Model = New(Model);
     
     VBO   : u32 = 0;
     EBO   : u32 = 0;
@@ -21,17 +19,8 @@ create_model :: (in_vertex_buffer : [..] Vertex, in_index_buffer : [..] u32) -> 
     glGenBuffers(1, *VBO);
     glGenBuffers(1, *EBO);
     
-    vertex_buffer_size : s64 = in_vertex_buffer.count * size_of(Vertex);
-    index_buffer_size  : s64 = in_index_buffer.count * size_of(u32);
-    
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-    
-    glBufferData(GL_ARRAY_BUFFER, vertex_buffer_size, in_vertex_buffer.data, GL_STATIC_DRAW);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, index_buffer_size, in_index_buffer.data, GL_STATIC_DRAW);
-    
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_TRUE,  6 * size_of(float), cast(*void) 0); // Position Attribute
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * size_of(float), cast(*void) (3 * size_of(float))); // Color Attribute  
     
     {
         using model;
@@ -164,9 +153,18 @@ draw_entities :: () {
                 model_location := glGetUniformLocation(shader_program, "model");
                 glUniformMatrix4fv(model_location, 1, GL_FALSE, *transpose(transform).coef[0][0]);
                 
+                vertex_buffer_size : s64 = entity.model.vertices.count * size_of(Vertex);
+                index_buffer_size  : s64 = entity.model.indices.count * size_of(u32);
+                
                 glBindBuffer(GL_ARRAY_BUFFER, entity.model.vertex_buffer);
                 glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, entity.model.index_buffer);
-                                
+                
+                glBufferData(GL_ARRAY_BUFFER, vertex_buffer_size, entity.model.vertices.data, GL_STATIC_DRAW);
+                glBufferData(GL_ELEMENT_ARRAY_BUFFER, index_buffer_size, entity.model.indices.data, GL_STATIC_DRAW);
+                
+                glVertexAttribPointer(0, 3, GL_FLOAT, GL_TRUE,  6 * size_of(float), cast(*void) 0); // Position Attribute
+                glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * size_of(float), cast(*void) (3 * size_of(float))); // Color Attribute  
+                
                 glDrawElements(GL_TRIANGLES, xx entity.model.indices.count, GL_UNSIGNED_INT, cast(*void) 0);
             }    
         }

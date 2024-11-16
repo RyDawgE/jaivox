@@ -8,22 +8,21 @@ main :: () {
     
     entity : *Entity = create_entity(Entity);
     camera : *DebugCamera = create_entity(DebugCamera);
-    chunk1 : *VoxelChunk = create_entity(VoxelChunk);
-    chunk2 : *VoxelChunk = create_entity(VoxelChunk);
 
-        
     init_debug_camera(camera);
     
     game_state.render_handle.bound_camera = camera;
     
-    chunk1.position = .{0, 0, 0};
-    create_voxel_chunk(chunk1);
+    for x : 0..32 {
+        for z : 0..32 {
+            chunk1 : *VoxelChunk = create_entity(VoxelChunk);
+            chunk1.position = .{xx x, 0, xx z};
+            create_voxel_chunk(chunk1);
+            chunk1.position = .{xx (x * CHUNK_SIZE * .08), 0, xx (z * CHUNK_SIZE * .08)};
+        }
+    }
     
-    // chunk2.position = .{1, 0, 0};
-    // create_voxel_chunk(chunk2);
-    // chunk2.position = .{30 * .08, 0, 0};
-
-    //entity.model = *create_model(SAMPLE_VERTS, SAMPLE_INDXS);
+    entity.model = create_model(SAMPLE_VERTS, SAMPLE_INDXS);
         
     camera.position += .{1, -.2, 8};
     

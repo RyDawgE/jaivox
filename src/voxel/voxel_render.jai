@@ -1,6 +1,6 @@
 // voxel render
 
-binary_greedy_mesh :: (chunk : *VoxelChunkData) -> Model {
+binary_greedy_mesh :: (chunk : *VoxelChunkData) -> *Model {
     using chunk;
     
     vertices : [..] Vertex;

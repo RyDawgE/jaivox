@@ -4,11 +4,11 @@ VoxelChunk :: struct @entity {
     voxel_data : *VoxelChunkData = null;
 }
 
-create_voxel_chunk :: (chunk : *VoxelChunk) {
+create_voxel_chunk :: (chunk : *VoxelChunk, chunk_position : Vector3) {
     using chunk;
     
     voxel_data = New(VoxelChunkData);
-    populate_chunk(voxel_data, position, xx game_state.start_time);
+    populate_chunk(voxel_data, chunk_position, xx game_state.start_time);
     mesh : *Model = binary_greedy_mesh(voxel_data);  
     model = mesh;
 }

@@ -12,6 +12,7 @@ DebugCamera :: struct @entity {
     
     movement : Movement = 0;
     speed    : float    = 3;
+    current_chunk : Vector3 = .{0, 0, 0};
 }
 
 init_debug_camera :: (camera : *DebugCamera) {
@@ -67,6 +68,20 @@ tick_debug_camera :: (camera : *DebugCamera) {
     
     rotate_from_mouse(camera);
     camera.position += ((camera.velocity.z * -get_forward_vector(camera.rotation)) + (camera.velocity.x * -get_right_vector(camera.rotation)) + (camera.velocity.y * .{0, 1, 0})) * camera.speed * game_state.delta_time;
+    
+    chunk_pos_x := floor((camera.position.x / VOXEL_SIZE) / CHUNK_SIZE);
+    chunk_pos_y := floor((camera.position.y / VOXEL_SIZE) / CHUNK_SIZE);
+    chunk_pos_z := floor((camera.position.z / VOXEL_SIZE) / CHUNK_SIZE);
+    
+    chunk_pos := Vector3.{chunk_pos_x, chunk_pos_y, chunk_pos_z};
+    
+    if chunk_pos != camera.current_chunk {
+        chunk1 : *VoxelChunk = create_entity(VoxelChunk);
+        create_voxel_chunk(chunk1, .{chunk_pos.x, 0, chunk_pos.z});
+        chunk1.position = .{xx (chunk_pos.x * CHUNK_SIZE * VOXEL_SIZE), 0, xx (chunk_pos.z * CHUNK_SIZE * VOXEL_SIZE)};
+    }
+    
+    camera.current_chunk = .{chunk_pos_x, chunk_pos_y, chunk_pos_z};
 }
 
 move_forward :: (camera: *DebugCamera, event : *Event) {

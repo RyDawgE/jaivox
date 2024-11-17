@@ -8,24 +8,20 @@ main :: () {
     initialize_entity_handle();
     create_render_engine();
     
-    entity : *Entity = create_entity(Entity);
     camera : *DebugCamera = create_entity(DebugCamera);
 
     init_debug_camera(camera);
     
     game_state.render_handle.bound_camera = camera;
     
-    for x : 0..16 {
-        for z : 0..16 {
-            chunk1 : *VoxelChunk = create_entity(VoxelChunk);
-            chunk1.position = .{xx x, 0, xx z};
-            create_voxel_chunk(chunk1);
-            chunk1.position = .{xx (x * CHUNK_SIZE * VOXEL_SIZE), 0, xx (z * CHUNK_SIZE * VOXEL_SIZE)};
-        }
-    }
-    
-    entity.model = create_model(SAMPLE_VERTS, SAMPLE_INDXS);
-        
+    // for x : 0..2 {
+    //     for z : 0..2 {
+    //         chunk1 : *VoxelChunk = create_entity(VoxelChunk);
+    //         create_voxel_chunk(chunk1, .{xx x, 0, xx z});
+    //         chunk1.position = .{xx (x * CHUNK_SIZE * VOXEL_SIZE), 0, xx (z * CHUNK_SIZE * VOXEL_SIZE)};
+    //     }
+    // }
+            
     camera.position += .{1, -.2, 8};
     
     frame_start : Apollo_Time;
@@ -48,9 +44,11 @@ main :: () {
 
 simulate_game :: () {
     for tick_proc : game_state.entity_handle.tickable_entities {
-         // it_index of table is key
+         // it_index of table is the hasmap key
         tick_proc(get_entity(it_index));
     }
+    
+    update_game_state();
 }
 
 cleanup :: () {

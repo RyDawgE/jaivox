@@ -17,11 +17,8 @@ close_game_binding :: (entity: *Entity, event : *Event) {
     }
 }
 
-rotate_left :: (entity: *Entity, event : *Event) {
-    entity.rotation.x += -1;
+update_game_state :: () {
+    // Main game loop goes here, if any
 }
 
-rotate_right :: (entity: *Entity, event : *Event) {
-    entity.rotation.x += 1;
-}
 

@@ -144,8 +144,11 @@ draw_entities :: () {
                 // Begin transformation                
                 set_from_axis_and_angle(*yaw, 0, 0, -1, radians(entity.rotation.x));
                 set_from_axis_and_angle(*pitch, -1, 0, 0, radians(entity.rotation.y));
+                set_from_axis_and_angle(*roll, 0, -1, 0, radians(entity.rotation.z));
+        
+        
                 
-                rotation = yaw * pitch;
+                rotation = yaw * pitch * pitch;
                 
                 transform = make_translation_matrix4(entity.position) * rotation_matrix(Matrix4, rotation);;
                 
@@ -184,13 +187,17 @@ draw_frame :: () {
     if bound_camera {
         yaw   : Quaternion;
         pitch : Quaternion;
+        roll  : Quaternion;
         
         transform : Matrix4 = Matrix4_Identity;
         
         set_from_axis_and_angle(*yaw, 0, -1, 0, radians(bound_camera.rotation.x));
         set_from_axis_and_angle(*pitch, -1, 0, 0, radians(bound_camera.rotation.y));
+        set_from_axis_and_angle(*roll, 0, 0, -1, radians(bound_camera.rotation.z));
+
         
-        rotation : Quaternion = yaw * pitch;
+        
+        rotation : Quaternion = yaw * pitch * roll;
         
         transform = make_translation_matrix4(bound_camera.position) * rotation_matrix(Matrix4, rotation);
         
@@ -201,7 +208,7 @@ draw_frame :: () {
         view = make_look_at_matrix(.{2, 2, 2}, .{0, 0, 0}, .{0, 0, 1}, false);
     }
     
-    proj  := transpose(make_projection_matrix(45.0 * PI / 180.0, xx (WindowCreationInfo.width / WindowCreationInfo.height), 0.1, 100.0));
+    proj  := transpose(make_projection_matrix(90.0 * PI / 180.0, xx (WindowCreationInfo.width / WindowCreationInfo.height), 0.1, 100.0));
     
     view_location := glGetUniformLocation(shader_program, "view");
     glUniformMatrix4fv(view_location, 1, GL_FALSE, *transpose(view).coef[0][0]);

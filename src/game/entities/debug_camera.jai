@@ -26,6 +26,9 @@ init_debug_camera :: (camera : *DebugCamera) {
     create_input_binding(camera, .KEY_Q, xx move_down);
     create_input_binding(camera,  141,   xx toggle_fast);
     create_input_binding(camera,  27,    xx close_game_binding);
+    create_input_binding(camera,  130,   xx rotate_left);
+    create_input_binding(camera,  131,   xx rotate_right);
+
 }
 
 tick_debug_camera :: (camera : *DebugCamera) {
@@ -117,5 +120,13 @@ rotate_from_mouse :: (entity: *Entity) {
     
     entity.rotation.x += mouse_delta.x * dt * 100;
     entity.rotation.y += mouse_delta.y * dt * 100;
+}
+
+rotate_left :: (entity: *Entity, event : *Event) {
+    entity.rotation.z += 1;
+}
+
+rotate_right :: (entity: *Entity, event : *Event) {
+    entity.rotation.z += -1;
 }
 

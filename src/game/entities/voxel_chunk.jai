@@ -22,6 +22,8 @@ destroy_voxel_chunk :: (chunk : *VoxelChunk) {
 populate_chunk :: (chunk : *VoxelChunkData, position : Vector3, seed : int) {
     using chunk;
     
+    chunk_erosion : float = get_2d(position.x, position.z, 1, 1, seed) * 10;
+    
     count : int = 0;
     for y : 0..CHUNK_SIZE_PADDED - 1 {
         for x : 0..CHUNK_SIZE_PADDED - 1 {
@@ -33,7 +35,7 @@ populate_chunk :: (chunk : *VoxelChunkData, position : Vector3, seed : int) {
                                 
                 
                 //height : float = ((sin(pos.z / 80) * cos(pos.x / 80)) + 2) * 10;
-                height : float = get_2d(pos.x, pos.z, .01, 10, seed) * 32;
+                height : float = get_2d(pos.x, pos.z, .01, 5, seed) * 32;
                 
                 //print("%\n", height);
                 

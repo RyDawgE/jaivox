@@ -62,10 +62,6 @@ tick_debug_camera :: (camera : *DebugCamera) {
         entity.velocity.y = 0;
     }
         
-    //print("Position: %\nRotation: %\n", entity.position, entity.rotation);
-    //print("Forward: %\n", get_forward_vector(camera.rotation));
-    //print("Right: %\n", get_right_vector(camera.rotation));
-    
     rotate_from_mouse(camera);
     camera.position += ((camera.velocity.z * -get_forward_vector(camera.rotation)) + (camera.velocity.x * -get_right_vector(camera.rotation)) + (camera.velocity.y * .{0, 1, 0})) * camera.speed * game_state.delta_time;
     
@@ -73,15 +69,11 @@ tick_debug_camera :: (camera : *DebugCamera) {
     chunk_pos_y := floor((camera.position.y / VOXEL_SIZE) / CHUNK_SIZE);
     chunk_pos_z := floor((camera.position.z / VOXEL_SIZE) / CHUNK_SIZE);
     
-    chunk_pos := Vector3.{chunk_pos_x, chunk_pos_y, chunk_pos_z};
-    
-    if chunk_pos != camera.current_chunk {
-        chunk1 : *VoxelChunk = create_entity(VoxelChunk);
-        create_voxel_chunk(chunk1, .{chunk_pos.x, 0, chunk_pos.z});
-        chunk1.position = .{xx (chunk_pos.x * CHUNK_SIZE * VOXEL_SIZE), 0, xx (chunk_pos.z * CHUNK_SIZE * VOXEL_SIZE)};
-    }
-    
     camera.current_chunk = .{chunk_pos_x, chunk_pos_y, chunk_pos_z};
+    
+    print("Position: %\nRotation: %\n", entity.position, entity.rotation);
+    print("Forward: %\nRight: %\n", get_forward_vector(camera.rotation), get_right_vector(camera.rotation));
+    print("Chunk Position: %\n", camera.current_chunk);
 }
 
 move_forward :: (camera: *DebugCamera, event : *Event) {
@@ -122,7 +114,7 @@ toggle_fast :: (camera: *DebugCamera, event : *Event) {
     using camera;
 
     if event.key_pressed {
-        speed = 8;
+        speed = 50;
     } else {
         speed = 3;
     }

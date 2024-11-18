@@ -7,7 +7,7 @@ VoxelChunk :: struct @entity {
 create_voxel_chunk :: (chunk : *VoxelChunk, chunk_position : Vector3, lod : int = 1) {
     using chunk;
     
-    print("%\n", lod);
+    //print("%\n", lod);
     
     pos_lod : int = ifx lod != 0 then abs(lod) else 1;
     
@@ -28,19 +28,18 @@ populate_chunk :: (chunk : *VoxelChunkData, position : Vector3, seed : int, cs :
     
     cs_p  : int = cs + 2;
     cs_p2 : int = cs_p * cs_p;
-    cs_p3 : int = cs_p2 * cs_p;
     
-    cs_ratio : float = (cast (float) cs_p / cast (float) CHUNK_SIZE_PADDED);
+    cs_ratio : float = (cast (float) cs / cast (float) CHUNK_SIZE);
     
     //chunk_erosion : float = get_2d(position.x, position.z, 1, 1, seed) * 10;
     
-    print("%\n", position);
+    //print("%\n", cs_ratio);
     
     for z : 0..cs_p - 1 {
         for x : 0..cs_p - 1 {
             pos2d : Vector2 = .{xx (x + cs * position.x), xx (z + cs * position.z)};
         
-            height : float = get_2d(pos2d.x / cs_ratio, pos2d.y / cs_ratio, .01, 2, seed) * (cs_p);
+            height : float = get_2d(pos2d.x / cs_ratio, pos2d.y / cs_ratio, .01, 2, seed) * (cs);
             //height : float = ((sin(pos.z / 80) * cos(pos.x / 80)) + 2) * 10;
             
             for y : 0..cs_p - 1 {

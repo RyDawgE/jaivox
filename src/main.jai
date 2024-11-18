@@ -9,29 +9,35 @@ main :: () {
     create_render_engine();
     
     camera : *DebugCamera = create_entity(DebugCamera);
+    world  : *VoxelWorld  = create_entity(VoxelWorld);
 
     init_debug_camera(camera);
     
+    subscribe_entity_to_tick(world, xx tick_voxel_world);
+    
     game_state.render_handle.bound_camera = camera;
     
-    rd := 16;
+    rd := 96;
     lod_intensity : float = 6;
     
     for x : 1..rd {
         for z : 1..rd {
-            chunk1 : *VoxelChunk = create_entity(VoxelChunk);
-            
             x_pos := x - (rd/2);
             z_pos := z - (rd/2);
+        
+            operation : VoxelChunkOperation;
+            operation.coordinate = .{xx x_pos, 0, xx z_pos};
             
-            chunk_pos : Vector3 = .{xx x_pos, 0, xx z_pos};
-            
-            lod : int = xx (distance(chunk_pos, .{0, 0, 0}) / lod_intensity);
-                        
-            create_voxel_chunk(chunk1, chunk_pos, lod);
-            chunk1.position = .{xx (x_pos * CHUNK_SIZE * VOXEL_SIZE), 0, xx (z_pos * CHUNK_SIZE * VOXEL_SIZE)}; 
+            queue_chunk_operation(world, operation);
         }
     }
+    
+    // for x : 1..4 {    
+    //     operation : VoxelChunkOperation;
+    //     operation.coordinate = .{xx x, 0, xx 0};
+        
+    //     queue_chunk_operation(world, operation);
+    // }
     
             
     camera.position = .{-3, 7, 9};
@@ -46,7 +52,6 @@ main :: () {
 
         poll_events();
         simulate_game();
-          
         draw_frame();
         
 		frame_end = current_time_monotonic ();
@@ -90,6 +95,8 @@ print_size_info :: () #compile_time {
 
 #load "./game/entities/debug_camera.jai";
 #load "./game/entities/voxel_chunk.jai";
+#load "./game/entities/voxel_world.jai";
+
 
 
 // platform dependent file inclusion

@@ -23,6 +23,8 @@ binary_greedy_mesh :: (chunk : *VoxelChunkData, cs : u32 = 30, vs : float = .16)
     
     array_resize(*axis_cols, cs_p2 * 3);
     array_resize(*col_face_masks, cs_p2 * 6);
+    
+    offset : Vector3 = .{vs, vs, vs};
 
         
     voxel_index : s32 = 0;
@@ -175,10 +177,12 @@ binary_greedy_mesh :: (chunk : *VoxelChunkData, cs : u32 = 30, vs : float = .16)
                         color = .{52, 110, 235} / .{255, 255, 255};
                     }
                     
-                    vert1 = .{v1 * (vs / cs_ratio), color};
-                    vert2 = .{v2 * (vs / cs_ratio), color};
-                    vert3 = .{v3 * (vs / cs_ratio), color};
-                    vert4 = .{v4 * (vs / cs_ratio), color};
+                    
+                    
+                    vert1 = .{v1 * (vs / cs_ratio) - offset, color};
+                    vert2 = .{v2 * (vs / cs_ratio) - offset, color};
+                    vert3 = .{v3 * (vs / cs_ratio) - offset, color};
+                    vert4 = .{v4 * (vs / cs_ratio) - offset, color};
                     
                     start : u32 = xx vertices.count;
                     

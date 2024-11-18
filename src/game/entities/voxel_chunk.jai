@@ -26,33 +26,32 @@ destroy_voxel_chunk :: (chunk : *VoxelChunk) {
 populate_chunk :: (chunk : *VoxelChunkData, position : Vector3, seed : int, cs : int = 30) {
     using chunk;
     
-    cs_p : int = cs + 2;
+    cs_p  : int = cs + 2;
+    cs_p2 : int = cs_p * cs_p;
+    cs_p3 : int = cs_p2 * cs_p;
     
     cs_ratio : float = (cast (float) cs_p / cast (float) CHUNK_SIZE_PADDED);
     
     //chunk_erosion : float = get_2d(position.x, position.z, 1, 1, seed) * 10;
     
     print("%\n", position);
-
-    count : int = 0;
-    for y : 0..cs_p - 1 {
+    
+    for z : 0..cs_p - 1 {
         for x : 0..cs_p - 1 {
-            for z : 0..cs_p - 1 {
-                pos : Vector3 = .{xx (x + cs * position.x), 
+            pos2d : Vector2 = .{xx (x + cs * position.x), xx (z + cs * position.z)};
+        
+            height : float = get_2d(pos2d.x / cs_ratio, pos2d.y / cs_ratio, .01, 2, seed) * (cs_p);
+            //height : float = ((sin(pos.z / 80) * cos(pos.x / 80)) + 2) * 10;
+            
+            for y : 0..cs_p - 1 {
+                pos : Vector3 = .{pos2d.x, 
                                   xx (y + cs * position.y), 
-                                  xx (z + cs * position.z),
+                                  pos2d.y,
                                   };
-                                
-                
-                //height : float = ((sin(pos.z / 80) * cos(pos.x / 80)) + 2) * 10;
-                height : float = get_2d(pos.x / cs_ratio, pos.z / cs_ratio, .01, 2, seed) * (cs_p);
-                
-                //print("%\n", height);
-                
+                                                
                 if xx pos.y <= height{
-                    voxels[count] = 1;
+                    voxels[(y*cs_p2) + (x*cs_p) + (z)] = 1;
                 }
-                count += 1;
             }
         }
     }

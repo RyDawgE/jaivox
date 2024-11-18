@@ -145,10 +145,8 @@ draw_entities :: () {
                 set_from_axis_and_angle(*yaw, 0, 0, -1, radians(entity.rotation.x));
                 set_from_axis_and_angle(*pitch, -1, 0, 0, radians(entity.rotation.y));
                 set_from_axis_and_angle(*roll, 0, -1, 0, radians(entity.rotation.z));
-        
-        
                 
-                rotation = yaw * pitch * pitch;
+                rotation = yaw * pitch * roll;
                 
                 transform = make_translation_matrix4(entity.position) * rotation_matrix(Matrix4, rotation);;
                 

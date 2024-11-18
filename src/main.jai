@@ -14,13 +14,12 @@ main :: () {
     
     game_state.render_handle.bound_camera = camera;
     
-    for x : 0..255 {
-            chunk1 : *VoxelChunk = create_entity(VoxelChunk);
-            create_voxel_chunk(chunk1, .{xx x, 0, 0});
-            chunk1.position = .{xx (x * CHUNK_SIZE * VOXEL_SIZE), 0, 0};
-    }
+    chunk1 : *VoxelChunk = create_entity(VoxelChunk);
+    create_voxel_chunk(chunk1, .{0, 0, 0}, 0);
+    chunk1.position = .{xx (0 * CHUNK_SIZE * VOXEL_SIZE), 0, xx (0 * CHUNK_SIZE * VOXEL_SIZE)};
             
-    camera.position += .{1, -.2, 8};
+    camera.position = .{-3, 7, 9};
+    camera.rotation = .{42, 30, 0};
     
     frame_start : Apollo_Time;
     frame_end   : Apollo_Time;
@@ -31,6 +30,9 @@ main :: () {
 
         poll_events();
         simulate_game();
+  
+        chunk1.rotation += .{0, 0, .05};      
+        
         draw_frame();
         
 		frame_end = current_time_monotonic ();

@@ -71,9 +71,9 @@ tick_debug_camera :: (camera : *DebugCamera) {
     
     camera.current_chunk = .{chunk_pos_x, chunk_pos_y, chunk_pos_z};
     
-    print("Position: %\nRotation: %\n", entity.position, entity.rotation);
-    print("Forward: %\nRight: %\n", get_forward_vector(camera.rotation), get_right_vector(camera.rotation));
-    print("Chunk Position: %\n", camera.current_chunk);
+    // print("Position: %\nRotation: %\n", entity.position, entity.rotation);
+    // print("Forward: %\nRight: %\n", get_forward_vector(camera.rotation), get_right_vector(camera.rotation));
+    // print("Chunk Position: %\n", camera.current_chunk);
 }
 
 move_forward :: (camera: *DebugCamera, event : *Event) {

@@ -4,12 +4,16 @@ VoxelChunk :: struct @entity {
     voxel_data : *VoxelChunkData = null;
 }
 
-create_voxel_chunk :: (chunk : *VoxelChunk, chunk_position : Vector3, lod : int) {
+create_voxel_chunk :: (chunk : *VoxelChunk, chunk_position : Vector3, lod : int = 1) {
     using chunk;
     
+    print("%\n", lod);
+    
+    pos_lod : int = ifx lod != 0 then abs(lod) else 1;
+    
     voxel_data = New(VoxelChunkData);
-    populate_chunk(voxel_data, chunk_position, xx game_state.start_time);
-    mesh : *Model = binary_greedy_mesh(voxel_data);  
+    populate_chunk(voxel_data, chunk_position, xx game_state.start_time, CHUNK_SIZE / pos_lod);
+    mesh : *Model = binary_greedy_mesh(voxel_data, xx (CHUNK_SIZE / pos_lod), VOXEL_SIZE * pos_lod);  
     model = mesh;
 }
 
@@ -19,25 +23,29 @@ destroy_voxel_chunk :: (chunk : *VoxelChunk) {
     }
 }
 
-populate_chunk :: (chunk : *VoxelChunkData, position : Vector3, seed : int) {
+populate_chunk :: (chunk : *VoxelChunkData, position : Vector3, seed : int, cs : int = 30) {
     using chunk;
     
-    chunk_erosion : float = get_2d(position.x, position.z, 1, 1, seed) * 10;
+    cs_p : int = cs + 2;
+    
+    cs_ratio : float = (cast (float) cs_p / cast (float) CHUNK_SIZE_PADDED);
+    
+    //chunk_erosion : float = get_2d(position.x, position.z, 1, 1, seed) * 10;
     
     print("%\n", position);
-    
+
     count : int = 0;
-    for y : 0..CHUNK_SIZE_PADDED - 1 {
-        for x : 0..CHUNK_SIZE_PADDED - 1 {
-            for z : 0..CHUNK_SIZE_PADDED - 1 {
-                pos : Vector3 = .{xx (x + CHUNK_SIZE * position.x), 
-                                  xx (y + CHUNK_SIZE * position.y), 
-                                  xx (z + CHUNK_SIZE * position.z),
+    for y : 0..cs_p - 1 {
+        for x : 0..cs_p - 1 {
+            for z : 0..cs_p - 1 {
+                pos : Vector3 = .{xx (x + cs * position.x), 
+                                  xx (y + cs * position.y), 
+                                  xx (z + cs * position.z),
                                   };
                                 
                 
                 //height : float = ((sin(pos.z / 80) * cos(pos.x / 80)) + 2) * 10;
-                height : float = get_2d(pos.x, pos.z, .05, 10, seed) * 32;
+                height : float = get_2d(pos.x / cs_ratio, pos.z / cs_ratio, .01, 2, seed) * (cs_p);
                 
                 //print("%\n", height);
                 

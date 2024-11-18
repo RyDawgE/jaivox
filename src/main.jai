@@ -14,9 +14,25 @@ main :: () {
     
     game_state.render_handle.bound_camera = camera;
     
-    chunk1 : *VoxelChunk = create_entity(VoxelChunk);
-    create_voxel_chunk(chunk1, .{0, 0, 0}, 0);
-    chunk1.position = .{xx (0 * CHUNK_SIZE * VOXEL_SIZE), 0, xx (0 * CHUNK_SIZE * VOXEL_SIZE)};
+    rd := 16;
+    lod_intensity : float = 6;
+    
+    for x : 1..rd {
+        for z : 1..rd {
+            chunk1 : *VoxelChunk = create_entity(VoxelChunk);
+            
+            x_pos := x - (rd/2);
+            z_pos := z - (rd/2);
+            
+            chunk_pos : Vector3 = .{xx x_pos, 0, xx z_pos};
+            
+            lod : int = xx (distance(chunk_pos, .{0, 0, 0}) / lod_intensity);
+                        
+            create_voxel_chunk(chunk1, chunk_pos, lod);
+            chunk1.position = .{xx (x_pos * CHUNK_SIZE * VOXEL_SIZE), 0, xx (z_pos * CHUNK_SIZE * VOXEL_SIZE)}; 
+        }
+    }
+    
             
     camera.position = .{-3, 7, 9};
     camera.rotation = .{42, 30, 0};
@@ -30,9 +46,7 @@ main :: () {
 
         poll_events();
         simulate_game();
-  
-        chunk1.rotation += .{0, 0, .05};      
-        
+          
         draw_frame();
         
 		frame_end = current_time_monotonic ();

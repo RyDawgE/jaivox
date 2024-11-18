@@ -1,7 +1,16 @@
 // voxel render
 
-binary_greedy_mesh :: (chunk : *VoxelChunkData) -> *Model {
+binary_greedy_mesh :: (chunk : *VoxelChunkData, cs : u32 = 30, vs : float = .16) -> *Model {
     using chunk;
+    
+    cs_p  : u32 = cs + 2;
+    cs_p2 : u32 = cs_p * cs_p;
+    cs_p3 : u32 = cs_p * cs_p * cs_p;
+    
+    cs_last_bit        : int = cs_p - 1;
+    edge_mask          : u64 = (ULL1 << cs_last_bit) + ULL1;
+    
+    cs_ratio : float = (cs * vs) / CHUNK_WORLD_SCALE;
     
     vertices : [..] Vertex;
     indices  : [..] u32;
@@ -9,52 +18,59 @@ binary_greedy_mesh :: (chunk : *VoxelChunkData) -> *Model {
     array_reserve(*vertices, voxels.count * 4);
     array_reserve(*indices, indices.count * 6);
     
-    axis_cols      : [CHUNK_SURFACE_AREA * 3] u64;
-    col_face_masks : [CHUNK_SURFACE_AREA * 6] u64;
+    axis_cols      : [..] u64;
+    col_face_masks : [..] u64;
+    
+    array_resize(*axis_cols, cs_p2 * 3);
+    array_resize(*col_face_masks, cs_p2 * 6);
+
         
     voxel_index : s32 = 0;
-    for y : 0..CHUNK_SIZE_PADDED - 1 {
-        y_offset : int = (y * CHUNK_SIZE_PADDED) + CHUNK_SURFACE_AREA;
-        for x : 0..CHUNK_SIZE_PADDED - 1 {
+    for y : 0..cs_p - 1 {
+        y_offset : int = (y * cs_p) + cs_p2;
+        for x : 0..cs_p - 1 {
             zb : u64 = 0;
-            for z : 0..CHUNK_SIZE_PADDED - 1 {
+            for z : 0..cs_p - 1 {
                 if (voxels[voxel_index] & 1 == 1) { // if first bit == 1, voxel is occupied
-                    axis_cols[x + (z * CHUNK_SIZE_PADDED)] |= ULL1 << y;
+                    axis_cols[x + (z * cs_p)] |= ULL1 << y;
                     axis_cols[z + y_offset] |= ULL1 << x;
                     zb |= ULL1 << z;
                 }         
                 voxel_index += 1;
             }
-            axis_cols[y + (x * CHUNK_SIZE_PADDED) + (CHUNK_SURFACE_AREA * 2)] = zb;
+            axis_cols[y + (x * cs_p) + (cs_p2 * 2)] = zb;
         }
     }
     
     for axis : 0..2 {
-        for i : 0..CHUNK_SURFACE_AREA - 1 {
-            col : u64 = axis_cols[(CHUNK_SURFACE_AREA * axis) + i];
-            col_face_masks[(CHUNK_SURFACE_AREA * (axis * 2)) + i] = col & ~((col >> 1) | (ULL1 << CS_LAST_BIT));
-            col_face_masks[(CHUNK_SURFACE_AREA * (axis * 2 + 1)) + i] = col & ~((col << 1) | ULL1);
+        for i : 0..cs_p2 - 1 {
+            col : u64 = axis_cols[(cs_p2 * axis) + i];
+            col_face_masks[(cs_p2 * (axis * 2)) + i] = col & ~((col >> 1) | (ULL1 << cs_last_bit));
+            col_face_masks[(cs_p2 * (axis * 2 + 1)) + i] = col & ~((col << 1) | ULL1);
         }
     }
     
     
     for face : 0..5 {
         axis : int = face / 2;
-        facexCS_P2 : int = face * CHUNK_SURFACE_AREA;
+        facexCS_P2 : int = face * cs_p2;
         face_even_offset : int = ifx (face % 2 == 0) then 1 else 0; 
         
-        merged_forward : [CHUNK_SURFACE_AREA] int;
-        for forward : 1..CS_LAST_BIT - 1 {
-            forwardxCS_PxfacexCS_P2 : int = (forward * CHUNK_SIZE_PADDED) + facexCS_P2;
+        merged_forward : [..] int;
+        array_resize(*merged_forward, cs_p2 * 6);
+        for forward : 1..cs_last_bit - 1 {
+            forwardxCS_PxfacexCS_P2 : int = (forward * cs_p) + facexCS_P2;
             bits_walking_right : u64 = 0;
-            merged_right : [CHUNK_SIZE_PADDED] int;
-            forwardGteCS : bool = forward >= CHUNK_SIZE;
+            merged_right : [..] int;
+            array_resize(*merged_right, cs_p);
+
+            forwardGteCS : bool = forward >= cs;
             
-            for right : 1..CS_LAST_BIT - 1 {
-                rightxCS_P : int = right * CHUNK_SIZE_PADDED;
+            for right : 1..cs_last_bit - 1 {
+                rightxCS_P : int = right * cs_p;
                 
-                bits_here : u64 = col_face_masks[right + forwardxCS_PxfacexCS_P2] & ~EDGE_MASK;
-                bits_merging_forward : u64 = ifx forwardGteCS then 0 else (bits_here & ~bits_walking_right & col_face_masks[right + forwardxCS_PxfacexCS_P2 + CHUNK_SIZE_PADDED]);
+                bits_here : u64 = col_face_masks[right + forwardxCS_PxfacexCS_P2] & ~edge_mask;
+                bits_merging_forward : u64 = ifx forwardGteCS then 0 else (bits_here & ~bits_walking_right & col_face_masks[right + forwardxCS_PxfacexCS_P2 + cs_p]);
                 
                 //print("Merging Forward\n");
                 copy_front : u64 = bits_merging_forward;
@@ -65,7 +81,7 @@ binary_greedy_mesh :: (chunk : *VoxelChunkData) -> *Model {
                     merged_forward[rightxCS_P + bit_pos] += 1;
                 }
                 
-                bits_merging_right : u64 = ifx right >= CHUNK_SIZE then 0 else (bits_here & (col_face_masks[right + 1 + forwardxCS_PxfacexCS_P2]));
+                bits_merging_right : u64 = ifx right >= cs then 0 else (bits_here & (col_face_masks[right + 1 + forwardxCS_PxfacexCS_P2]));
                 
                 //print("Merging Right\n");
                 bits_stopped_forward : u64 = bits_here & ~bits_merging_forward;
@@ -75,7 +91,7 @@ binary_greedy_mesh :: (chunk : *VoxelChunkData) -> *Model {
                     bits_stopped_forward &= ~(ULL1 << bit_pos);
                     
                     shifted_pos : u64 = ULL1 << bit_pos;
-                    if ((bits_merging_right & (shifted_pos)) && merged_forward[rightxCS_P + bit_pos] == merged_forward[(right + 1) * CHUNK_SIZE_PADDED + bit_pos]) {
+                    if ((bits_merging_right & (shifted_pos)) && merged_forward[rightxCS_P + bit_pos] == merged_forward[(right + 1) * cs_p + bit_pos]) {
                         bits_walking_right |= ULL1 << bit_pos;
                         merged_right[bit_pos] += 1;
                         merged_forward[rightxCS_P + bit_pos] = 0;
@@ -159,10 +175,10 @@ binary_greedy_mesh :: (chunk : *VoxelChunkData) -> *Model {
                         color = .{52, 110, 235} / .{255, 255, 255};
                     }
                     
-                    vert1 = .{v1 * VOXEL_SCALE, color};
-                    vert2 = .{v2 * VOXEL_SCALE, color};
-                    vert3 = .{v3 * VOXEL_SCALE, color};
-                    vert4 = .{v4 * VOXEL_SCALE, color};
+                    vert1 = .{v1 * (vs / cs_ratio), color};
+                    vert2 = .{v2 * (vs / cs_ratio), color};
+                    vert3 = .{v3 * (vs / cs_ratio), color};
+                    vert4 = .{v4 * (vs / cs_ratio), color};
                     
                     start : u32 = xx vertices.count;
                     
@@ -180,7 +196,9 @@ binary_greedy_mesh :: (chunk : *VoxelChunkData) -> *Model {
                     array_add(*indices, 0 + start);
                 }
             }
+            array_free(merged_right);
         }
+        array_free(merged_forward);
     }
     
     return create_model(vertices, indices);

@@ -16,4 +16,5 @@ CHUNK_VOLUME       : u32 : CHUNK_SIZE_PADDED * CHUNK_SIZE_PADDED * CHUNK_SIZE_PA
 VoxelChunkData :: struct {
     voxels     : [CHUNK_VOLUME] u32;  
     location   : Vector3;
+    lod        : int = 1;
 }

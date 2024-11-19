@@ -40,7 +40,7 @@ tick_voxel_world :: (world : *VoxelWorld) {
     		
     		time : float = cast (float) to_float64_seconds (operation_end - operation_start);
             
-    		//print("%\n", time);
+    		print("%\n", time);
             
             operation_budget -= time;        
         }

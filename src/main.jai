@@ -17,7 +17,7 @@ main :: () {
     
     game_state.render_handle.bound_camera = camera;
     
-    rd := 96;
+    rd := 16;
     lod_intensity : float = 6;
     
     for x : 1..rd {
@@ -31,14 +31,6 @@ main :: () {
             queue_chunk_operation(world, operation);
         }
     }
-    
-    // for x : 1..4 {    
-    //     operation : VoxelChunkOperation;
-    //     operation.coordinate = .{xx x, 0, xx 0};
-        
-    //     queue_chunk_operation(world, operation);
-    // }
-    
             
     camera.position = .{-3, 7, 9};
     camera.rotation = .{42, 30, 0};

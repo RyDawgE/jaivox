@@ -1,7 +1,25 @@
 // voxel render
 
-binary_greedy_mesh :: (chunk : *VoxelChunkData, cs : u32 = 30, vs : float = .16) -> *Model {
+VoxelModel :: struct {
+    color_palette : u8  = 0;
+    base_vertex   : u32 = 0;
+    model_size    : u32 = 0;
+}
+
+VoxelWorldRenderHandle :: struct {
+    voxel_world_vertex_buffer   : [..] Vertex;
+    voxel_world_element_buffer  : [..] u32;
+    chunk_entity_ids            : [..] u32;
+    VBO : u32;
+    EBO : u32;
+}
+
+
+binary_greedy_mesh :: (chunk : *VoxelChunkData) -> *Model {
     using chunk;
+    
+    cs : u32 = CHUNK_SIZE / cast (u32) chunk.lod;
+    vs : float = VOXEL_SIZE * chunk.lod;
     
     cs_p  : u32 = cs + 2;
     cs_p2 : u32 = cs_p * cs_p;

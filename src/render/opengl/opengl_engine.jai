@@ -29,9 +29,20 @@ create_model :: (in_vertex_buffer : [..] Vertex, in_index_buffer : [..] u32) -> 
         indices = in_index_buffer;
         vertex_buffer = VBO;
         index_buffer  = EBO;
-    }
+    }    
     
     return model;   
+}
+
+create_voxel_model :: (world_render : *VoxelWorldRenderHandle, chunk : *VoxelChunk) -> VoxelModel {
+    if (!chunk.voxel_data) {
+        return .{};
+        print("Bad Voxel Data during model creation.\n");
+    }
+    
+    mesh : *Model = binary_greedy_mesh(chunk.voxel_data); 
+    
+    
 }
 
 initialize_render :: (render_handle : *RenderHandle) {

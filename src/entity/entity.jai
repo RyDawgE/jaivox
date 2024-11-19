@@ -129,11 +129,19 @@ destroy_entity :: (entity : *Entity) -> bool {
 get_entity :: (id : u64) -> *void {
     using game_state.entity_handle;
 
+    ones : u64 = ~0;
+
     block_index : u64 = (id >> 32) - 1; // only back half
-    slot_index  : u64 = ((~0) >> 32) & id; // only front half
+    slot_mask   : u64 = (ones >> 32);
+    slot_index  : u64 = slot_mask & id; // only front half
+    
+    // print("block: %\n", formatInt(block_index, 2, 64));
+    // print("mask: %\n", formatInt(slot_mask, 2, 64));
+    // print("slot:  %\n", formatInt(slot_index, 2, 64));
+
     
     memory : *void = entity_blocks[block_index].memory;
-    memory += (bit_scan_forward(slot_index) - 1) * LARGEST_ENTITY_SIZE;
+    memory += (slot_index - 1) * LARGEST_ENTITY_SIZE;
     
     return memory;
 }

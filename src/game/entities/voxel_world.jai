@@ -29,7 +29,7 @@ tick_voxel_world :: (world : *VoxelWorld) {
             operation : VoxelChunkOperation = operations[0];
             
             chunk : *VoxelChunk = create_entity(VoxelChunk);
-            lod : int = xx (distance(operation.coordinate, .{0, 0, 0}) / 4);  
+            lod : int = xx (distance(operation.coordinate, .{0, 0, 0}) / 8);  
             create_voxel_chunk(chunk, operation.coordinate, lod);
             chunk.position = .{xx (operation.coordinate.x * CHUNK_SIZE * VOXEL_SIZE), 0, xx (operation.coordinate.z * CHUNK_SIZE * VOXEL_SIZE)}; 
         

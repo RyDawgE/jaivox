@@ -217,7 +217,11 @@ draw_frame :: () {
         view = make_look_at_matrix(.{2, 2, 2}, .{0, 0, 0}, .{0, 0, 1}, false);
     }
     
-    proj  := transpose(make_projection_matrix(90.0 * PI / 180.0, xx (WindowCreationInfo.width / WindowCreationInfo.height), 0.1, 1000.0));
+    
+
+    aspect_ratio : float = (WindowCreationInfo.width / WindowCreationInfo.height);
+        
+    proj  := transpose(make_projection_matrix(75.0 * PI / 180.0, aspect_ratio, 0.1, 1000.0, 0, 0, true));
     
     view_location := glGetUniformLocation(shader_program, "view");
     glUniformMatrix4fv(view_location, 1, GL_FALSE, *transpose(view).coef[0][0]);

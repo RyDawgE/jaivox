@@ -9,8 +9,8 @@ RenderEngine :: enum u8 {
 }
 
 WindowCreationInfo :: struct {
-    width  : s32    :  1280;
-    height : s32    :  720;
+    width  : float    :  1280;
+    height : float    :  720;
     title  : string : "JaiDawgEngine - Renderer: %";
 }
 
@@ -63,11 +63,11 @@ create_model_registry :: () {
 }
 
 create_game_window :: () {
-    window_width  : s32    : WindowCreationInfo.width;
-    window_height : s32    : WindowCreationInfo.height;
+    window_width  : float  : WindowCreationInfo.width;
+    window_height : float  : WindowCreationInfo.height;
     window_title  : string : WindowCreationInfo.title;
 
-    game_state.render_handle.window = xx create_window(window_width, window_height,
+    game_state.render_handle.window = xx create_window(xx window_width, xx window_height,
                                                     tprint(window_title, RENDER_NAMES[RENDERER]), 
                                                     wanted_msaa = 0); 
                                                 

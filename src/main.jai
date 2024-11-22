@@ -12,12 +12,11 @@ main :: () {
     world  : *VoxelWorld  = create_entity(VoxelWorld);
 
     init_debug_camera(camera);
-    
-    subscribe_entity_to_tick(world, xx tick_voxel_world);
-    
+    init_voxel_world(world);
+        
     game_state.render_handle.bound_camera = camera;
     
-    rd := 32;
+    rd := 1;
     lod_intensity : float = 6;
     
     for x : 1..rd {

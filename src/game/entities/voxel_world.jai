@@ -10,6 +10,10 @@ VoxelWorld :: struct @entity {
     operations : [..] VoxelChunkOperation;
 }
 
+init_voxel_world :: (world : *VoxelWorld) {
+    subscribe_entity_to_tick(world, xx tick_voxel_world);
+}
+
 queue_chunk_operation :: (world : *VoxelWorld, operation : VoxelChunkOperation) {
     using world;
     
@@ -29,9 +33,13 @@ tick_voxel_world :: (world : *VoxelWorld) {
             operation : VoxelChunkOperation = operations[0];
             
             chunk : *VoxelChunk = create_entity(VoxelChunk);
+
             lod : int = xx (distance(operation.coordinate, .{0, 0, 0}) / 8);  
-            create_voxel_chunk(chunk, operation.coordinate, lod);
+            create_voxel_chunk_data(chunk, operation.coordinate, lod);
+
             chunk.position = .{xx (operation.coordinate.x * CHUNK_SIZE * VOXEL_SIZE), 0, xx (operation.coordinate.z * CHUNK_SIZE * VOXEL_SIZE)}; 
+        
+            create_voxel_model(game_state.render_handle.voxel_render_data, chunk.id);
         
             array_add(*chunks, chunk.id);
             array_unordered_remove_by_index(*operations, 0);
@@ -40,7 +48,7 @@ tick_voxel_world :: (world : *VoxelWorld) {
     		
     		time : float = cast (float) to_float64_seconds (operation_end - operation_start);
             
-    		print("%\n", time);
+    		//print("%\n", time);
             
             operation_budget -= time;        
         }

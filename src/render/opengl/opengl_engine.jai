@@ -6,8 +6,18 @@ RenderHandle :: struct {
     shader_program             : u32                      = 0;
     model_registry             : *Table(u32, Model);
     entity_vertex_attributes   : u32;
-    voxel_vertex_attributes    : u32;
+    IBO                        : u32;
     bound_camera               : *Entity                  = null;
+    
+    voxel_render_data          : *VoxelWorldRenderData    = null;
+}
+
+VoxelIndirectCommand :: struct {
+    count           : u32;
+    instance_count  : u32;
+    first_index     : u32;
+    base_vertex     : int;
+    base_instance   : u32;
 }
 
 create_model :: (in_vertex_buffer : [..] Vertex, in_index_buffer : [..] u32) -> *Model {    
@@ -40,25 +50,39 @@ create_model :: (in_vertex_buffer : [..] Vertex, in_index_buffer : [..] u32) -> 
     return model;   
 }
 
-create_voxel_model :: (world_render : *VoxelWorldRenderHandle, chunk : *VoxelChunk) -> VoxelModel {
+create_voxel_model :: (world_render : *VoxelWorldRenderData, chunk_id : u64) -> VoxelModel {
+    
+    chunk := cast (*VoxelChunk) get_entity(chunk_id);
+        
     if (!chunk.voxel_data) {
-        return .{};
         print("Bad Voxel Data during model creation.\n");
+        return .{};
     }
+
     
-    mesh : *Model = binary_greedy_mesh(chunk.voxel_data); 
+    model : *VoxelModel = binary_greedy_mesh(world_render, chunk.voxel_data); 
+        
+    chunk.voxel_model = model;
     
+    array_add(*world_render.chunk_entity_ids, chunk.id);
+
+    glNamedBufferSubData(world_render.VBO, 
+                         model.base_vertex * size_of(Vertex),
+                         model.vertex_count * size_of(Vertex),
+                         world_render.vertex_buffer.data
+                         );
     
+    // print("Chunk Buffer: %\n", model);
+    // print("World Vertex Buffer Size: %mb\n", (size_of(Vertex) * world_render.vertex_buffer.count) / 1_000_000);
+
+    return model;
 }
 
 initialize_render :: (render_handle : *RenderHandle) {
     create_opengl_context();
     create_shader_programs();    
+    create_voxel_buffer();
     create_attribute_descriptors();
-}
-
-cleanup_render :: () {
-
 }
 
 create_opengl_context :: () {
@@ -74,6 +98,7 @@ create_opengl_context :: () {
     
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);    
+    //glDebugMessageCallback(debug_message_callback,xx  0);
 
 }
 
@@ -109,19 +134,104 @@ create_shader_programs :: () {
 
 create_attribute_descriptors :: () {
     using game_state.render_handle;
-    
+
     glGenVertexArrays(1, *entity_vertex_attributes);       
-    glGenVertexArrays(1, *voxel_vertex_attributes);
+    glGenVertexArrays(1, *voxel_render_data.VAO);
     
     glBindVertexArray(entity_vertex_attributes);
     
 }
+
+create_voxel_buffer :: () {
+    using game_state.render_handle;
+
+    voxel_render_data = New(VoxelWorldRenderData);
+    
+    array_reserve(*voxel_render_data.vertex_buffer, size_of(Vertex) * 1_000_000);
+    
+    glGenBuffers(1, *voxel_render_data.VBO);
+    glGenBuffers(1, *voxel_render_data.EBO);
+    glGenBuffers(1, *IBO);
+    
+    glBindBuffer(GL_ARRAY_BUFFER, voxel_render_data.VBO);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, voxel_render_data.EBO);
+    glBindBuffer(GL_DRAW_INDIRECT_BUFFER, IBO);
+    
+    // Index buffer is always the same per indirect, so here I calculate the worst-case
+    // scenario and upload it on startup.
+    for i : 0..((CHUNK_SIZE / 2) * CHUNK_SIZE * CHUNK_SIZE * 6) - 1{
+        array_add(*voxel_render_data.index_buffer, (i * 4) + 1);
+        array_add(*voxel_render_data.index_buffer, (i * 4) + 2);
+        array_add(*voxel_render_data.index_buffer, (i * 4) + 0);
+        
+        array_add(*voxel_render_data.index_buffer, (i * 4) + 2);
+        array_add(*voxel_render_data.index_buffer, (i * 4) + 3);
+        array_add(*voxel_render_data.index_buffer, (i * 4) + 0);
+    }
+    
+    // Size of allocated space, in bytes
+    vertex_buffer_size : s64 = voxel_render_data.vertex_buffer.allocated;
+    index_buffer_size  : s64 = voxel_render_data.index_buffer.allocated;
+        
+    // Preallocate the data by sending the empty, reserved arrays.
+    glBufferData(GL_ARRAY_BUFFER, vertex_buffer_size, voxel_render_data.vertex_buffer.data, GL_STATIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, index_buffer_size, voxel_render_data.index_buffer.data, GL_STATIC_DRAW);
+ 
+}
+
+
+
 
 swap_buffers :: (window: Window_Type, vsync := true) {  //@TODO: Implement other platforms and vsync
     #if OS == .WINDOWS {
         dc := GetDC(window);
         SwapBuffers(dc);
     }
+}
+
+draw_voxels :: () {
+    using game_state.render_handle;
+        
+    glBindVertexArray(entity_vertex_attributes); // Make a voxel version of this later. Right now its exactly the same format
+    
+    glEnableVertexAttribArray(0);
+    glEnableVertexAttribArray(1);
+    
+    
+    glBindBuffer(GL_DRAW_INDIRECT_BUFFER, IBO);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, voxel_render_data.EBO);
+
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_TRUE,  6 * size_of(float), cast(*void) 0); // Position Attribute
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * size_of(float), cast(*void) (3 * size_of(float))); // Color Attribute  
+    
+
+    indirect_buffer : [..] VoxelIndirectCommand;
+    
+    for id : voxel_render_data.chunk_entity_ids {
+        chunk : *VoxelChunk = cast(*VoxelChunk) get_entity(id);
+        model : *VoxelModel = chunk.voxel_model;
+
+        indirect : VoxelIndirectCommand = .{
+            model.element_count,
+            1,
+            0,
+            model.base_vertex,
+            0
+        };
+        
+        array_add(*indirect_buffer, indirect);
+        
+    }    
+    
+    glBufferData(GL_DRAW_INDIRECT_BUFFER, size_of(VoxelIndirectCommand) * indirect_buffer.count, indirect_buffer.data, GL_STATIC_DRAW);
+        
+    transform := make_translation_matrix4(.{0, 0, 0});
+
+    model_location := glGetUniformLocation(shader_program, "model");
+    glUniformMatrix4fv(model_location, 1, GL_FALSE, *transpose(transform).coef[0][0]);
+
+    //glDrawElements(GL_TRIANGLES, xx voxel_render_data.index_buffer.count, GL_UNSIGNED_INT, cast(*void) 0);
+    glMultiDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_INT, xx 0, xx indirect_buffer.count, 0);
 }
 
 draw_entities :: () {
@@ -140,7 +250,7 @@ draw_entities :: () {
     // For each entity
     yaw   : Quaternion;
     pitch : Quaternion;
-    roll  : Quaternion; // Unused! Implement me!
+    roll  : Quaternion; 
     
     rotation : Quaternion;
     
@@ -157,6 +267,8 @@ draw_entities :: () {
                 if !entity.model {
                     continue;
                 }
+                
+                //print("Entity: %\n", entity);
                 
                 // Begin transformation                
                 set_from_axis_and_angle(*yaw, 0, 0, -1, radians(entity.rotation.x));
@@ -203,8 +315,6 @@ draw_frame :: () {
         set_from_axis_and_angle(*yaw, 0, -1, 0, radians(bound_camera.rotation.x));
         set_from_axis_and_angle(*pitch, -1, 0, 0, radians(bound_camera.rotation.y));
         set_from_axis_and_angle(*roll, 0, 0, -1, radians(bound_camera.rotation.z));
-
-        
         
         rotation : Quaternion = yaw * pitch * roll;
         
@@ -216,8 +326,6 @@ draw_frame :: () {
     } else {
         view = make_look_at_matrix(.{2, 2, 2}, .{0, 0, 0}, .{0, 0, 1}, false);
     }
-    
-    
 
     aspect_ratio : float = (WindowCreationInfo.width / WindowCreationInfo.height);
         
@@ -229,12 +337,23 @@ draw_frame :: () {
     projection_location := glGetUniformLocation(shader_program, "proj");
     glUniformMatrix4fv(projection_location, 1, GL_FALSE, *proj.coef[0][0]);
         
-    draw_entities();
+    draw_voxels();
+    //draw_entities();
     
     swap_buffers(window);
 }
 
+cleanup_render :: () {
 
+}
+
+debug_message_callback :: (source : GLenum, type : GLenum, id : GLuint, severity : GLenum, length : GLsizei, message : *u8, userParam : *void) -> void #c_call
+{
+    new_context : Context;
+    push_context new_context {
+        print("GL CALLBACK: % type = %, severity = %, message = %\n", "foo", type, severity, to_string(message));
+    }
+}
 
 
 #scope_file

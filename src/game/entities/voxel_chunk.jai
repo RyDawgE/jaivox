@@ -1,10 +1,11 @@
 VoxelChunk :: struct @entity {
     using #as entity : Entity;
     
-    voxel_data : *VoxelChunkData = null;
+    voxel_data  : *VoxelChunkData = null;
+    voxel_model : *VoxelModel     = null;
 }
 
-create_voxel_chunk :: (chunk : *VoxelChunk, chunk_position : Vector3, lod : int = 1) {
+create_voxel_chunk_data :: (chunk : *VoxelChunk, chunk_position : Vector3, lod : int = 1) {
     using chunk;    
     pos_lod : int = ifx lod != 0 then abs(lod) else 1;
     
@@ -15,8 +16,6 @@ create_voxel_chunk :: (chunk : *VoxelChunk, chunk_position : Vector3, lod : int 
     voxel_data.location = chunk_position;
     
     populate_chunk(voxel_data, xx game_state.start_time);
-    mesh : *Model = binary_greedy_mesh(voxel_data);  
-    model = mesh;
 }
 
 destroy_voxel_chunk :: (chunk : *VoxelChunk) {
@@ -46,6 +45,7 @@ populate_chunk :: (chunk : *VoxelChunkData, seed : int) {
             pos2d : Vector2 = .{xx (x + cs * position.x), xx (z + cs * position.z)};
         
             height : float = get_2d(pos2d.x / cs_ratio, pos2d.y / cs_ratio, .01, 3, seed) * (cs);
+
             //height : float = ((sin(pos.z / 80) * cos(pos.x / 80)) + 2) * 10;
             
             for y : 0..cs_p - 1 {

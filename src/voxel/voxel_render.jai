@@ -3,20 +3,31 @@
 VoxelModel :: struct {
     color_palette : u8  = 0;
     base_vertex   : u32 = 0;
-    model_size    : u32 = 0;
+    vertex_count  : u32 = 0; 
+    base_element  : u32 = 0; 
+    element_count : u32 = 0;
 }
 
-VoxelWorldRenderHandle :: struct {
-    voxel_world_vertex_buffer   : [..] Vertex;
-    voxel_world_element_buffer  : [..] u32;
-    chunk_entity_ids            : [..] u32;
+VoxelWorldRenderData :: struct {
+    vertex_buffer      : [..] Vertex;
+    index_buffer       : [..] u32;
+    chunk_entity_ids   : [..] u64;
+    VAO : u32;
     VBO : u32;
     EBO : u32;
 }
 
 
-binary_greedy_mesh :: (chunk : *VoxelChunkData) -> *Model {
+binary_greedy_mesh :: (world_render : *VoxelWorldRenderData, chunk : *VoxelChunkData) -> *VoxelModel {
     using chunk;
+    
+    model : *VoxelModel = New(VoxelModel);
+    
+    start : u32 = xx world_render.vertex_buffer.count;
+    indx_start : u32 = xx world_render.index_buffer.count;
+    model.base_vertex = start;
+    model.base_element = indx_start;
+    
     
     cs : u32 = CHUNK_SIZE / cast (u32) chunk.lod;
     vs : float = VOXEL_SIZE * chunk.lod;
@@ -25,8 +36,8 @@ binary_greedy_mesh :: (chunk : *VoxelChunkData) -> *Model {
     cs_p2 : u32 = cs_p * cs_p;
     cs_p3 : u32 = cs_p * cs_p * cs_p;
     
-    cs_last_bit        : int = cs_p - 1;
-    edge_mask          : u64 = (ULL1 << cs_last_bit) + ULL1;
+    cs_last_bit : int = cs_p - 1;
+    edge_mask   : u64 = (ULL1 << cs_last_bit) + ULL1;
     
     cs_ratio : float = (cs * vs) / CHUNK_WORLD_SCALE;
     
@@ -195,27 +206,21 @@ binary_greedy_mesh :: (chunk : *VoxelChunkData) -> *Model {
                         color = .{52, 110, 235} / .{255, 255, 255};
                     }
                     
-                    
-                    
                     vert1 = .{v1 * (vs / cs_ratio) - offset, color};
                     vert2 = .{v2 * (vs / cs_ratio) - offset, color};
                     vert3 = .{v3 * (vs / cs_ratio) - offset, color};
                     vert4 = .{v4 * (vs / cs_ratio) - offset, color};
                     
-                    start : u32 = xx vertices.count;
+                    start : u32 = xx world_render.vertex_buffer.count;
                     
-                    array_add(*vertices, vert1);
-                    array_add(*vertices, vert2);
-                    array_add(*vertices, vert3);
-                    array_add(*vertices, vert4);
+                    array_add(*world_render.vertex_buffer, vert1);
+                    array_add(*world_render.vertex_buffer, vert2);
+                    array_add(*world_render.vertex_buffer, vert3);
+                    array_add(*world_render.vertex_buffer, vert4);
                     
-                    array_add(*indices, 1 + start);
-                    array_add(*indices, 2 + start);
-                    array_add(*indices, 0 + start);
+                    model.vertex_count += 4;
+                    model.element_count += 6;
                     
-                    array_add(*indices, 2 + start);
-                    array_add(*indices, 3 + start);
-                    array_add(*indices, 0 + start);
                 }
             }
             array_free(merged_right);
@@ -223,5 +228,5 @@ binary_greedy_mesh :: (chunk : *VoxelChunkData) -> *Model {
         array_free(merged_forward);
     }
     
-    return create_model(vertices, indices);
+    return model;
 }

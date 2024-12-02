@@ -16,7 +16,7 @@ main :: () {
         
     game_state.render_handle.bound_camera = camera;
     
-    rd := 1;
+    rd := 4;
     lod_intensity : float = 6;
     
     for x : 1..rd {

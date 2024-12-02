@@ -35,8 +35,8 @@ create_model :: (in_vertex_buffer : [..] Vertex, in_index_buffer : [..] u32) -> 
     vertex_buffer_size : s64 = in_vertex_buffer.count * size_of(Vertex);
     index_buffer_size  : s64 = in_index_buffer.count * size_of(u32);
     
-    glBufferData(GL_ARRAY_BUFFER, vertex_buffer_size, in_vertex_buffer.data, GL_STATIC_DRAW);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, index_buffer_size, in_index_buffer.data, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, vertex_buffer_size, in_vertex_buffer.data, GL_DYNAMIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, index_buffer_size, in_index_buffer.data, GL_DYNAMIC_DRAW);
     
     {
         using model;
@@ -97,7 +97,8 @@ create_opengl_context :: () {
     glViewport(0, 0, xx width, xx height);
     
     glEnable(GL_CULL_FACE);
-    glCullFace(GL_BACK);    
+    glCullFace(GL_BACK);  
+    glEnable(GL_DEPTH_TEST); 
     //glDebugMessageCallback(debug_message_callback,xx  0);
 
 }
@@ -127,9 +128,7 @@ create_shader_programs :: () {
     glLinkProgram(shader_program);
     
     glDeleteShader(vertex_shader);
-    glDeleteShader(fragment_shader);
-    
-    glEnable(GL_DEPTH_TEST);
+    glDeleteShader(fragment_shader);    
 }
 
 create_attribute_descriptors :: () {
@@ -174,8 +173,8 @@ create_voxel_buffer :: () {
     index_buffer_size  : s64 = voxel_render_data.index_buffer.allocated;
         
     // Preallocate the data by sending the empty, reserved arrays.
-    glBufferData(GL_ARRAY_BUFFER, vertex_buffer_size, voxel_render_data.vertex_buffer.data, GL_STATIC_DRAW);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, index_buffer_size, voxel_render_data.index_buffer.data, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, vertex_buffer_size, voxel_render_data.vertex_buffer.data, GL_DYNAMIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, index_buffer_size, voxel_render_data.index_buffer.data, GL_DYNAMIC_DRAW);
  
 }
 
@@ -197,7 +196,6 @@ draw_voxels :: () {
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);
     
-    
     glBindBuffer(GL_DRAW_INDIRECT_BUFFER, IBO);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, voxel_render_data.EBO);
 
@@ -215,7 +213,7 @@ draw_voxels :: () {
             model.element_count,
             1,
             0,
-            model.base_vertex,
+            xx model.base_vertex,
             0
         };
         
@@ -223,15 +221,15 @@ draw_voxels :: () {
         
     }    
     
-    glBufferData(GL_DRAW_INDIRECT_BUFFER, size_of(VoxelIndirectCommand) * indirect_buffer.count, indirect_buffer.data, GL_STATIC_DRAW);
+    glBufferData(GL_DRAW_INDIRECT_BUFFER, size_of(VoxelIndirectCommand) * indirect_buffer.count, indirect_buffer.data, GL_DYNAMIC_DRAW);
         
     transform := make_translation_matrix4(.{0, 0, 0});
 
     model_location := glGetUniformLocation(shader_program, "model");
     glUniformMatrix4fv(model_location, 1, GL_FALSE, *transpose(transform).coef[0][0]);
 
-    //glDrawElements(GL_TRIANGLES, xx voxel_render_data.index_buffer.count, GL_UNSIGNED_INT, cast(*void) 0);
-    glMultiDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_INT, xx 0, xx indirect_buffer.count, 0);
+    glDrawElements(GL_TRIANGLES, xx voxel_render_data.index_buffer.count, GL_UNSIGNED_INT, cast(*void) 0);
+    //glMultiDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_INT, xx 0, xx indirect_buffer.count, 0);
 }
 
 draw_entities :: () {

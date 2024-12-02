@@ -94,6 +94,8 @@ register_model :: () {}
 #if cast (RenderEngine) RENDERER ==  {
     case .OPENGL;
         #load "./opengl/opengl_engine.jai";
+    case .VULKAN;
+        #load "./vulkan/vulkan_engine.jai";
         
     case;
         #run print("invalid renderer argument supplied: %\n", RENDERER);

@@ -44,6 +44,7 @@ build :: () {
                 RENDERER = 1;
             case "vulkan";
                 RENDERER = 0;
+                compile_shaders(tprint("%/shaders", build_dir));
             case;
                 compiler_report(tprint("Command-line argument #%, '%', is invalid. Valid options are: 'debug', 'release', 'no_output'.\n", it_index+1, arg));
         }

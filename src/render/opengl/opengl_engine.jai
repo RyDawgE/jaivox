@@ -54,7 +54,7 @@ create_voxel_model :: (world_render : *VoxelWorldRenderData, chunk_id : u64) -> 
     
     chunk := cast (*VoxelChunk) get_entity(chunk_id);
         
-    if (!chunk.voxel_data) {
+if (!chunk.voxel_data) {
         print("Bad Voxel Data during model creation.\n");
         return .{};
     }

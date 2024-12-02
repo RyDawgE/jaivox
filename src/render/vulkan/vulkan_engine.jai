@@ -1363,7 +1363,29 @@ update_uniform_buffer :: (current_image : u32) {
         using ubo;
         
         model = transpose(rotation_matrix(Matrix4, model_rotate));
-        view  = transpose(make_look_at_matrix(.{2, 2, 2}, .{0, 0, 0}, .{0, 0, 1}, false));
+
+        if bound_camera {
+            yaw   : Quaternion;
+            pitch : Quaternion;
+            roll  : Quaternion;
+            
+            transform : Matrix4 = Matrix4_Identity;
+            
+            set_from_axis_and_angle(*yaw, 0, -1, 0, radians(bound_camera.rotation.x));
+            set_from_axis_and_angle(*pitch, -1, 0, 0, radians(bound_camera.rotation.y));
+            set_from_axis_and_angle(*roll, 0, 0, -1, radians(bound_camera.rotation.z));
+            
+            rotation : Quaternion = yaw * pitch * roll;
+            
+            transform = make_translation_matrix4(bound_camera.position) * rotation_matrix(Matrix4, rotation);
+            
+            view = transpose(inverse(transform)); //type mat4
+        
+            //view = make_look_at_matrix(bound_camera.position, .{0, 0, 0}, .{0, 0, 1}, false);
+        } else {
+            view = make_look_at_matrix(.{2, 2, 2}, .{0, 0, 0}, .{0, 0, 1}, false);
+        }
+
         proj  = transpose(make_projection_matrix(45.0 * PI / 180.0, xx (swap_chain_extent.width / swap_chain_extent.height), 0.1, 100.0));
     }
     
@@ -1395,10 +1417,12 @@ draw_frame :: () {
     signal_semaphores := VkSemaphore.[render_finished_semaphores[current_frame]];
     swap_chains       := VkSwapchainKHR.[swap_chain];
 
+    update_uniform_buffer(current_frame);
+    
     vkResetCommandBuffer(command_buffers[current_frame], 0);
+    
     record_command_buffer(command_buffers[current_frame], image_index);
     
-    update_uniform_buffer(current_frame);
 
     submit_info : VkSubmitInfo = .{};
     {

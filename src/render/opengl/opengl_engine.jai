@@ -177,7 +177,9 @@ create_voxel_buffer :: () {
         
     // Preallocate the data by sending the empty, reserved arrays.
     glBufferData(GL_ARRAY_BUFFER, vertex_buffer_size, voxel_render_data.vertex_buffer.data, GL_DYNAMIC_DRAW);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, index_buffer_size, voxel_render_data.index_buffer.data, GL_DYNAMIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, index_buffer_size, voxel_render_data.index_buffer.data, GL_STATIC_DRAW);
+    glBufferData(GL_DRAW_INDIRECT_BUFFER, 65536 * size_of(VoxelIndirectCommand) * 64, cast (*void) 0, GL_DYNAMIC_DRAW);
+
  
 }
 
@@ -220,6 +222,8 @@ draw_voxels_indirect :: () {
             0
         };
         
+        glBufferSubData(GL_DRAW_INDIRECT_BUFFER, size_of(VoxelIndirectCommand) * indirect_buffer.count, size_of(VoxelIndirectCommand), *indirect);
+        
         array_add(*indirect_buffer, indirect);    
     }    
     
@@ -228,7 +232,7 @@ draw_voxels_indirect :: () {
     model_location := glGetUniformLocation(shader_program, "model");
     glUniformMatrix4fv(model_location, 1, GL_FALSE, *transpose(transform).coef[0][0]);
     
-    glBufferData(GL_DRAW_INDIRECT_BUFFER, size_of(VoxelIndirectCommand) * indirect_buffer.count, indirect_buffer.data, GL_DYNAMIC_DRAW);
+    
     glMultiDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_INT, xx 0, xx indirect_buffer.count, 0);
 
     
@@ -366,7 +370,7 @@ draw_frame :: () {
     projection_location := glGetUniformLocation(shader_program, "proj");
     glUniformMatrix4fv(projection_location, 1, GL_FALSE, *proj.coef[0][0]);
         
-    draw_voxels();
+    draw_voxels_indirect();
     //draw_entities();
     
     

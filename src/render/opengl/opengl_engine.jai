@@ -69,13 +69,8 @@ create_voxel_model :: (world_render : *VoxelWorldRenderData, chunk_id : u64) -> 
     glNamedBufferSubData(world_render.VBO, 
                          model.base_vertex * size_of(Vertex),
                          model.vertex_count * size_of(Vertex),
-                         world_render.vertex_buffer.data
+                         world_render.vertex_buffer.data + model.base_vertex
                          );
-                         
-    glNamedBufferSubData(world_render.EBO,
-                         model.base_element * size_of(u32),
-                         model.element_count * size_of(u32),
-                         world_render.index_buffer.data);
     
     // print("Chunk Buffer: %\n", model);
     // print("World Vertex Buffer Size: %mb\n", (size_of(Vertex) * world_render.vertex_buffer.count) / 1_000_000);
@@ -105,7 +100,7 @@ create_opengl_context :: () {
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);  
     glEnable(GL_DEPTH_TEST); 
-    //glDebugMessageCallback(debug_message_callback,xx  0);
+    glDebugMessageCallback(debug_message_callback,xx  0);
 
 }
 
@@ -174,13 +169,15 @@ create_voxel_buffer :: () {
         array_add(*voxel_render_data.index_buffer, (i * 4) + 0);
     }
     
+    print("%\n", voxel_render_data.index_buffer.count * size_of(u32) * 64);
+    
     // Size of allocated space, in bytes
     vertex_buffer_size : s64 = voxel_render_data.vertex_buffer.allocated;
     index_buffer_size  : s64 = voxel_render_data.index_buffer.allocated;
         
     // Preallocate the data by sending the empty, reserved arrays.
     glBufferData(GL_ARRAY_BUFFER, vertex_buffer_size, voxel_render_data.vertex_buffer.data, GL_DYNAMIC_DRAW);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, index_buffer_size * 64, voxel_render_data.index_buffer.data, GL_DYNAMIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, index_buffer_size, voxel_render_data.index_buffer.data, GL_DYNAMIC_DRAW);
  
 }
 
@@ -260,8 +257,9 @@ draw_voxels :: () {
         model_location := glGetUniformLocation(shader_program, "model");
         glUniformMatrix4fv(model_location, 1, GL_FALSE, *transpose(transform).coef[0][0]);
 
-        glDrawElementsBaseVertex(GL_TRIANGLES, model.element_count, GL_UNSIGNED_INT, cast (*void) 0, xx model.base_vertex);
+        glDrawElementsBaseVertex(GL_TRIANGLES, model.element_count, GL_UNSIGNED_INT, cast (*void) 0, xx (model.base_vertex));
     }    
+    //glDrawElements(GL_TRIANGLES, 20000, GL_UNSIGNED_INT, cast (*void) 0 );
     
 }
 

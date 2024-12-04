@@ -16,11 +16,13 @@ main :: () {
         
     game_state.render_handle.bound_camera = camera;
     
-    rd := 2;
+    // num of chunks = rd ^ 2
+    rd := 64;
     lod_intensity : float = 6;
     
     for x : 1..rd {
         for z : 1..rd {
+
             x_pos := x - (rd/2);
             z_pos := z - (rd/2);
         
@@ -30,6 +32,8 @@ main :: () {
             queue_chunk_operation(world, operation);
         }
     }
+    
+
             
     camera.position = .{-3, 7, 9};
     camera.rotation = .{42, 30, 0};

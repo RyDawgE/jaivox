@@ -50,7 +50,7 @@ populate_chunk :: (chunk : *VoxelChunkData, seed : int) {
             
             for y : 0..cs_p - 1 {
                 pos : Vector3 = .{pos2d.x, 
-                                  xx (y + cs * position.y), 
+                                  cast (float) (y + cs * position.y), 
                                   pos2d.y,
                                   };
                                                 

@@ -206,10 +206,10 @@ binary_greedy_mesh :: (world_render : *VoxelWorldRenderData, chunk : *VoxelChunk
                         color = .{52, 110, 235} / .{255, 255, 255};
                     }
                     
-                    vert1 = .{v1 * (vs / cs_ratio) - offset, color};
-                    vert2 = .{v2 * (vs / cs_ratio) - offset, color};
-                    vert3 = .{v3 * (vs / cs_ratio) - offset, color};
-                    vert4 = .{v4 * (vs / cs_ratio) - offset, color};
+                    vert1 = .{(v1 * (vs / cs_ratio) - offset) + (chunk.location * CHUNK_WORLD_SCALE), color};
+                    vert2 = .{(v2 * (vs / cs_ratio) - offset) + (chunk.location * CHUNK_WORLD_SCALE), color};
+                    vert3 = .{(v3 * (vs / cs_ratio) - offset) + (chunk.location * CHUNK_WORLD_SCALE), color};
+                    vert4 = .{(v4 * (vs / cs_ratio) - offset) + (chunk.location * CHUNK_WORLD_SCALE), color};
                     
                     start : u32 = xx world_render.vertex_buffer.count;
                     

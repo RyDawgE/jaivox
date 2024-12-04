@@ -1077,11 +1077,10 @@ copy_buffer :: (src_buffer : VkBuffer, dst_buffer : VkBuffer, size : VkDeviceSiz
 create_vertex_buffer :: () {
     using game_state.render_handle;
     
-    buffer_size : VkDeviceSize = cast (u64) (size_of(Vertex) * SAMPLE_VERTS.count);
-    
-    staging_buffer : VkBuffer;
-    staging_buffer_memory : VkDeviceMemory;
-    
+    // Creating the buffer. There is nothing allocated, would in theory have size 0.
+    buffer_size             : VkDeviceSize = cast (u64) (size_of(Vertex) * SAMPLE_VERTS.count);
+    staging_buffer          : VkBuffer;
+    staging_buffer_memory   : VkDeviceMemory;
     create_buffer(buffer_size, .TRANSFER_SRC_BIT, .HOST_VISIBLE_BIT | .HOST_COHERENT_BIT, *staging_buffer, *staging_buffer_memory);
 
     data : *void;    

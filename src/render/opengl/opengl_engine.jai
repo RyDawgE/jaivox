@@ -207,9 +207,6 @@ create_voxel_buffer :: () {
  
 }
 
-
-
-
 swap_buffers :: (window: Window_Type, vsync := true) {  //@TODO: Implement other platforms and vsync
     #if OS == .WINDOWS {
         dc := GetDC(window);
@@ -381,7 +378,7 @@ draw_frame :: () {
     } else {
         draw_voxels(); 
     }
-    //draw_entities();
+    draw_entities();
     swap_buffers(window);
     
     

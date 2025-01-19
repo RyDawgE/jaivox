@@ -10,6 +10,26 @@ VoxelWorld :: struct @entity {
     operations : [..] VoxelChunkOperation;
 }
 
+create_voxel_world :: (world : *VoxelWorld) {
+    init_voxel_world(world);
+    // num of chunks = rd ^ 2
+    rd := 64;
+    lod_intensity : float = 6;
+    
+    for x : 1..rd {
+        for z : 1..rd {
+
+            x_pos := x - (rd/2);
+            z_pos := z - (rd/2);
+        
+            operation : VoxelChunkOperation;
+            operation.coordinate = .{xx x_pos, 0, xx z_pos};
+            
+            queue_chunk_operation(world, operation);
+        }
+    }
+}
+
 init_voxel_world :: (world : *VoxelWorld) {
     subscribe_entity_to_tick(world, xx tick_voxel_world);
 }
@@ -29,7 +49,6 @@ tick_voxel_world :: (world : *VoxelWorld) {
         
     		operation_start : Apollo_Time = current_time_monotonic ();
 
-
             operation : VoxelChunkOperation = operations[0];
             
             chunk : *VoxelChunk = create_entity(VoxelChunk);
@@ -43,6 +62,8 @@ tick_voxel_world :: (world : *VoxelWorld) {
         
             array_add(*chunks, chunk.id);
             array_unordered_remove_by_index(*operations, 0);
+    		
+    		free(model);
     		
     		operation_end : Apollo_Time = current_time_monotonic ();
     		

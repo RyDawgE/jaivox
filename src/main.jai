@@ -10,36 +10,19 @@ main :: () {
     
     camera : *DebugCamera = create_entity(DebugCamera);
     world  : *VoxelWorld  = create_entity(VoxelWorld);
+    dbg    : *DebugEntity = create_entity(DebugEntity);
+    init_debug_entity(dbg);
 
     init_debug_camera(camera);
-    init_voxel_world(world);
-        
     game_state.render_handle.bound_camera = camera;
     
-    // num of chunks = rd ^ 2
-    rd := 64;
-    lod_intensity : float = 6;
-    
-    for x : 1..rd {
-        for z : 1..rd {
-
-            x_pos := x - (rd/2);
-            z_pos := z - (rd/2);
-        
-            operation : VoxelChunkOperation;
-            operation.coordinate = .{xx x_pos, 0, xx z_pos};
-            
-            queue_chunk_operation(world, operation);
-        }
-    }
-    
-
-            
     camera.position = .{-3, 7, 9};
     camera.rotation = .{42, 30, 0};
     
     frame_start : Apollo_Time;
     frame_end   : Apollo_Time;
+    
+    //create_voxel_world(world);
 
     // @MainLoop
     while !game_state.should_close {
@@ -88,6 +71,7 @@ print_size_info :: () #compile_time {
 #load "./math_utilities.jai";
 #load "./voxel/noise/perlin_noise.jai";
 
+#load "./game/entities/debug_entity.jai";
 #load "./game/entities/debug_camera.jai";
 #load "./game/entities/voxel_chunk.jai";
 #load "./game/entities/voxel_world.jai";

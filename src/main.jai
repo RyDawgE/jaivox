@@ -12,17 +12,20 @@ main :: () {
     world  : *VoxelWorld  = create_entity(VoxelWorld);
     dbg    : *DebugEntity = create_entity(DebugEntity);
     init_debug_entity(dbg);
+    dbg.position += .{0, 3, 0};
 
     init_debug_camera(camera);
     game_state.render_handle.bound_camera = camera;
     
-    camera.position = .{-3, 7, 9};
-    camera.rotation = .{42, 30, 0};
+    camera.position = .{0, 0, 3};
+    camera.rotation = .{0, 0, 0};
     
     frame_start : Apollo_Time;
     frame_end   : Apollo_Time;
     
-    //create_voxel_world(world);
+    create_voxel_world(world);
+    
+    print("%\n", size_of(Vertex));
 
     // @MainLoop
     while !game_state.should_close {

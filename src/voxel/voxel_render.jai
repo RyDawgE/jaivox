@@ -55,7 +55,6 @@ binary_greedy_mesh :: (world_render : *VoxelWorldRenderData, chunk : *VoxelChunk
     
     offset : Vector3 = .{vs, vs, vs};
 
-        
     voxel_index : s32 = 0;
     for y : 0..cs_p - 1 {
         y_offset : int = (y * cs_p) + cs_p2;
@@ -144,6 +143,11 @@ binary_greedy_mesh :: (world_render : *VoxelWorldRenderData, chunk : *VoxelChunk
                     v3 : Vector3;
                     v4 : Vector3;
                     
+                    uv1 : Vector2;
+                    uv2 : Vector2;
+                    uv3 : Vector2;
+                    uv4 : Vector2;
+                    
                     vert1 : Vertex;
                     vert2 : Vertex;
                     vert3 : Vertex;
@@ -158,6 +162,11 @@ binary_greedy_mesh :: (world_render : *VoxelWorldRenderData, chunk : *VoxelChunk
                         v3 = .{mesh_right, mesh_up, mesh_back};
                         v4 = .{mesh_right, mesh_up, mesh_front};
                         
+                        uv1 = .{(v1.x - 1) / cs, (v1.z - 1) / cs};
+                        uv2 = .{(v2.x - 1) / cs, (v2.z - 1) / cs};
+                        uv3 = .{(v3.x - 1) / cs, (v3.z - 1) / cs};
+                        uv4 = .{(v4.x - 1) / cs, (v4.z - 1) / cs};
+
                         color = .{52, 235, 143} / .{255, 255, 255};
                         
                     // Down
@@ -166,6 +175,11 @@ binary_greedy_mesh :: (world_render : *VoxelWorldRenderData, chunk : *VoxelChunk
                         v2 = .{mesh_left, mesh_up, mesh_front};
                         v3 = .{mesh_right, mesh_up, mesh_front};
                         v4 = .{mesh_right, mesh_up, mesh_back}; 
+                        
+                        uv1 = .{(v1.x - 1) / cs, (v1.z - 1) / cs};
+                        uv2 = .{(v2.x - 1) / cs, (v2.z - 1) / cs};
+                        uv3 = .{(v3.x - 1) / cs, (v3.z - 1) / cs};
+                        uv4 = .{(v4.x - 1) / cs, (v4.z - 1) / cs};
                     
                         color = .{52, 235, 143} / .{255, 255, 255};
     
@@ -175,6 +189,11 @@ binary_greedy_mesh :: (world_render : *VoxelWorldRenderData, chunk : *VoxelChunk
                         v2 = .{mesh_up, mesh_back, mesh_left};
                         v3 = .{mesh_up, mesh_back, mesh_right};
                         v4 = .{mesh_up, mesh_front, mesh_right};
+                        
+                        uv1 = .{(v1.y - 1) / cs, (v1.z - 1) / cs};
+                        uv2 = .{(v2.y - 1) / cs, (v2.z - 1) / cs};
+                        uv3 = .{(v3.y - 1) / cs, (v3.z - 1) / cs};
+                        uv4 = .{(v4.y - 1) / cs, (v4.z - 1) / cs};
 
                         color = .{235, 64, 52} / .{255, 255, 255};
                         
@@ -184,6 +203,11 @@ binary_greedy_mesh :: (world_render : *VoxelWorldRenderData, chunk : *VoxelChunk
                         v2 = .{mesh_up, mesh_front, mesh_left};
                         v3 = .{mesh_up, mesh_front, mesh_right};
                         v4 = .{mesh_up, mesh_back, mesh_right};
+
+                        uv1 = .{(v1.y - 1) / cs, (v1.z - 1) / cs};
+                        uv2 = .{(v2.y - 1) / cs, (v2.z - 1) / cs};
+                        uv3 = .{(v3.y - 1) / cs, (v3.z - 1) / cs};
+                        uv4 = .{(v4.y - 1) / cs, (v4.z - 1) / cs};
                     
                         color = .{235, 64, 52} / .{255, 255, 255};
                         
@@ -193,6 +217,11 @@ binary_greedy_mesh :: (world_render : *VoxelWorldRenderData, chunk : *VoxelChunk
                         v2 = .{mesh_back, mesh_left, mesh_up};
                         v3 = .{mesh_back, mesh_right, mesh_up};
                         v4 = .{mesh_front, mesh_right, mesh_up};
+                        
+                        uv1 = .{(v1.x - 1) / cs, (v1.y - 1) / cs};
+                        uv2 = .{(v2.x - 1) / cs, (v2.y - 1) / cs};
+                        uv3 = .{(v3.x - 1) / cs, (v3.y - 1) / cs};
+                        uv4 = .{(v4.x - 1) / cs, (v4.y - 1) / cs};     
                     
                         color = .{52, 110, 235} / .{255, 255, 255};
                         
@@ -203,13 +232,18 @@ binary_greedy_mesh :: (world_render : *VoxelWorldRenderData, chunk : *VoxelChunk
                         v3 = .{mesh_front, mesh_right, mesh_up};
                         v4 = .{mesh_back, mesh_right, mesh_up};
                         
+                        uv1 = .{(v1.x - 1) / cs, (v1.y - 1) / cs};
+                        uv2 = .{(v2.x - 1) / cs, (v2.y - 1) / cs};
+                        uv3 = .{(v3.x - 1) / cs, (v3.y - 1) / cs};
+                        uv4 = .{(v4.x - 1) / cs, (v4.y - 1) / cs};     
+                        
                         color = .{52, 110, 235} / .{255, 255, 255};
                     }
                     
-                    vert1 = .{(v1 * (vs / cs_ratio) - offset) + (chunk.location * CHUNK_WORLD_SCALE), color};
-                    vert2 = .{(v2 * (vs / cs_ratio) - offset) + (chunk.location * CHUNK_WORLD_SCALE), color};
-                    vert3 = .{(v3 * (vs / cs_ratio) - offset) + (chunk.location * CHUNK_WORLD_SCALE), color};
-                    vert4 = .{(v4 * (vs / cs_ratio) - offset) + (chunk.location * CHUNK_WORLD_SCALE), color};
+                    vert1 = .{(v1 * (vs / cs_ratio) - offset) + (chunk.location * CHUNK_WORLD_SCALE), color, uv1};
+                    vert2 = .{(v2 * (vs / cs_ratio) - offset) + (chunk.location * CHUNK_WORLD_SCALE), color, uv2};
+                    vert3 = .{(v3 * (vs / cs_ratio) - offset) + (chunk.location * CHUNK_WORLD_SCALE), color, uv3};
+                    vert4 = .{(v4 * (vs / cs_ratio) - offset) + (chunk.location * CHUNK_WORLD_SCALE), color, uv4};
                     
                     start : u32 = xx world_render.vertex_buffer.count;
                     

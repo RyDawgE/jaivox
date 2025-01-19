@@ -20,7 +20,8 @@ VoxelIndirectCommand :: struct {
     base_instance   : u32;
 }
 
-USE_INDIRECTION : bool = true;
+// Currently broken when rendering both Entities and Voxels
+USE_INDIRECTION : bool = false;
 
 create_model :: (in_vertex_buffer : [..] Vertex, in_index_buffer : [..] u32) -> *Model {    
     model : *Model = New(Model);
@@ -37,8 +38,8 @@ create_model :: (in_vertex_buffer : [..] Vertex, in_index_buffer : [..] u32) -> 
     vertex_buffer_size : s64 = in_vertex_buffer.count * size_of(Vertex);
     index_buffer_size  : s64 = in_index_buffer.count * size_of(u32);
     
-    glBufferData(GL_ARRAY_BUFFER, vertex_buffer_size, in_vertex_buffer.data, GL_DYNAMIC_DRAW);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, index_buffer_size, in_index_buffer.data, GL_DYNAMIC_DRAW);
+    glNamedBufferData(VBO, vertex_buffer_size, in_vertex_buffer.data, GL_DYNAMIC_DRAW);
+    glNamedBufferData(EBO, index_buffer_size, in_index_buffer.data, GL_DYNAMIC_DRAW);
     
     {
         using model;
@@ -223,22 +224,20 @@ draw_voxels_indirect :: () {
     
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);
+    glEnableVertexAttribArray(2);
     
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, voxel_render_data.EBO);
 
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_TRUE,  6 * size_of(float), cast(*void) 0); // Position Attribute
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * size_of(float), cast(*void) (3 * size_of(float))); // Color Attribute  
-   
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_TRUE,  size_of(Vertex), cast(*void) 0); // Position Attribute
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, size_of(Vertex), cast(*void) (3 * size_of(float))); // Color Attribute  
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, size_of(Vertex), cast(*void) (6 * size_of(float))); // Tex CoordAttribute  
     
     transform := make_translation_matrix4(.{0, 0, 0});
 
     model_location := glGetUniformLocation(shader_program, "model");
     glUniformMatrix4fv(model_location, 1, GL_FALSE, *transpose(transform).coef[0][0]);
     
-    
     glMultiDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_INT, xx 0, xx voxel_render_data.chunk_entity_ids.count, 0);
-
-    
 }
 
 draw_voxels :: () {
@@ -248,12 +247,14 @@ draw_voxels :: () {
     
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);
-    
+    glEnableVertexAttribArray(2);
+
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, voxel_render_data.EBO);
     glBindBuffer(GL_ARRAY_BUFFER, voxel_render_data.VBO);
 
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_TRUE,  6 * size_of(float), cast(*void) 0); // Position Attribute
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * size_of(float), cast(*void) (3 * size_of(float))); // Color Attribute  
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_TRUE,  size_of(Vertex), cast(*void) 0); // Position Attribute
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, size_of(Vertex), cast(*void) (3 * size_of(float))); // Color Attribute  
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, size_of(Vertex), cast(*void) (6 * size_of(float))); // Tex CoordAttribute  
             
     transform := make_translation_matrix4(.{0, 0, 0});
     
@@ -278,7 +279,8 @@ draw_entities :: () {
     
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);
-    
+    glEnableVertexAttribArray(2);
+
     //@TODO: Filter this out by entities that actually need rendering.
     //This should be for each model, rather than each entity. Each model would
     //Have a reference to every entity that uses it, or at least the transform of such.
@@ -319,9 +321,10 @@ draw_entities :: () {
                 glBindBuffer(GL_ARRAY_BUFFER, entity.model.vertex_buffer);
                 glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, entity.model.index_buffer);
                 
-                glVertexAttribPointer(0, 3, GL_FLOAT, GL_TRUE,  6 * size_of(float), cast(*void) 0); // Position Attribute
-                glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * size_of(float), cast(*void) (3 * size_of(float))); // Color Attribute  
-                
+                glVertexAttribPointer(0, 3, GL_FLOAT, GL_TRUE,  size_of(Vertex), cast(*void) 0); // Position Attribute
+                glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, size_of(Vertex), cast(*void) (3 * size_of(float))); // Color Attribute  
+                glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, size_of(Vertex), cast(*void) (6 * size_of(float))); // Tex CoordAttribute  
+             
                 model_location := glGetUniformLocation(shader_program, "model");
                 glUniformMatrix4fv(model_location, 1, GL_FALSE, *transpose(transform).coef[0][0]);
                 
@@ -390,7 +393,7 @@ cleanup_render :: () {
 
 debug_message_callback :: (source : GLenum, type : GLenum, id : GLuint, severity : GLenum, length : GLsizei, message : *u8, userParam : *void) -> void #c_call
 {
-    new_context : Context;
+    new_context : #Context;
     push_context new_context {
         print("GL CALLBACK: % type = %, severity = %, message = %\n", "foo", type, severity, to_string(message));
     }

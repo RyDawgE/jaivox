@@ -15,8 +15,9 @@ WindowCreationInfo :: struct {
 }
 
 Vertex :: struct {
-    position : Vector3;
-    color    : Vector3;
+    position  : Vector3;
+    color     : Vector3;
+    tex_coord : Vector2;
 }
 
 //@TODO: Depricate.
@@ -45,10 +46,10 @@ Model :: struct {
 }
 
 SAMPLE_VERTS : [..] Vertex = xx Vertex.[
-    .{.{-.5, -.5, 0}, .{1, 0, 0}},
-    .{.{ .5, -.5, 0}, .{0, 1, 0}},
-    .{.{ .5,  .5, 0}, .{0, 0, 1}},
-    .{.{-.5,  .5, 0}, .{1, 1, 1}},
+    .{.{-.5, -.5, 0}, .{1, 0, 0}, .{0, 0}},
+    .{.{ .5, -.5, 0}, .{0, 1, 0}, .{0, 1}},
+    .{.{ .5,  .5, 0}, .{0, 0, 1}, .{1, 1}},
+    .{.{-.5,  .5, 0}, .{1, 1, 1}, .{1, 0}},
 ];
 
 SAMPLE_INDXS : [..] u32 = xx u32.[

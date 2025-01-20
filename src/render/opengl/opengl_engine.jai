@@ -10,6 +10,8 @@ RenderHandle :: struct {
     bound_camera               : *Entity                  = null;
     
     voxel_render_data          : *VoxelWorldRenderData    = null;
+    
+    subscribed_entities        : [..] u64;
 }
 
 VoxelIndirectCommand :: struct {
@@ -294,44 +296,39 @@ draw_entities :: () {
     
     transform : Matrix4;
 
-    for block : game_state.entity_handle.entity_blocks {
-        mask : u64 = block.member_mask;
-        for i : 0..64 { 
-            forward_bit : u64 = mask >> i;
-            if forward_bit & 1 == 1 {
-                entity : *Entity = xx (block.memory + (LARGEST_ENTITY_SIZE * i));
+    for id : subscribed_entities {
+        entity : *Entity = get_entity(id);
                 
-                //bad way to do it.
-                if !entity.model {
-                    continue;
-                }
-                
-                //print("Entity: %\n", entity);
-                
-                // Begin transformation                
-                set_from_axis_and_angle(*yaw, 0, 0, -1, radians(entity.rotation.x));
-                set_from_axis_and_angle(*pitch, -1, 0, 0, radians(entity.rotation.y));
-                set_from_axis_and_angle(*roll, 0, -1, 0, radians(entity.rotation.z));
-                
-                rotation = yaw * pitch * roll;
-                
-                transform = make_translation_matrix4(entity.position) * rotation_matrix(Matrix4, rotation);;
-                
-                // Begin Render
-                glBindBuffer(GL_ARRAY_BUFFER, entity.model.vertex_buffer);
-                glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, entity.model.index_buffer);
-                
-                glVertexAttribPointer(0, 3, GL_FLOAT, GL_TRUE,  size_of(Vertex), cast(*void) 0); // Position Attribute
-                glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, size_of(Vertex), cast(*void) (3 * size_of(float))); // Color Attribute  
-                glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, size_of(Vertex), cast(*void) (6 * size_of(float))); // Tex CoordAttribute  
-             
-                model_location := glGetUniformLocation(shader_program, "model");
-                glUniformMatrix4fv(model_location, 1, GL_FALSE, *transpose(transform).coef[0][0]);
-                
-                glDrawElements(GL_TRIANGLES, xx entity.model.indices.count, GL_UNSIGNED_INT, cast(*void) 0);
-            }    
+        //bad way to do it.
+        if !entity.model {
+            continue;
         }
-    }
+        
+        //print("Entity: %\n", entity);
+        
+        // Begin transformation                
+        set_from_axis_and_angle(*yaw, 0, 0, -1, radians(entity.rotation.x));
+        set_from_axis_and_angle(*pitch, -1, 0, 0, radians(entity.rotation.y));
+        set_from_axis_and_angle(*roll, 0, -1, 0, radians(entity.rotation.z));
+        
+        rotation = yaw * pitch * roll;
+        
+        transform = make_translation_matrix4(entity.position) * rotation_matrix(Matrix4, rotation);;
+        
+        // Begin Render
+        glBindBuffer(GL_ARRAY_BUFFER, entity.model.vertex_buffer);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, entity.model.index_buffer);
+        
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_TRUE,  size_of(Vertex), cast(*void) 0); // Position Attribute
+        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, size_of(Vertex), cast(*void) (3 * size_of(float))); // Color Attribute  
+        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, size_of(Vertex), cast(*void) (6 * size_of(float))); // Tex CoordAttribute  
+     
+        model_location := glGetUniformLocation(shader_program, "model");
+        glUniformMatrix4fv(model_location, 1, GL_FALSE, *transpose(transform).coef[0][0]);
+        
+        glDrawElements(GL_TRIANGLES, xx entity.model.indices.count, GL_UNSIGNED_INT, cast(*void) 0);
+    }    
+ 
 }
 
 draw_frame :: () {

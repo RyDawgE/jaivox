@@ -4,6 +4,7 @@ DebugEntity :: struct @entity {
 
 init_debug_entity :: (entity : *DebugEntity) {
     subscribe_entity_to_tick(entity, xx tick_debug_entity);
+    subscribe_entity_to_render(entity);
         
     cube_verts, cube_indices := create_debug_cube_mesh();
         

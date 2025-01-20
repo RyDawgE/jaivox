@@ -119,6 +119,11 @@ destroy_entity :: (entity : *Entity) -> bool {
         free(entity.input_bindings);
     }    
     
+    render_subscription := *game_state.render_handle.subscribed_entities;
+    if array_find(<<render_subscription, entity.id) {
+        array_unordered_remove_by_value(input_subscription, entity.id);
+    }    
+    
     if entity.model {
         free(entity.model);
     }
@@ -160,7 +165,18 @@ subscribe_entity_to_tick :: (entity : *Entity, proc_callback : ENTITY_TICK_PROCE
     using game_state.entity_handle;
     
     table_add(tickable_entities, entity.id, proc_callback);
+    
+    return;
 }
+
+subscribe_entity_to_render :: (entity : *Entity) {
+    using game_state.render_handle;
+    
+    array_add(*subscribed_entities, entity.id);
+    
+    return;
+}
+
 
 tick_entity :: (entity : *Entity) {
     entity.position += entity.velocity * 0.03;

@@ -128,6 +128,11 @@ create_opengl_context :: () {
     glCullFace(GL_BACK);  
     glEnable(GL_DEPTH_TEST); 
     glDebugMessageCallback(debug_message_callback,xx  0);
+    
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
 }
 
@@ -157,6 +162,9 @@ create_shader_programs :: () {
     
     glDeleteShader(vertex_shader);
     glDeleteShader(fragment_shader);    
+    
+    data : *u8 = load_texture("/assets/tex_environment_grass.png");
+    defer unload_texture(data);
 }
 
 create_attribute_descriptors :: () {

@@ -107,3 +107,4 @@ register_model :: () {}
 #import "Window_Creation";
 #import "File";
 #load "../voxel/voxel_render.jai";
+#load "texture.jai";

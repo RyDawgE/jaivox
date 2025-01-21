@@ -99,3 +99,4 @@ print_size_info :: () #compile_time {
 #import "Hash_Table";
 #import "String";
 #import "System";
+#import "File";

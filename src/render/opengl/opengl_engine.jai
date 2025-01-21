@@ -67,9 +67,7 @@ create_voxel_model :: (world_render : *VoxelWorldRenderData, chunk_id : u64) -> 
 
     
     model : *VoxelModel = binary_greedy_mesh(world_render, chunk.voxel_data); 
-    
-    model.texture_object = create_texture(TEX_ENV_GRASS);
-    
+    model.texture_object = world_render.texture;
     chunk.voxel_model = model;
     
     array_add(*world_render.chunk_entity_ids, chunk.id);
@@ -175,6 +173,9 @@ create_voxel_buffer :: () {
     using game_state.render_handle;
 
     voxel_render_data = New(VoxelWorldRenderData);
+    
+    voxel_render_data.texture = create_texture(TEX_ENV_GRASS);
+
     
     array_reserve(*voxel_render_data.vertex_buffer, size_of(Vertex) * 1_000_000);
     

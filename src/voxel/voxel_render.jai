@@ -15,6 +15,8 @@ VoxelWorldRenderData :: struct {
     VAO : u32;
     VBO : u32;
     EBO : u32;
+    //TODO: Make this a table or something
+    texture : u32;
 }
 
 

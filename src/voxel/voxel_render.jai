@@ -155,7 +155,7 @@ binary_greedy_mesh :: (world_render : *VoxelWorldRenderData, chunk : *VoxelChunk
                     vert3 : Vertex;
                     vert4 : Vertex;
                     
-                    color : Vector3;
+                    normal : Vector3;
                     
                     // Up
                     if face == 0 {
@@ -169,7 +169,7 @@ binary_greedy_mesh :: (world_render : *VoxelWorldRenderData, chunk : *VoxelChunk
                         uv3 = .{(v3.x - 1) / cs, (v3.z - 1) / cs};
                         uv4 = .{(v4.x - 1) / cs, (v4.z - 1) / cs};
 
-                        color = .{52, 235, 143} / .{255, 255, 255};
+                        normal = .{0, 1, 0};
                         
                     // Down
                     } else if face == 1 {
@@ -183,7 +183,7 @@ binary_greedy_mesh :: (world_render : *VoxelWorldRenderData, chunk : *VoxelChunk
                         uv3 = .{(v3.x - 1) / cs, (v3.z - 1) / cs};
                         uv4 = .{(v4.x - 1) / cs, (v4.z - 1) / cs};
                     
-                        color = .{52, 235, 143} / .{255, 255, 255};
+                        normal = .{0, -1, 0};
     
                     // Right
                     } else if face == 2 {
@@ -197,7 +197,7 @@ binary_greedy_mesh :: (world_render : *VoxelWorldRenderData, chunk : *VoxelChunk
                         uv3 = .{(v3.y - 1) / cs, (v3.z - 1) / cs};
                         uv4 = .{(v4.y - 1) / cs, (v4.z - 1) / cs};
 
-                        color = .{235, 64, 52} / .{255, 255, 255};
+                        normal = .{0, 0, 1};
                         
                     // Left
                     } else if face == 3 {
@@ -211,7 +211,7 @@ binary_greedy_mesh :: (world_render : *VoxelWorldRenderData, chunk : *VoxelChunk
                         uv3 = .{(v3.y - 1) / cs, (v3.z - 1) / cs};
                         uv4 = .{(v4.y - 1) / cs, (v4.z - 1) / cs};
                     
-                        color = .{235, 64, 52} / .{255, 255, 255};
+                        normal = .{0, 0, -1};
                         
                     // Front
                     } else if face == 4 {
@@ -225,7 +225,7 @@ binary_greedy_mesh :: (world_render : *VoxelWorldRenderData, chunk : *VoxelChunk
                         uv3 = .{(v3.x - 1) / cs, (v3.y - 1) / cs};
                         uv4 = .{(v4.x - 1) / cs, (v4.y - 1) / cs};     
                     
-                        color = .{52, 110, 235} / .{255, 255, 255};
+                        normal = .{1, 0, 0};
                         
                     // Back
                     } else if face == 5 {
@@ -239,13 +239,13 @@ binary_greedy_mesh :: (world_render : *VoxelWorldRenderData, chunk : *VoxelChunk
                         uv3 = .{(v3.x - 1) / cs, (v3.y - 1) / cs};
                         uv4 = .{(v4.x - 1) / cs, (v4.y - 1) / cs};     
                         
-                        color = .{52, 110, 235} / .{255, 255, 255};
+                        normal = .{-1, 0, 0};
                     }
                     
-                    vert1 = .{(v1 * (vs / cs_ratio) - offset) + (chunk.location * CHUNK_WORLD_SCALE), color, uv1};
-                    vert2 = .{(v2 * (vs / cs_ratio) - offset) + (chunk.location * CHUNK_WORLD_SCALE), color, uv2};
-                    vert3 = .{(v3 * (vs / cs_ratio) - offset) + (chunk.location * CHUNK_WORLD_SCALE), color, uv3};
-                    vert4 = .{(v4 * (vs / cs_ratio) - offset) + (chunk.location * CHUNK_WORLD_SCALE), color, uv4};
+                    vert1 = .{(v1 * (vs / cs_ratio) - offset) + (chunk.location * CHUNK_WORLD_SCALE), normal, uv1};
+                    vert2 = .{(v2 * (vs / cs_ratio) - offset) + (chunk.location * CHUNK_WORLD_SCALE), normal, uv2};
+                    vert3 = .{(v3 * (vs / cs_ratio) - offset) + (chunk.location * CHUNK_WORLD_SCALE), normal, uv3};
+                    vert4 = .{(v4 * (vs / cs_ratio) - offset) + (chunk.location * CHUNK_WORLD_SCALE), normal, uv4};
                     
                     start : u32 = xx world_render.vertex_buffer.count;
                     

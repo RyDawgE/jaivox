@@ -1,3 +1,5 @@
+GLOBAL_ILLUMINATION_POINT : Vector3 : .{100, 100, 100};
+
 RENDER_NAMES := string.[
     "Vulkan",
     "OpenGL",
@@ -16,7 +18,7 @@ WindowCreationInfo :: struct {
 
 Vertex :: struct {
     position  : Vector3;
-    color     : Vector3;
+    normal    : Vector3;
     tex_coord : Vector2;
 }
 

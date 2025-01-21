@@ -12,7 +12,7 @@ main :: () {
     world  : *VoxelWorld  = create_entity(VoxelWorld);
     dbg    : *DebugEntity = create_entity(DebugEntity);
     init_debug_entity(dbg);
-    dbg.position += .{0, 3, 0};
+    dbg.position = GLOBAL_ILLUMINATION_POINT;
 
     init_debug_camera(camera);
     game_state.render_handle.bound_camera = camera;

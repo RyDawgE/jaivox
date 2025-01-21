@@ -357,6 +357,14 @@ create_texture :: (texture_memory : string) -> u32 {
     return texture_object;
 }
 
+handle_lighting :: () {
+    using game_state.render_handle;
+    
+    light_uniform := glGetUniformLocation(shader_program, "lightPos");
+    point := GLOBAL_ILLUMINATION_POINT;
+    glUniform3f(light_uniform, point.x, point.y, point.z);
+}
+
 draw_frame :: () {
     using game_state.render_handle;
 
@@ -398,6 +406,8 @@ draw_frame :: () {
     
     projection_location := glGetUniformLocation(shader_program, "proj");
     glUniformMatrix4fv(projection_location, 1, GL_FALSE, *proj.coef[0][0]);
+    
+    handle_lighting();
         
     if USE_INDIRECTION {
         draw_voxels_indirect();

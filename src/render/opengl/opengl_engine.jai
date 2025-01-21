@@ -177,7 +177,7 @@ create_voxel_buffer :: () {
     voxel_render_data.texture = create_texture(TEX_ENV_GRASS);
 
     
-    array_reserve(*voxel_render_data.vertex_buffer, size_of(Vertex) * 1_000_000);
+    array_reserve(*voxel_render_data.vertex_buffer, size_of(Vertex) * 10_000_000);
     
     glGenBuffers(1, *voxel_render_data.VBO);
     glGenBuffers(1, *voxel_render_data.EBO);

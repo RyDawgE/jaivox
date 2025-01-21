@@ -15,12 +15,13 @@ void main() {
     vec3 norm = normalize(fragNormal);
     vec3 lightDir = normalize(lightPos - fragPos);  
     vec3 lightColor = vec3(1, 1, 1);
+    vec4 ambientIntensity = vec4(.75, .75, .75, .75);
     float lightIntensity = .75;
     
     float diff = max(dot(norm, lightDir), 0.0);
     vec3 diffuse = diff * (lightColor * lightIntensity);
     
-    outColor = (vec4(diffuse, 1.0) + vec4(1, 1, 1, 1)) * texture(Sampler, texCoord);
+    outColor = (vec4(diffuse, 1.0) + ambientIntensity) * texture(Sampler, texCoord);
     
     //outColor = vec4(normalize(fragNormal), 0);
     //outColor = texture(Sampler, texCoord);

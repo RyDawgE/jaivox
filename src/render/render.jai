@@ -43,6 +43,7 @@ Model :: struct {
     vertex_attributes  : u32;
     vertex_buffer      : u32;
     index_buffer       : u32;
+    texture_object     : u32;
 }
 
 SAMPLE_VERTS : [..] Vertex = xx Vertex.[
@@ -108,3 +109,5 @@ register_model :: () {}
 #import "File";
 #load "../voxel/voxel_render.jai";
 #load "texture.jai";
+#load "textures.jai";
+

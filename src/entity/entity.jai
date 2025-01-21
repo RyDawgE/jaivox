@@ -2,7 +2,6 @@ LARGEST_ENTITY_SIZE :: #run get_entity_slot_size();
 
 ENTITY_TICK_PROCEDURE_SIGNATURE :: #type (entity: *Entity);
 
-
 Entity :: struct @entity {
     id : u64;
     

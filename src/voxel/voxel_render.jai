@@ -1,11 +1,11 @@
 // voxel render
 
 VoxelModel :: struct {
-    color_palette : u8  = 0;
-    base_vertex   : u32 = 0;
-    vertex_count  : u32 = 0; 
-    base_element  : u32 = 0; 
-    element_count : u32 = 0;
+    texture_object : u32 = 0;
+    base_vertex    : u32 = 0;
+    vertex_count   : u32 = 0; 
+    base_element   : u32 = 0; 
+    element_count  : u32 = 0;
 }
 
 VoxelWorldRenderData :: struct {

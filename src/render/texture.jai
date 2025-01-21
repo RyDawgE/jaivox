@@ -1,21 +1,20 @@
-load_texture :: (path : string) -> *u8 {
-    asset_path := tprint("%/..%", get_data_dir(), path);
-    print("%\n", asset_path);
-
-    file : File = file_open(asset_path);
-    size : s64 = file_length(file);
-    mem  : *u8;
+bake_texture :: (path : string) -> string, bool #compile_time {
+    data, success := read_entire_file(path);
     
-    x,y,channels : s32;   
+    assert(success, "Could not bake texture %\n");
     
-    mem = alloc(size);
-    mem = stbi_load_from_file(*file, *x, *y, *channels, 3);
-    
-    return mem;
+    return data, success;
 }
 
-unload_texture :: (mem : *u8) {
-    free(mem);
+load_texture_from_data :: (buffer : *[]u8, data : string) {
+    x, y, channels : s32;
+    
+    buffer.data = stbi_load_from_memory(data.data, data.count.(s32), *x, *y, *channels, 4);
+    buffer.count = x * y * channels;
+}
+
+unload_texture :: (mem : []u8) {
+    stbi_image_free(mem.data);
 }
 
 #import "stb_image";

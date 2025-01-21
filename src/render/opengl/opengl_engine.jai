@@ -67,7 +67,9 @@ create_voxel_model :: (world_render : *VoxelWorldRenderData, chunk_id : u64) -> 
 
     
     model : *VoxelModel = binary_greedy_mesh(world_render, chunk.voxel_data); 
-        
+    
+    model.texture_object = create_texture(TEX_ENV_GRASS);
+    
     chunk.voxel_model = model;
     
     array_add(*world_render.chunk_entity_ids, chunk.id);
@@ -128,12 +130,6 @@ create_opengl_context :: () {
     glCullFace(GL_BACK);  
     glEnable(GL_DEPTH_TEST); 
     glDebugMessageCallback(debug_message_callback,xx  0);
-    
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
 }
 
 create_shader_programs :: () {
@@ -161,10 +157,14 @@ create_shader_programs :: () {
     glLinkProgram(shader_program);
     
     glDeleteShader(vertex_shader);
-    glDeleteShader(fragment_shader);    
+    glDeleteShader(fragment_shader);  
     
-    data : *u8 = load_texture("/assets/tex_environment_grass.png");
-    defer unload_texture(data);
+    glGenTextures(1, *test_texture);  
+    glBindTexture(GL_TEXTURE_2D, test_texture);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 }
 
 create_attribute_descriptors :: () {
@@ -274,6 +274,7 @@ draw_voxels :: () {
 
         model_location := glGetUniformLocation(shader_program, "model");
         glUniformMatrix4fv(model_location, 1, GL_FALSE, *transpose(transform).coef[0][0]);
+        glBindTexture(GL_TEXTURE_2D, model.texture_object);
 
         glDrawElementsBaseVertex(GL_TRIANGLES, model.element_count, GL_UNSIGNED_INT, cast (*void) 0, xx (model.base_vertex));
     }    
@@ -326,6 +327,7 @@ draw_entities :: () {
         // Begin Render
         glBindBuffer(GL_ARRAY_BUFFER, entity.model.vertex_buffer);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, entity.model.index_buffer);
+        glBindTexture(GL_TEXTURE_2D, entity.model.texture_object);
         
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_TRUE,  size_of(Vertex), cast(*void) 0); // Position Attribute
         glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, size_of(Vertex), cast(*void) (3 * size_of(float))); // Color Attribute  
@@ -337,6 +339,27 @@ draw_entities :: () {
         glDrawElements(GL_TRIANGLES, xx entity.model.indices.count, GL_UNSIGNED_INT, cast(*void) 0);
     }    
  
+}
+
+create_texture :: (texture_memory : string) -> u32 {
+    using game_state.render_handle;
+    texture_object : u32;
+    
+    glGenTextures(1, *texture_object);  
+    glBindTexture(GL_TEXTURE_2D, texture_object);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    
+    buffer : [] u8;
+    load_texture_from_data (*buffer, texture_memory);
+    defer unload_texture(buffer);
+    
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 30, 30, 0, GL_RGBA, GL_UNSIGNED_BYTE, buffer.data);
+    glGenerateMipmap(GL_TEXTURE_2D);
+    
+    return texture_object;
 }
 
 draw_frame :: () {

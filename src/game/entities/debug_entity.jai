@@ -12,6 +12,8 @@ init_debug_entity :: (entity : *DebugEntity) {
         cube_verts,
         cube_indices
     );
+    
+    entity.model.texture_object = create_texture(TEX_UNDEFINED);
 }
 
 tick_debug_entity :: (entity : *DebugEntity) {

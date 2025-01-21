@@ -25,8 +25,6 @@ main :: () {
     
     create_voxel_world(world);
     
-    print("%\n", size_of(Vertex));
-
     // @MainLoop
     while !game_state.should_close {
 		frame_start = current_time_monotonic ();
@@ -40,7 +38,7 @@ main :: () {
 		game_state.delta_time = cast (float) to_float64_seconds (frame_end - frame_start);
 		
 		// Print FPS
-		//print("%\n", 1 / game_state.delta_time);
+		print("%\n", 1 / game_state.delta_time);
     }
     cleanup();
 }

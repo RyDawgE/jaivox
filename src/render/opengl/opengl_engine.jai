@@ -158,13 +158,7 @@ create_shader_programs :: () {
     
     glDeleteShader(vertex_shader);
     glDeleteShader(fragment_shader);  
-    
-    glGenTextures(1, *test_texture);  
-    glBindTexture(GL_TEXTURE_2D, test_texture);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
 }
 
 create_attribute_descriptors :: () {

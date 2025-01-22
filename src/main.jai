@@ -38,7 +38,7 @@ main :: () {
 		game_state.delta_time = cast (float) to_float64_seconds (frame_end - frame_start);
 		
 		// Print FPS
-		//print("%\n", 1 / game_state.delta_time);
+		print("%\n", 1 / game_state.delta_time);
     }
     cleanup();
 }

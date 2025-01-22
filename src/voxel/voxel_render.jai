@@ -31,7 +31,7 @@ binary_greedy_mesh :: (world_render : *VoxelWorldRenderData, chunk : *VoxelChunk
     model.base_element = indx_start;
     
     
-    cs : u32 = CHUNK_SIZE / cast (u32) chunk.lod;
+    cs : u32 = (CHUNK_SIZE / cast (u32) chunk.lod);
     vs : float = VOXEL_SIZE * chunk.lod;
     
     cs_p  : u32 = cs + 2;

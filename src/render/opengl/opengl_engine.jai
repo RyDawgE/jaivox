@@ -23,7 +23,8 @@ VoxelIndirectCommand :: struct {
 }
 
 // Currently broken when rendering both Entities and Voxels
-USE_INDIRECTION : bool = false;
+USE_INDIRECTION : bool  = false;
+MSAA_LEVEL      : s32   = 2;
 
 create_model :: (in_vertex_buffer : [..] Vertex, in_index_buffer : [..] u32) -> *Model {    
     model : *Model = New(Model);
@@ -117,7 +118,7 @@ create_opengl_context :: () {
     using game_state.render_handle;
     using WindowCreationInfo;
     
-    gl_create_context(window, 4, 3, false, DEBUG, 0);
+    gl_create_context(window, 4, 3, false, DEBUG, MSAA_LEVEL);
     gl_load(*gl);
     
     gl_enable_debug_output(true);
@@ -127,6 +128,7 @@ create_opengl_context :: () {
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);  
     glEnable(GL_DEPTH_TEST); 
+    glEnable(GL_MULTISAMPLE);  
     glDebugMessageCallback(debug_message_callback,xx  0);
 }
 
@@ -208,8 +210,10 @@ create_voxel_buffer :: () {
     // Preallocate the data by sending the empty, reserved arrays.
     glBufferData(GL_ARRAY_BUFFER, vertex_buffer_size, voxel_render_data.vertex_buffer.data, GL_DYNAMIC_DRAW);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, index_buffer_size, voxel_render_data.index_buffer.data, GL_STATIC_DRAW);
-    glBufferData(GL_DRAW_INDIRECT_BUFFER, 65536 * size_of(VoxelIndirectCommand) * 64, cast (*void) 0, GL_DYNAMIC_DRAW);
+    
+    if USE_INDIRECTION then glBufferData(GL_DRAW_INDIRECT_BUFFER, 65536 * size_of(VoxelIndirectCommand) * 64, cast (*void) 0, GL_DYNAMIC_DRAW);
 
+    //array_free(voxel_render_data.vertex_buffer);
  
 }
 

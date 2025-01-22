@@ -1,7 +1,7 @@
 // voxel
 
 // constants
-VOXEL_SIZE         : float : .1;
+VOXEL_SIZE         : float : .16;
 CHUNK_SIZE         : u32 : 30;
 ULL1 : u64 : 1;
 

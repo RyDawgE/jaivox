@@ -14,7 +14,7 @@ uniform sampler2D Sampler;
 void main() {
     vec3 norm = normalize(fragNormal);
     vec3 lightDir = normalize(lightPos - fragPos);  
-    vec3 lightColor = vec3(1, 1, 1);
+    vec3 lightColor = vec3(.5, .5, .5);
     float ambientIntensity = .75;
     float lightIntensity = .75;
     
@@ -25,4 +25,5 @@ void main() {
     
     //outColor = vec4(normalize(fragNormal), 0);
     //outColor = texture(Sampler, texCoord);
+    //outColor = vec4(texCoord, 0, 1);
 }

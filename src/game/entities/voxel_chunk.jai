@@ -44,7 +44,7 @@ populate_chunk :: (chunk : *VoxelChunkData, seed : int) {
         for x : 0..cs_p - 1 {
             pos2d : Vector2 = .{xx (x + cs * position.x), xx (z + cs * position.z)};
         
-            height : float = get_2d(pos2d.x / cs_ratio, pos2d.y / cs_ratio, .01, 3, seed) * (cs);
+            height : float = get_2d(pos2d.x / cs_ratio, pos2d.y / cs_ratio, .02, 2, seed) * (cs);
 
             //height : float = ((sin(pos.z / 80) * cos(pos.x / 80)) + 2) * 10;
             

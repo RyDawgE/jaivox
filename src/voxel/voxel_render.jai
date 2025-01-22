@@ -55,7 +55,10 @@ binary_greedy_mesh :: (world_render : *VoxelWorldRenderData, chunk : *VoxelChunk
     array_resize(*axis_cols, cs_p2 * 3);
     array_resize(*col_face_masks, cs_p2 * 6);
     
-    offset : Vector3 = .{vs, vs, vs};
+    offset : Vector3 = .{0, 0, 0};
+
+
+    //offset : Vector3 = .{vs, vs, vs};
 
     voxel_index : s32 = 0;
     for y : 0..cs_p - 1 {

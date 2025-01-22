@@ -1,4 +1,4 @@
-GLOBAL_ILLUMINATION_POINT : Vector3 : .{100, 100, 100};
+GLOBAL_ILLUMINATION_POINT : Vector3 : .{25, 100, 25};
 
 RENDER_NAMES := string.[
     "Vulkan",

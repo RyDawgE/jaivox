@@ -14,7 +14,7 @@ VoxelWorld :: struct @entity {
 create_voxel_world :: (world : *VoxelWorld) {
     init_voxel_world(world);
     // num of chunks = rd ^ 2
-    rd := 96;
+    rd := 176;
     lod_intensity : float = 6;
     
     for x : 1..rd {
@@ -25,7 +25,7 @@ create_voxel_world :: (world : *VoxelWorld) {
         
             operation : VoxelChunkOperation = .{};
             operation.coordinate = .{xx x_pos, 0, xx z_pos};
-            operation.lod = xx (distance(operation.coordinate, .{0, 0, 0}) / 8);  
+            operation.lod = xx (distance(operation.coordinate, .{0, 0, 0}) / lod_intensity);  
 
             
             queue_chunk_operation(world, operation);

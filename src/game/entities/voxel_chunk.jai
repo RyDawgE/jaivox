@@ -60,6 +60,8 @@ populate_chunk :: (chunk : *VoxelChunkData, seed : int) {
             }
         }
     }
+    
+    //print("Voxels: %\n", voxels);
     return;
 }
 

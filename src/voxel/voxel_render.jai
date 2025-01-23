@@ -46,7 +46,7 @@ binary_greedy_mesh :: (world_render : *VoxelWorldRenderData, chunk : *VoxelChunk
     vertices : [..] Vertex;
     indices  : [..] u32;
     
-    array_reserve(*vertices, voxels.count * 4);
+    array_reserve(*vertices, voxels.count * 6);
     array_reserve(*indices, indices.count * 6);
     
     axis_cols      : [..] u64;
@@ -266,6 +266,11 @@ binary_greedy_mesh :: (world_render : *VoxelWorldRenderData, chunk : *VoxelChunk
         }
         array_free(merged_forward);
     }
+    
+    array_free(vertices);
+    array_free(indices);
+    array_free(axis_cols);
+    array_free(col_face_masks);
     
     return model;
 }

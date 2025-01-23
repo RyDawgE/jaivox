@@ -176,7 +176,7 @@ create_voxel_buffer :: () {
 
     voxel_render_data = New(VoxelWorldRenderData);
     
-    voxel_render_data.texture = create_texture(TEX_ENV_GRASS);
+    voxel_render_data.texture = create_texture(TEX_ENV_GRASS_62);
 
     
     array_reserve(*voxel_render_data.vertex_buffer, size_of(Vertex) * 10_000_000);
@@ -201,7 +201,7 @@ create_voxel_buffer :: () {
         array_add(*voxel_render_data.index_buffer, (i * 4) + 0);
     }
     
-    print("%\n", voxel_render_data.index_buffer.count * size_of(u32) * 64);
+    //print("%\n", voxel_render_data.index_buffer.count * size_of(u32) * 64);
     
     // Size of allocated space, in bytes
     vertex_buffer_size : s64 = voxel_render_data.vertex_buffer.allocated;
@@ -352,10 +352,10 @@ create_texture :: (texture_memory : string) -> u32 {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     
     buffer : [] u8;
-    load_texture_from_data (*buffer, texture_memory);
+    td : TextureData = load_texture_from_data (*buffer, texture_memory);
     defer unload_texture(buffer);
     
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 30, 30, 0, GL_RGBA, GL_UNSIGNED_BYTE, buffer.data);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, cast (u32) td.x, cast (u32) td.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, buffer.data);
     glGenerateMipmap(GL_TEXTURE_2D);
     
     return texture_object;

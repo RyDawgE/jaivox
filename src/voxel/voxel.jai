@@ -2,7 +2,7 @@
 
 // constants
 VOXEL_SIZE         : float : .16;
-CHUNK_SIZE         : u32 : 30;
+CHUNK_SIZE         : u32 : 62;
 ULL1 : u64 : 1;
 
 // derived
@@ -14,7 +14,7 @@ CHUNK_SURFACE_AREA : u32 : CHUNK_SIZE_PADDED * CHUNK_SIZE_PADDED;
 CHUNK_VOLUME       : u32 : CHUNK_SIZE_PADDED * CHUNK_SIZE_PADDED * CHUNK_SIZE_PADDED;
 
 VoxelChunkData :: struct {
-    voxels     : [CHUNK_VOLUME] u32;  
+    voxels     : [CHUNK_VOLUME] u8;  
     location   : Vector3;
     lod        : int = 1;
 }

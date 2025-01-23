@@ -1,5 +1,6 @@
 VoxelChunkOperation :: struct {
     coordinate : Vector3;
+    lod : int = 1; 
 }
 
 
@@ -22,8 +23,10 @@ create_voxel_world :: (world : *VoxelWorld) {
             x_pos := x - (rd/2);
             z_pos := z - (rd/2);
         
-            operation : VoxelChunkOperation;
+            operation : VoxelChunkOperation = .{};
             operation.coordinate = .{xx x_pos, 0, xx z_pos};
+            operation.lod = xx (distance(operation.coordinate, .{0, 0, 0}) / 8);  
+
             
             queue_chunk_operation(world, operation);
         }
@@ -37,13 +40,25 @@ init_voxel_world :: (world : *VoxelWorld) {
 queue_chunk_operation :: (world : *VoxelWorld, operation : VoxelChunkOperation) {
     using world;
     
+    for op : operations {
+        if it_index + 1 >= operations.count {
+            array_add(*operations, operation);
+            return;
+        }
+        
+        if operations[it_index + 1].lod < operation.lod {
+            array_insert_at(*operations, operation, it_index);
+            return;
+        }
+    }
     array_add(*operations, operation);
+    
 }
 
 tick_voxel_world :: (world : *VoxelWorld) {
     using world;
     
-    operation_budget : float = .004;
+    operation_budget : float = .002;
     while operation_budget > 0 {
         if operations.count > 0 {
         
@@ -53,8 +68,7 @@ tick_voxel_world :: (world : *VoxelWorld) {
             
             chunk : *VoxelChunk = create_entity(VoxelChunk);
 
-            lod : int = xx (distance(operation.coordinate, .{0, 0, 0}) / 8);  
-            create_voxel_chunk_data(chunk, operation.coordinate, lod);
+            create_voxel_chunk_data(chunk, operation.coordinate, operation.lod);
 
             chunk.position = .{xx (operation.coordinate.x * CHUNK_SIZE * VOXEL_SIZE), 0, xx (operation.coordinate.z * CHUNK_SIZE * VOXEL_SIZE)}; 
         

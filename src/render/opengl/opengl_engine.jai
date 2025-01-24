@@ -403,7 +403,7 @@ draw_frame :: () {
 
     aspect_ratio : float = (WindowCreationInfo.width / WindowCreationInfo.height);
         
-    proj  := transpose(make_projection_matrix(75.0 * PI / 180.0, aspect_ratio, 0.1, 1000.0, 0, 0, true));
+    proj  := transpose(make_projection_matrix(75.0 * PI / 180.0, aspect_ratio, 0.1, 10000.0, 0, 0, true));
     
     view_location := glGetUniformLocation(shader_program, "view");
     glUniformMatrix4fv(view_location, 1, GL_FALSE, *transpose(view).coef[0][0]);

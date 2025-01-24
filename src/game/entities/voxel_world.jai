@@ -14,8 +14,8 @@ VoxelWorld :: struct @entity {
 create_voxel_world :: (world : *VoxelWorld) {
     init_voxel_world(world);
     // num of chunks = rd ^ 2
-    rd := 176;
-    lod_intensity : float = 6;
+    rd := 128;
+    lod_intensity : float = 5;
     
     for x : 1..rd {
         for z : 1..rd {

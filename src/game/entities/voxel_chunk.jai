@@ -9,13 +9,15 @@ create_voxel_chunk_data :: (chunk : *VoxelChunk, chunk_position : Vector3, lod :
     using chunk;    
     pos_lod : int = ifx lod != 0 then abs(lod) else 1;
     
+    //print("%\n", pos_lod);
+    
     voxel_data = New(VoxelChunkData);
     
     // Maybe make initialize_chunk()?
-    voxel_data.lod = pos_lod;
+    voxel_data.lod = cast (int) pow(cast (float) pos_lod, 1.2);
     voxel_data.location = chunk_position;
     
-    populate_chunk(voxel_data, xx game_state.start_time);
+    populate_chunk(voxel_data, cast (int) game_state.start_time);
 }
 
 destroy_voxel_chunk :: (chunk : *VoxelChunk) {

@@ -17,8 +17,8 @@ main :: () {
     init_debug_camera(camera);
     game_state.render_handle.bound_camera = camera;
     
-    camera.position = .{0, 400, 0};
-    camera.rotation = .{0, 90, 0};
+    camera.position = .{0, 10, 0};
+    camera.rotation = .{0, 0, 0};
     
     frame_start : Apollo_Time;
     frame_end   : Apollo_Time;

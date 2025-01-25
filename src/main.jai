@@ -1,11 +1,13 @@
 main :: () {
     game_state.start_time = cast (float) to_float64_seconds (current_time_monotonic()); 
 
-    game_state.entity_handle = New(EntityHandle);
-    game_state.render_handle = New(RenderHandle);
-    game_state.input_handle  = New(InputHandle);
-
+    game_state.entity_handle  = New(EntityHandle);
+    game_state.render_handle  = New(RenderHandle);
+    game_state.input_handle   = New(InputHandle);
+    game_state.physics_handle = New(PhysicsHandle);
+    
     initialize_entity_handle();
+    initialize_physics();
     create_render_engine();
     
     camera : *DebugCamera = create_entity(DebugCamera);
@@ -31,6 +33,7 @@ main :: () {
 
         poll_events();
         simulate_game();
+        simulate_physics();
         draw_frame();
         
 		frame_end = current_time_monotonic ();
@@ -74,6 +77,7 @@ print_size_info :: () #compile_time {
 #load "./memory_utilities.jai";
 #load "./math_utilities.jai";
 #load "./voxel/noise/perlin_noise.jai";
+#load "./physics/physx_engine.jai";
 
 #load "./game/entities/debug_entity.jai";
 #load "./game/entities/debug_camera.jai";

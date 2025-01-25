@@ -55,10 +55,9 @@ binary_greedy_mesh :: (world_render : *VoxelWorldRenderData, chunk : *VoxelChunk
     array_resize(*axis_cols, cs_p2 * 3);
     array_resize(*col_face_masks, cs_p2 * 6);
     
-    offset : Vector3 = .{0, 0, 0};
+    offset : Vector3 = .{vs, vs, vs};
 
 
-    //offset : Vector3 = .{vs, vs, vs};
 
     voxel_index : s32 = 0;
     for y : 0..cs_p - 1 {
@@ -245,10 +244,10 @@ binary_greedy_mesh :: (world_render : *VoxelWorldRenderData, chunk : *VoxelChunk
                         normal = .{-1, 0, 0};
                     }
                     
-                    vert1 = .{(v1 * (vs / cs_ratio) - offset) + (chunk.location * CHUNK_WORLD_SCALE), normal, uv1};
-                    vert2 = .{(v2 * (vs / cs_ratio) - offset) + (chunk.location * CHUNK_WORLD_SCALE), normal, uv2};
-                    vert3 = .{(v3 * (vs / cs_ratio) - offset) + (chunk.location * CHUNK_WORLD_SCALE), normal, uv3};
-                    vert4 = .{(v4 * (vs / cs_ratio) - offset) + (chunk.location * CHUNK_WORLD_SCALE), normal, uv4};
+                    vert1 = .{(v1 * (vs / cs_ratio) - offset), normal, uv1};
+                    vert2 = .{(v2 * (vs / cs_ratio) - offset), normal, uv2};
+                    vert3 = .{(v3 * (vs / cs_ratio) - offset), normal, uv3};
+                    vert4 = .{(v4 * (vs / cs_ratio) - offset), normal, uv4};
                     
                     start : u32 = xx world_render.vertex_buffer.count;
                     

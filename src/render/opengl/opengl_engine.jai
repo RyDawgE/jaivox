@@ -265,11 +265,27 @@ draw_voxels :: () {
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, size_of(Vertex), cast(*void) (3 * size_of(float))); // Color Attribute  
     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, size_of(Vertex), cast(*void) (6 * size_of(float))); // Tex CoordAttribute  
             
-    transform := make_translation_matrix4(.{0, 0, 0});
+    // For each entity
+    yaw   : Quaternion;
+    pitch : Quaternion;
+    roll  : Quaternion; 
+    
+    rotation : Quaternion;
+    
+    transform : Matrix4;
     
     for id : voxel_render_data.chunk_entity_ids {
         chunk : *VoxelChunk = cast(*VoxelChunk) get_entity(id);
         model : *VoxelModel = chunk.voxel_model;
+        
+        // Begin transformation                
+        set_from_axis_and_angle(*yaw, 0, 0, -1, radians(chunk.rotation.x));
+        set_from_axis_and_angle(*pitch, -1, 0, 0, radians(chunk.rotation.y));
+        set_from_axis_and_angle(*roll, 0, -1, 0, radians(chunk.rotation.z));
+        
+        rotation = yaw * pitch * roll;
+        
+        transform = make_translation_matrix4(chunk.position) * rotation_matrix(Matrix4, rotation);
 
         model_location := glGetUniformLocation(shader_program, "model");
         glUniformMatrix4fv(model_location, 1, GL_FALSE, *transpose(transform).coef[0][0]);
@@ -321,7 +337,7 @@ draw_entities :: () {
         
         rotation = yaw * pitch * roll;
         
-        transform = make_translation_matrix4(entity.position) * rotation_matrix(Matrix4, rotation);;
+        transform = make_translation_matrix4(entity.position) * rotation_matrix(Matrix4, rotation);
         
         // Begin Render
         glBindBuffer(GL_ARRAY_BUFFER, entity.model.vertex_buffer);

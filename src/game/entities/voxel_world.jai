@@ -13,7 +13,7 @@ VoxelWorld :: struct @entity {
 create_voxel_world :: (world : *VoxelWorld) {
     init_voxel_world(world);
     // num of chunks = rd ^ 2
-    rd : float = 64;
+    rd : float = 128;
     lod_intensity : float = 5;
     
     for x : 1.. cast (int) rd {
@@ -22,7 +22,6 @@ create_voxel_world :: (world : *VoxelWorld) {
             x_pos : float = x - (rd/2);
             z_pos : float = z - (rd/2);
             
-        
             operation : VoxelChunkOperation = .{};
             operation.coordinate = .{x_pos, 0, z_pos};
             
@@ -67,6 +66,7 @@ tick_voxel_world :: (world : *VoxelWorld) {
             operation : VoxelChunkOperation = operations[0];
 
             chunk : *VoxelChunk = create_entity(VoxelChunk);
+            chunk.position = .{xx (operation.coordinate.x * CHUNK_SIZE * VOXEL_SIZE), 0, xx (operation.coordinate.z * CHUNK_SIZE * VOXEL_SIZE)}; 
             
             create_voxel_chunk_data(chunk, operation.coordinate, operation.lod);
             create_voxel_model(game_state.render_handle.voxel_render_data, chunk.id);

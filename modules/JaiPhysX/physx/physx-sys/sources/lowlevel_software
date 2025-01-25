@@ -1,9 +1,0 @@
-[
-    "PxsCCD",
-    "PxsContactManager",
-    "PxsContext",
-    "PxsDefaultMemoryManager",
-    "PxsIslandSim",
-    "PxsNphaseImplementationContext",
-    "PxsSimpleIslandManager",
-]

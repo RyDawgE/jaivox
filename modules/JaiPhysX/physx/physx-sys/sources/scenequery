@@ -1,7 +1,0 @@
-[
-    "SqCompoundPruner",
-    "SqCompoundPruningPool",
-    "SqFactory",
-    "SqManager",
-    "SqQuery",
-]

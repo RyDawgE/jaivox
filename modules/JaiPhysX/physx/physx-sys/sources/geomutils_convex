@@ -1,9 +1,0 @@
-[
-    "GuBigConvexData",
-    "GuConvexHelper",
-    "GuConvexMesh",
-    "GuConvexSupportTable",
-    "GuConvexUtilsInternal",
-    "GuHillClimbing",
-    "GuShapeConvex",
-]

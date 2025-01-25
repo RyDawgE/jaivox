@@ -1,9 +1,0 @@
----
-source: physx-sys/pxbind/tests/records.rs
-expression: ro.size_asserts
----
-using namespace physx;
-#include "structgen_out.hpp"
-
-
-

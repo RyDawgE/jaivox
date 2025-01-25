@@ -1,3 +1,0 @@
-/mnt/c/Users/Kuju/Projects/JaiPhysX/physx/physx-build/build/CMakeFiles/physx.dir
-/mnt/c/Users/Kuju/Projects/JaiPhysX/physx/physx-build/build/CMakeFiles/edit_cache.dir
-/mnt/c/Users/Kuju/Projects/JaiPhysX/physx/physx-build/build/CMakeFiles/rebuild_cache.dir

@@ -35,7 +35,7 @@ populate_chunk :: (chunk : *VoxelChunkData, seed : int) {
     
     cs_ratio : float = (cast (float) cs / cast (float) CHUNK_SIZE);
     
-    position : Vector3 = chunk.location;
+    c_position : Vector3 = chunk.location;
     
     //chunk_erosion : float = get_2d(position.x, position.z, 1, 1, seed) * 10;
     
@@ -43,7 +43,7 @@ populate_chunk :: (chunk : *VoxelChunkData, seed : int) {
     
     for z : 0..cs_p - 1 {
         for x : 0..cs_p - 1 {
-            pos2d : Vector2 = .{xx (x + cs * position.x), xx (z + cs * position.z)};
+            pos2d : Vector2 = .{xx (x + cs * c_position.x), xx (z + cs * c_position.z)};
         
             height : float = get_2d(pos2d.x / cs_ratio, pos2d.y / cs_ratio, .005, 4, seed) * (cs);
 
@@ -51,7 +51,7 @@ populate_chunk :: (chunk : *VoxelChunkData, seed : int) {
             
             for y : 0..cs_p - 1 {
                 pos : Vector3 = .{pos2d.x, 
-                                  cast (float) (y + cs * position.y), 
+                                  cast (float) (y + cs * c_position.y), 
                                   pos2d.y,
                                   };
                                                 

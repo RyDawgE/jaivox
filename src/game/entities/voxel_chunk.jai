@@ -65,7 +65,7 @@ populate_chunk :: (chunk : *VoxelChunkData, seed : int) {
         }
     }
     
-    //print("Voxels: %\n", voxels);
+    //print("Voxel Count: %\n", voxels.count);
     return;
 }
 

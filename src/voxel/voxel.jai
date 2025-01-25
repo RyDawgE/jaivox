@@ -13,6 +13,8 @@ CHUNK_SIZE_PADDED   : u32       : CHUNK_SIZE + 2;
 CHUNK_SURFACE_AREA  : u32       : CHUNK_SIZE_PADDED * CHUNK_SIZE_PADDED; 
 CHUNK_VOLUME        : u32       : CHUNK_SIZE_PADDED * CHUNK_SIZE_PADDED * CHUNK_SIZE_PADDED;
 
+MAX_LOD_DEFORM      : u8        : 0b00000010;
+
 VoxelChunkData :: struct {
     voxels     : [] u8; // @TODO: Change to *u8  
     location   : Vector3;

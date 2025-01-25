@@ -1,6 +1,6 @@
 VoxelChunkOperation :: struct {
     coordinate : Vector3;
-    lod : int = 1; 
+    lod : u8 = 1; 
 }
 
 VoxelWorld :: struct @entity {
@@ -28,7 +28,7 @@ create_voxel_world :: (world : *VoxelWorld) {
             
             dist : float = distance(operation.coordinate, .{0, 0, 0});
             
-            operation.lod = 1 << cast (int) clamp(pow(dist/12, .75), 0, 4);  
+            operation.lod = cast (u8) 1 << cast (int) clamp(pow(dist/12, .75), 0, 4);  
 
             queue_chunk_operation(world, operation);
         }

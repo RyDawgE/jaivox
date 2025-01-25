@@ -77,7 +77,7 @@ print_size_info :: () #compile_time {
 #load "./memory_utilities.jai";
 #load "./math_utilities.jai";
 #load "./voxel/noise/perlin_noise.jai";
-#load "./physics/physx_engine.jai";
+#load "./physics/physics_engine.jai";
 
 #load "./game/entities/debug_entity.jai";
 #load "./game/entities/debug_camera.jai";

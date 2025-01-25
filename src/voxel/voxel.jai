@@ -14,7 +14,7 @@ CHUNK_SURFACE_AREA  : u32       : CHUNK_SIZE_PADDED * CHUNK_SIZE_PADDED;
 CHUNK_VOLUME        : u32       : CHUNK_SIZE_PADDED * CHUNK_SIZE_PADDED * CHUNK_SIZE_PADDED;
 
 VoxelChunkData :: struct {
-    voxels     : [CHUNK_VOLUME] u8; // @TODO: Change to *u8  
+    voxels     : [] u8; // @TODO: Change to *u8  
     location   : Vector3;
     lod        : u8 = 1;
 }

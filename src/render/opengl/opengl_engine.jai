@@ -56,14 +56,14 @@ create_model :: (in_vertex_buffer : [..] Vertex, in_index_buffer : [..] u32) -> 
     return model;   
 }
 
-create_voxel_model :: (world_render : *VoxelWorldRenderData, chunk_id : u64) -> VoxelModel {
+create_voxel_model :: (world_render : *VoxelWorldRenderData, chunk_id : u64) {
     using game_state.render_handle;
     
     chunk := cast (*VoxelChunk) get_entity(chunk_id);
         
     if (!chunk.voxel_data) {
             print("Bad Voxel Data during model creation.\n");
-            return .{};
+            return;
         }
 
     
@@ -104,7 +104,7 @@ create_voxel_model :: (world_render : *VoxelWorldRenderData, chunk_id : u64) -> 
     // print("World Vertex Buffer Size: %mb\n", (size_of(Vertex) * world_render.vertex_buffer.count) / 1_000_000);
 
 
-    return model;
+    return;
 }
 
 initialize_render :: (render_handle : *RenderHandle) {
@@ -258,8 +258,8 @@ draw_voxels :: () {
     glEnableVertexAttribArray(1);
     glEnableVertexAttribArray(2);
 
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, voxel_render_data.EBO);
     glBindBuffer(GL_ARRAY_BUFFER, voxel_render_data.VBO);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, voxel_render_data.EBO);
 
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_TRUE,  size_of(Vertex), cast(*void) 0); // Position Attribute
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, size_of(Vertex), cast(*void) (3 * size_of(float))); // Color Attribute  

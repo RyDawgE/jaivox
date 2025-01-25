@@ -5,14 +5,19 @@ VoxelChunk :: struct @entity {
     voxel_model : *VoxelModel     = null;
 }
 
+init_voxel_chunk :: (entity : *VoxelChunk, coordinate : Vector3, lod : u8) {
+    entity.position = .{coordinate.x, 0, coordinate.z} * CHUNK_WORLD_SCALE; 
+    
+    create_voxel_chunk_data(entity, coordinate, lod);
+    create_voxel_model(game_state.render_handle.voxel_render_data, entity.id);
+}
+
 create_voxel_chunk_data :: (chunk : *VoxelChunk, chunk_position : Vector3, lod : u8 = 1) {
     using chunk;    
     
     //print("%\n", pos_lod);
     
     voxel_data = New(VoxelChunkData);
-    
-    // Maybe make initialize_chunk()?
     voxel_data.lod = lod;
     voxel_data.location = chunk_position;
     
@@ -21,25 +26,23 @@ create_voxel_chunk_data :: (chunk : *VoxelChunk, chunk_position : Vector3, lod :
 
 destroy_voxel_chunk :: (chunk : *VoxelChunk) {
     if chunk.voxel_data {
+        array_free(chunk.voxel_data.voxels);
         free(chunk.voxel_data);
     }
 }
 
 populate_chunk :: (chunk : *VoxelChunkData, seed : int) {  
     using chunk;
-  
-    cs    : int = CHUNK_SIZE / lod;
     
+    cs    : int = CHUNK_SIZE / lod;
     cs_p  : int = cs + 2;
     cs_p2 : int = cs_p * cs_p;
+    cs_p3 : int = cs_p * cs_p * cs_p;
+
+    array_resize(*voxels, cs_p3);
     
     cs_ratio : float = (cast (float) cs / cast (float) CHUNK_SIZE);
-    
     c_position : Vector3 = chunk.location;
-    
-    //chunk_erosion : float = get_2d(position.x, position.z, 1, 1, seed) * 10;
-    
-    //print("%\n", cs_ratio);
     
     for z : 0..cs_p - 1 {
         for x : 0..cs_p - 1 {
@@ -65,5 +68,7 @@ populate_chunk :: (chunk : *VoxelChunkData, seed : int) {
     //print("Voxels: %\n", voxels);
     return;
 }
+
+
 
 

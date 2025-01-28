@@ -9,7 +9,7 @@ RenderHandle :: struct {
     IBO                        : u32;
     bound_camera               : *Entity                  = null;
     
-    voxel_render_data          : *VoxelWorldRenderData    = null;
+    //voxel_render_data          : *VoxelWorldRenderData    = null;
     
     subscribed_entities        : [..] u64;
 }
@@ -56,50 +56,50 @@ create_model :: (in_vertex_buffer : [..] Vertex, in_index_buffer : [..] u32) -> 
     return model;   
 }
 
-create_voxel_model :: (world_render : *VoxelWorldRenderData, chunk_id : u64) {
-    using game_state.render_handle;
+// create_voxel_model :: (world_render : *VoxelWorldRenderData, chunk_id : u64) {
+//     using game_state.render_handle;
     
-    chunk := cast (*VoxelChunk) get_entity(chunk_id);
+//     chunk := cast (*VoxelChunk) get_entity(chunk_id);
         
-    if (!chunk.voxel_data) {
-            print("Bad Voxel Data during model creation.\n");
-            return;
-    }
+//     if (!chunk.voxel_data) {
+//             print("Bad Voxel Data during model creation.\n");
+//             return;
+//     }
 
     
-    model : *VoxelModel = binary_greedy_mesh(world_render, chunk.voxel_data); 
-    model.texture_object = world_render.texture;
-    chunk.voxel_model = model;
+//     model : *VoxelModel = binary_greedy_mesh(world_render, chunk.voxel_data); 
+//     model.texture_object = world_render.texture;
+//     chunk.voxel_model = model;
     
-    array_add(*world_render.chunk_entity_ids, chunk.id);
+//     array_add(*world_render.chunk_entity_ids, chunk.id);
 
-    glNamedBufferSubData(world_render.VBO, 
-                         model.base_vertex * size_of(Vertex),
-                         model.vertex_count * size_of(Vertex),
-                         world_render.vertex_buffer.data + model.base_vertex
-                         );
+//     glNamedBufferSubData(world_render.VBO, 
+//                          model.base_vertex * size_of(Vertex),
+//                          model.vertex_count * size_of(Vertex),
+//                          world_render.vertex_buffer.data + model.base_vertex
+//                          );
     
-    if USE_INDIRECTION {
-        indirect : VoxelIndirectCommand = .{
-            model.element_count,
-            1,
-            0,
-            cast (s32) model.base_vertex,
-            0
-        };
+//     if USE_INDIRECTION {
+//         indirect : VoxelIndirectCommand = .{
+//             model.element_count,
+//             1,
+//             0,
+//             cast (s32) model.base_vertex,
+//             0
+//         };
         
-        //glBufferSubData(GL_DRAW_INDIRECT_BUFFER, size_of(VoxelIndirectCommand) * abs(flatten_voxel_position(chunk.voxel_data.location, 128)), size_of(VoxelIndirectCommand), *indirect);    
-    }
-    // print("Chunk Buffer: %\n", model);
-    // print("World Vertex Buffer Size: %mb\n", (size_of(Vertex) * world_render.vertex_buffer.count) / 1_000_000);
+//         //glBufferSubData(GL_DRAW_INDIRECT_BUFFER, size_of(VoxelIndirectCommand) * abs(flatten_voxel_position(chunk.voxel_data.location, 128)), size_of(VoxelIndirectCommand), *indirect);    
+//     }
+//     // print("Chunk Buffer: %\n", model);
+//     // print("World Vertex Buffer Size: %mb\n", (size_of(Vertex) * world_render.vertex_buffer.count) / 1_000_000);
     
-    return;
-}
+//     return;
+// }
 
 initialize_render :: (render_handle : *RenderHandle) {
     create_opengl_context();
     create_shader_programs();    
-    create_voxel_buffer();
+    //create_voxel_buffer();
     create_attribute_descriptors();
 }
 
@@ -154,7 +154,7 @@ create_attribute_descriptors :: () {
     using game_state.render_handle;
 
     glGenVertexArrays(1, *entity_vertex_attributes);       
-    glGenVertexArrays(1, *voxel_render_data.VAO);
+    //glGenVertexArrays(1, *voxel_render_data.VAO);
     
     glBindVertexArray(entity_vertex_attributes);
     
@@ -163,43 +163,43 @@ create_attribute_descriptors :: () {
 create_voxel_buffer :: () {
     using game_state.render_handle;
 
-    voxel_render_data = New(VoxelWorldRenderData);
+    // voxel_render_data = New(VoxelWorldRenderData);
     
-    voxel_render_data.texture = create_texture(TEX_ENV_GRASS_62);
+    // voxel_render_data.texture = create_texture(TEX_ENV_GRASS_62);
 
-    array_reserve(*voxel_render_data.vertex_buffer, size_of(Vertex) * 10_000_000);
+    // array_reserve(*voxel_render_data.vertex_buffer, size_of(Vertex) * 10_000_000);
     
-    glGenBuffers(1, *voxel_render_data.VBO);
-    glGenBuffers(1, *voxel_render_data.EBO);
-    glGenBuffers(1, *IBO);
+    // glGenBuffers(1, *voxel_render_data.VBO);
+    // glGenBuffers(1, *voxel_render_data.EBO);
+    // glGenBuffers(1, *IBO);
     
-    glBindBuffer(GL_ARRAY_BUFFER, voxel_render_data.VBO);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, voxel_render_data.EBO);
-    glBindBuffer(GL_DRAW_INDIRECT_BUFFER, IBO);
+    // glBindBuffer(GL_ARRAY_BUFFER, voxel_render_data.VBO);
+    // glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, voxel_render_data.EBO);
+    // glBindBuffer(GL_DRAW_INDIRECT_BUFFER, IBO);
     
     // Index buffer is always the same per indirect, so here I calculate the worst-case
     // scenario and upload it on startup.
-    for i : 0..((CHUNK_SIZE / 2) * CHUNK_SIZE * CHUNK_SIZE * 6) - 1{
-        array_add(*voxel_render_data.index_buffer, (i * 4) + 1);
-        array_add(*voxel_render_data.index_buffer, (i * 4) + 2);
-        array_add(*voxel_render_data.index_buffer, (i * 4) + 0);
+    // for i : 0..((CHUNK_SIZE / 2) * CHUNK_SIZE * CHUNK_SIZE * 6) - 1{
+    //     array_add(*voxel_render_data.index_buffer, (i * 4) + 1);
+    //     array_add(*voxel_render_data.index_buffer, (i * 4) + 2);
+    //     array_add(*voxel_render_data.index_buffer, (i * 4) + 0);
         
-        array_add(*voxel_render_data.index_buffer, (i * 4) + 2);
-        array_add(*voxel_render_data.index_buffer, (i * 4) + 3);
-        array_add(*voxel_render_data.index_buffer, (i * 4) + 0);
-    }
+    //     array_add(*voxel_render_data.index_buffer, (i * 4) + 2);
+    //     array_add(*voxel_render_data.index_buffer, (i * 4) + 3);
+    //     array_add(*voxel_render_data.index_buffer, (i * 4) + 0);
+    // }
     
-    //print("%\n", voxel_render_data.index_buffer.count * size_of(u32) * 64);
+    // //print("%\n", voxel_render_data.index_buffer.count * size_of(u32) * 64);
     
-    // Size of allocated space, in bytes
-    vertex_buffer_size : s64 = voxel_render_data.vertex_buffer.allocated;
-    index_buffer_size  : s64 = voxel_render_data.index_buffer.allocated;
+    // // Size of allocated space, in bytes
+    // vertex_buffer_size : s64 = voxel_render_data.vertex_buffer.allocated;
+    // index_buffer_size  : s64 = voxel_render_data.index_buffer.allocated;
         
-    // Preallocate the data by sending the empty, reserved arrays.
-    glBufferData(GL_ARRAY_BUFFER, vertex_buffer_size, voxel_render_data.vertex_buffer.data, GL_DYNAMIC_DRAW);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, index_buffer_size, voxel_render_data.index_buffer.data, GL_DYNAMIC_DRAW);
+    // // Preallocate the data by sending the empty, reserved arrays.
+    // glBufferData(GL_ARRAY_BUFFER, vertex_buffer_size, voxel_render_data.vertex_buffer.data, GL_DYNAMIC_DRAW);
+    // glBufferData(GL_ELEMENT_ARRAY_BUFFER, index_buffer_size, voxel_render_data.index_buffer.data, GL_DYNAMIC_DRAW);
     
-    if USE_INDIRECTION then glBufferData(GL_DRAW_INDIRECT_BUFFER, 262144 * size_of(VoxelIndirectCommand), cast (*void) 0, GL_DYNAMIC_DRAW);
+    // if USE_INDIRECTION then glBufferData(GL_DRAW_INDIRECT_BUFFER, 262144 * size_of(VoxelIndirectCommand), cast (*void) 0, GL_DYNAMIC_DRAW);
 
     //array_free(voxel_render_data.vertex_buffer);
  
@@ -212,78 +212,78 @@ swap_buffers :: (window: Window_Type, vsync := true) {  //@TODO: Implement other
     }
 }
 
-draw_voxels_indirect :: () {
-    using game_state.render_handle;
+// draw_voxels_indirect :: () {
+//     using game_state.render_handle;
 
-    glBindBuffer(GL_DRAW_INDIRECT_BUFFER, IBO);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, voxel_render_data.EBO);
-    glBindBuffer(GL_ARRAY_BUFFER, voxel_render_data.VBO);
+//     glBindBuffer(GL_DRAW_INDIRECT_BUFFER, IBO);
+//     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, voxel_render_data.EBO);
+//     glBindBuffer(GL_ARRAY_BUFFER, voxel_render_data.VBO);
     
-    glBindVertexArray(entity_vertex_attributes); // Make a voxel version of this later. Right now its exactly the same format
+//     glBindVertexArray(entity_vertex_attributes); // Make a voxel version of this later. Right now its exactly the same format
     
-    glEnableVertexAttribArray(0);
-    glEnableVertexAttribArray(1);
-    glEnableVertexAttribArray(2);
+//     glEnableVertexAttribArray(0);
+//     glEnableVertexAttribArray(1);
+//     glEnableVertexAttribArray(2);
     
 
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_TRUE,  size_of(Vertex), cast(*void) 0); // Position Attribute
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, size_of(Vertex), cast(*void) (3 * size_of(float))); // Color Attribute  
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, size_of(Vertex), cast(*void) (6 * size_of(float))); // Tex CoordAttribute  
+//     glVertexAttribPointer(0, 3, GL_FLOAT, GL_TRUE,  size_of(Vertex), cast(*void) 0); // Position Attribute
+//     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, size_of(Vertex), cast(*void) (3 * size_of(float))); // Color Attribute  
+//     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, size_of(Vertex), cast(*void) (6 * size_of(float))); // Tex CoordAttribute  
     
-    transform := make_translation_matrix4(.{0, 0, 0});
-    model_location := glGetUniformLocation(shader_program, "model");
-    glUniformMatrix4fv(model_location, 1, GL_FALSE, *transpose(transform).coef[0][0]);
+//     transform := make_translation_matrix4(.{0, 0, 0});
+//     model_location := glGetUniformLocation(shader_program, "model");
+//     glUniformMatrix4fv(model_location, 1, GL_FALSE, *transpose(transform).coef[0][0]);
     
-    glMultiDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_INT, cast (*void) 0, cast (u32) voxel_render_data.chunk_entity_ids.count, 0);
-}
+//     glMultiDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_INT, cast (*void) 0, cast (u32) voxel_render_data.chunk_entity_ids.count, 0);
+// }
 
-draw_voxels :: () {
-    using game_state.render_handle;
+// draw_voxels :: () {
+//     using game_state.render_handle;
             
-    glBindVertexArray(entity_vertex_attributes); // Make a voxel version of this later. Right now its exactly the same format
+//     glBindVertexArray(entity_vertex_attributes); // Make a voxel version of this later. Right now its exactly the same format
     
-    glEnableVertexAttribArray(0);
-    glEnableVertexAttribArray(1);
-    glEnableVertexAttribArray(2);
+//     glEnableVertexAttribArray(0);
+//     glEnableVertexAttribArray(1);
+//     glEnableVertexAttribArray(2);
 
-    glBindBuffer(GL_ARRAY_BUFFER, voxel_render_data.VBO);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, voxel_render_data.EBO);
+//     glBindBuffer(GL_ARRAY_BUFFER, voxel_render_data.VBO);
+//     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, voxel_render_data.EBO);
 
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_TRUE,  size_of(Vertex), cast(*void) 0); // Position Attribute
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, size_of(Vertex), cast(*void) (3 * size_of(float))); // Color Attribute  
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, size_of(Vertex), cast(*void) (6 * size_of(float))); // Tex CoordAttribute  
+//     glVertexAttribPointer(0, 3, GL_FLOAT, GL_TRUE,  size_of(Vertex), cast(*void) 0); // Position Attribute
+//     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, size_of(Vertex), cast(*void) (3 * size_of(float))); // Color Attribute  
+//     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, size_of(Vertex), cast(*void) (6 * size_of(float))); // Tex CoordAttribute  
             
-    // For each entity
-    yaw   : Quaternion;
-    pitch : Quaternion;
-    roll  : Quaternion; 
+//     // For each entity
+//     yaw   : Quaternion;
+//     pitch : Quaternion;
+//     roll  : Quaternion; 
     
-    rotation : Quaternion;
+//     rotation : Quaternion;
     
-    transform : Matrix4;
+//     transform : Matrix4;
     
-    for id : voxel_render_data.chunk_entity_ids {
-        chunk : *VoxelChunk = cast(*VoxelChunk) get_entity(id);
-        model : *VoxelModel = chunk.voxel_model;
+//     for id : voxel_render_data.chunk_entity_ids {
+//         chunk : *VoxelChunk = cast(*VoxelChunk) get_entity(id);
+//         model : *VoxelModel = chunk.voxel_model;
         
-        // Begin transformation                
-        set_from_axis_and_angle(*yaw, 0, 0, -1, radians(chunk.rotation.x));
-        set_from_axis_and_angle(*pitch, -1, 0, 0, radians(chunk.rotation.y));
-        set_from_axis_and_angle(*roll, 0, -1, 0, radians(chunk.rotation.z));
+//         // Begin transformation                
+//         set_from_axis_and_angle(*yaw, 0, 0, -1, radians(chunk.rotation.x));
+//         set_from_axis_and_angle(*pitch, -1, 0, 0, radians(chunk.rotation.y));
+//         set_from_axis_and_angle(*roll, 0, -1, 0, radians(chunk.rotation.z));
         
-        rotation = yaw * pitch * roll;
+//         rotation = yaw * pitch * roll;
         
-        transform = make_translation_matrix4(chunk.position) * rotation_matrix(Matrix4, rotation);
+//         transform = make_translation_matrix4(chunk.position) * rotation_matrix(Matrix4, rotation);
 
-        model_location := glGetUniformLocation(shader_program, "model");
-        glUniformMatrix4fv(model_location, 1, GL_FALSE, *transpose(transform).coef[0][0]);
-        glBindTexture(GL_TEXTURE_2D, model.texture_object);
+//         model_location := glGetUniformLocation(shader_program, "model");
+//         glUniformMatrix4fv(model_location, 1, GL_FALSE, *transpose(transform).coef[0][0]);
+//         glBindTexture(GL_TEXTURE_2D, model.texture_object);
 
-        glDrawElementsBaseVertex(GL_TRIANGLES, model.element_count, GL_UNSIGNED_INT, cast (*void) 0, xx (model.base_vertex));
-    }    
-    //glDrawElements(GL_TRIANGLES, 20000, GL_UNSIGNED_INT, cast (*void) 0 );
+//         glDrawElementsBaseVertex(GL_TRIANGLES, model.element_count, GL_UNSIGNED_INT, cast (*void) 0, xx (model.base_vertex));
+//     }    
+//     //glDrawElements(GL_TRIANGLES, 20000, GL_UNSIGNED_INT, cast (*void) 0 );
     
-}
+// }
 
 draw_entities :: () {
     using game_state.render_handle;
@@ -417,11 +417,11 @@ draw_frame :: () {
     
     handle_lighting();
         
-    if USE_INDIRECTION {
-        draw_voxels_indirect();
-    } else {
-        draw_voxels(); 
-    }
+    // if USE_INDIRECTION {
+    //     draw_voxels_indirect();
+    // } else {
+    //     draw_voxels(); 
+    // }
     draw_entities();
     swap_buffers(window);
     

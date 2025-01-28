@@ -5,13 +5,14 @@ main :: () {
     game_state.render_handle  = New(RenderHandle);
     game_state.input_handle   = New(InputHandle);
     game_state.physics_handle = New(PhysicsHandle);
+    game_state.voxel_handle   = New(VoxelWorldHandle);
     
     initialize_entity_handle();
     initialize_physics();
+    initialize_voxel_world();
     create_render_engine();
     
     camera : *DebugCamera = create_entity(DebugCamera);
-    world  : *VoxelWorld  = create_entity(VoxelWorld);
     dbg    : *DebugEntity = create_entity(DebugEntity);
     init_debug_entity(dbg);
     dbg.position = GLOBAL_ILLUMINATION_POINT;
@@ -25,7 +26,7 @@ main :: () {
     frame_start : Apollo_Time;
     frame_end   : Apollo_Time;
     
-    create_voxel_world(world);
+    //create_voxel_world(world);
     
     // @MainLoop
     while !game_state.should_close {
@@ -41,7 +42,7 @@ main :: () {
 		game_state.delta_time = cast (float) to_float64_seconds (frame_end - frame_start);
 		
 		// Print FPS
-		print("%\n", 1 / game_state.delta_time);
+		//print("%\n", 1 / game_state.delta_time);
     }
     cleanup();
 }

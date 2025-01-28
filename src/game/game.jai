@@ -3,10 +3,11 @@ GameState :: struct {
     delta_time    : float = 0;
     start_time    : float = 0;
     
-    entity_handle  : *EntityHandle;
-    render_handle  : *RenderHandle;
-    input_handle   : *InputHandle;
-    physics_handle : *PhysicsHandle;
+    entity_handle   : *EntityHandle;
+    voxel_handle    : *VoxelWorldHandle;
+    render_handle   : *RenderHandle;
+    input_handle    : *InputHandle;
+    physics_handle  : *PhysicsHandle;
 }
 
 game_state : GameState = .{};

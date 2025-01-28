@@ -20,3 +20,10 @@ VoxelChunkData :: struct {
     location   : Vector3;
     lod        : u8 = 1;
 }
+
+flatten_voxel_position :: (pos : Vector3, n : s32) -> s32 {
+    n2 : s32 = n*n;
+    n3 : s32 = n*n*n;
+    
+    return cast (s32) pos.x + (cast (s32) pos.y * n2) + (cast (s32) pos.z * n3);
+}

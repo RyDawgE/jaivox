@@ -64,7 +64,7 @@ create_voxel_model :: (world_render : *VoxelWorldRenderData, chunk_id : u64) {
     if (!chunk.voxel_data) {
             print("Bad Voxel Data during model creation.\n");
             return;
-        }
+    }
 
     
     model : *VoxelModel = binary_greedy_mesh(world_render, chunk.voxel_data); 
@@ -79,31 +79,20 @@ create_voxel_model :: (world_render : *VoxelWorldRenderData, chunk_id : u64) {
                          world_render.vertex_buffer.data + model.base_vertex
                          );
     
-    // This really sucks. Need to use a subbuffer somehow
     if USE_INDIRECTION {
-        indirect_buffer : [..] VoxelIndirectCommand;
+        indirect : VoxelIndirectCommand = .{
+            model.element_count,
+            1,
+            0,
+            cast (s32) model.base_vertex,
+            0
+        };
         
-        for id : voxel_render_data.chunk_entity_ids {
-            chunk : *VoxelChunk = cast(*VoxelChunk) get_entity(id);
-            model : *VoxelModel = chunk.voxel_model;
-    
-            indirect : VoxelIndirectCommand = .{
-                model.element_count,
-                1,
-                0,
-                cast (s32) model.base_vertex,
-                0
-            };
-            
-            glBufferSubData(GL_DRAW_INDIRECT_BUFFER, size_of(VoxelIndirectCommand) * indirect_buffer.count, size_of(VoxelIndirectCommand), *indirect);
-            
-            array_add(*indirect_buffer, indirect);    
-        } 
+        //glBufferSubData(GL_DRAW_INDIRECT_BUFFER, size_of(VoxelIndirectCommand) * abs(flatten_voxel_position(chunk.voxel_data.location, 128)), size_of(VoxelIndirectCommand), *indirect);    
     }
     // print("Chunk Buffer: %\n", model);
     // print("World Vertex Buffer Size: %mb\n", (size_of(Vertex) * world_render.vertex_buffer.count) / 1_000_000);
-
-
+    
     return;
 }
 
@@ -178,7 +167,6 @@ create_voxel_buffer :: () {
     
     voxel_render_data.texture = create_texture(TEX_ENV_GRASS_62);
 
-    
     array_reserve(*voxel_render_data.vertex_buffer, size_of(Vertex) * 10_000_000);
     
     glGenBuffers(1, *voxel_render_data.VBO);
@@ -209,9 +197,9 @@ create_voxel_buffer :: () {
         
     // Preallocate the data by sending the empty, reserved arrays.
     glBufferData(GL_ARRAY_BUFFER, vertex_buffer_size, voxel_render_data.vertex_buffer.data, GL_DYNAMIC_DRAW);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, index_buffer_size, voxel_render_data.index_buffer.data, GL_STATIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, index_buffer_size, voxel_render_data.index_buffer.data, GL_DYNAMIC_DRAW);
     
-    if USE_INDIRECTION then glBufferData(GL_DRAW_INDIRECT_BUFFER, 65536 * size_of(VoxelIndirectCommand) * 64, cast (*void) 0, GL_DYNAMIC_DRAW);
+    if USE_INDIRECTION then glBufferData(GL_DRAW_INDIRECT_BUFFER, 262144 * size_of(VoxelIndirectCommand), cast (*void) 0, GL_DYNAMIC_DRAW);
 
     //array_free(voxel_render_data.vertex_buffer);
  
@@ -228,6 +216,8 @@ draw_voxels_indirect :: () {
     using game_state.render_handle;
 
     glBindBuffer(GL_DRAW_INDIRECT_BUFFER, IBO);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, voxel_render_data.EBO);
+    glBindBuffer(GL_ARRAY_BUFFER, voxel_render_data.VBO);
     
     glBindVertexArray(entity_vertex_attributes); // Make a voxel version of this later. Right now its exactly the same format
     
@@ -235,18 +225,16 @@ draw_voxels_indirect :: () {
     glEnableVertexAttribArray(1);
     glEnableVertexAttribArray(2);
     
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, voxel_render_data.EBO);
 
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_TRUE,  size_of(Vertex), cast(*void) 0); // Position Attribute
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, size_of(Vertex), cast(*void) (3 * size_of(float))); // Color Attribute  
     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, size_of(Vertex), cast(*void) (6 * size_of(float))); // Tex CoordAttribute  
     
     transform := make_translation_matrix4(.{0, 0, 0});
-
     model_location := glGetUniformLocation(shader_program, "model");
     glUniformMatrix4fv(model_location, 1, GL_FALSE, *transpose(transform).coef[0][0]);
     
-    glMultiDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_INT, xx 0, xx voxel_render_data.chunk_entity_ids.count, 0);
+    glMultiDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_INT, cast (*void) 0, cast (u32) voxel_render_data.chunk_entity_ids.count, 0);
 }
 
 draw_voxels :: () {

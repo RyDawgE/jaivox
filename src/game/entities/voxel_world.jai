@@ -17,7 +17,7 @@ init_voxel_world :: (world : *VoxelWorld) {
 create_voxel_world :: (world : *VoxelWorld) {
     init_voxel_world(world);
     // num of chunks = rd ^ 2
-    rd : float = 256;
+    rd : float = 128;
     lod_intensity : float = 5;
     
     for x : 1.. cast (int) rd {

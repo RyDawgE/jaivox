@@ -6,6 +6,7 @@ VoxelModel :: struct {
     vertex_count   : u32 = 0; 
     base_element   : u32 = 0; 
     element_count  : u32 = 0;
+    model_id       : u32 = 0;
 }
 
 VoxelWorldRenderData :: struct {
@@ -42,12 +43,6 @@ binary_greedy_mesh :: (world_render : *VoxelWorldRenderData, chunk : *VoxelChunk
     edge_mask   : u64 = (ULL1 << cs_last_bit) + ULL1;
     
     cs_ratio : float = (cs * vs) / CHUNK_WORLD_SCALE;
-    
-    vertices : [..] Vertex;
-    indices  : [..] u32;
-    
-    array_reserve(*vertices, voxels.count * 6);
-    array_reserve(*indices, indices.count * 6);
     
     axis_cols      : [..] u64;
     col_face_masks : [..] u64;
@@ -244,11 +239,22 @@ binary_greedy_mesh :: (world_render : *VoxelWorldRenderData, chunk : *VoxelChunk
                         normal = .{-1, 0, 0};
                     }
                     
+                    if USE_INDIRECTION {
+                    
+                    vert1 = .{((v1 * (vs / cs_ratio) - offset) + (chunk.location * CHUNK_WORLD_SCALE)), normal, uv1};
+                    vert2 = .{((v2 * (vs / cs_ratio) - offset) + (chunk.location * CHUNK_WORLD_SCALE)), normal, uv2};
+                    vert3 = .{((v3 * (vs / cs_ratio) - offset) + (chunk.location * CHUNK_WORLD_SCALE)), normal, uv3};
+                    vert4 = .{((v4 * (vs / cs_ratio) - offset) + (chunk.location * CHUNK_WORLD_SCALE)), normal, uv4};
+                    
+                    }   else {
+                    
                     vert1 = .{(v1 * (vs / cs_ratio) - offset), normal, uv1};
                     vert2 = .{(v2 * (vs / cs_ratio) - offset), normal, uv2};
                     vert3 = .{(v3 * (vs / cs_ratio) - offset), normal, uv3};
                     vert4 = .{(v4 * (vs / cs_ratio) - offset), normal, uv4};
                     
+                    }
+                                    
                     start : u32 = xx world_render.vertex_buffer.count;
                     
                     array_add(*world_render.vertex_buffer, vert1);
@@ -266,8 +272,6 @@ binary_greedy_mesh :: (world_render : *VoxelWorldRenderData, chunk : *VoxelChunk
         array_free(merged_forward);
     }
     
-    array_free(vertices);
-    array_free(indices);
     array_free(axis_cols);
     array_free(col_face_masks);
     

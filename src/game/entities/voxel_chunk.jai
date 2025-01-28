@@ -10,6 +10,10 @@ init_voxel_chunk :: (entity : *VoxelChunk, coordinate : Vector3, lod : u8) {
     
     create_voxel_chunk_data(entity, coordinate, lod);
     create_voxel_model(game_state.render_handle.voxel_render_data, entity.id);
+    
+    if (entity.voxel_data.lod > MAX_LOD_DEFORM) {
+        free_voxel_chunk_data(entity);
+    }
 }
 
 create_voxel_chunk_data :: (chunk : *VoxelChunk, chunk_position : Vector3, lod : u8 = 1) {
@@ -24,7 +28,7 @@ create_voxel_chunk_data :: (chunk : *VoxelChunk, chunk_position : Vector3, lod :
     populate_chunk(voxel_data, cast (int) game_state.start_time);
 }
 
-destroy_voxel_chunk :: (chunk : *VoxelChunk) {
+free_voxel_chunk_data :: (chunk : *VoxelChunk) {
     if chunk.voxel_data {
         array_free(chunk.voxel_data.voxels);
         free(chunk.voxel_data);

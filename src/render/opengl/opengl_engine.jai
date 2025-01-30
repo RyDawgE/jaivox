@@ -23,7 +23,7 @@ VoxelIndirectCommand :: struct {
 }
 
 // Currently broken when rendering both Entities and Voxels
-USE_INDIRECTION : bool  = false;
+USE_INDIRECTION : bool  = true;
 MSAA_LEVEL      : s32   = 2;
 
 create_model :: (in_vertex_buffer : [..] Vertex, in_index_buffer : [..] u32) -> *Model {    
@@ -80,13 +80,25 @@ create_voxel_model :: (world_render : *VoxelWorldRenderData, chunk_id : u64) {
                          );
     
     if USE_INDIRECTION {
-        indirect : VoxelIndirectCommand = .{
-            model.element_count,
-            1,
-            0,
-            cast (s32) model.base_vertex,
-            0
-        };
+        indirect_buffer : [..] VoxelIndirectCommand;
+
+        for id : voxel_render_data.chunk_entity_ids {
+            if chunk_id != id then continue;
+            chunk : *VoxelChunk = cast(*VoxelChunk) get_entity(id);
+            model : *VoxelModel = chunk.voxel_model;
+    
+            indirect : VoxelIndirectCommand = .{
+                model.element_count,
+                1,
+                0,
+                cast (s32) model.base_vertex,
+                0
+            };
+            
+            glBufferSubData(GL_DRAW_INDIRECT_BUFFER, size_of(VoxelIndirectCommand) * it_index, size_of(VoxelIndirectCommand), *indirect);
+            
+            array_add(*indirect_buffer, indirect);    
+        } 
         
         //glBufferSubData(GL_DRAW_INDIRECT_BUFFER, size_of(VoxelIndirectCommand) * abs(flatten_voxel_position(chunk.voxel_data.location, 128)), size_of(VoxelIndirectCommand), *indirect);    
     }
@@ -279,8 +291,9 @@ draw_voxels :: () {
         glUniformMatrix4fv(model_location, 1, GL_FALSE, *transpose(transform).coef[0][0]);
         glBindTexture(GL_TEXTURE_2D, model.texture_object);
 
-        glDrawElementsBaseVertex(GL_TRIANGLES, model.element_count, GL_UNSIGNED_INT, cast (*void) 0, xx (model.base_vertex));
+        //glDrawElementsBaseVertex(GL_TRIANGLES, model.element_count, GL_UNSIGNED_INT, cast (*void) 0, xx (model.base_vertex));
     }    
+    glMultiDrawElements(GL_TRIANGLES, xx voxel_render_data.chunk_entity_ids.count, GL_UNSIGNED_INT, cast (*void) 0, xx voxel_render_data.index_buffer.count);
     //glDrawElements(GL_TRIANGLES, 20000, GL_UNSIGNED_INT, cast (*void) 0 );
     
 }

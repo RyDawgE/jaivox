@@ -15,7 +15,7 @@ load_texture_from_data :: (buffer : *[]u8, data : string) -> TextureData {
     
     buffer.data = stbi_load_from_memory(data.data, data.count.(s32), *x, *y, *channels, 4);
     
-    print("x: %, y: %", x, y);
+    //print("x: %, y: %", x, y);
     
     buffer.count = x * y * channels;
     

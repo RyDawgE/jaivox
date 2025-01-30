@@ -17,7 +17,7 @@ init_voxel_world :: (world : *VoxelWorld) {
 create_voxel_world :: (world : *VoxelWorld) {
     init_voxel_world(world);
     // num of chunks = rd ^ 2
-    rd : float = 128;
+    rd : float : RENDER_DISTANCE;
     lod_intensity : float = 5;
     
     for x : 1.. cast (int) rd {
@@ -35,6 +35,14 @@ create_voxel_world :: (world : *VoxelWorld) {
             queue_chunk_operation(world, operation);
         }
     }
+
+    // operation : VoxelChunkOperation = .{};
+    // operation.coordinate = .{0, 0, 0};
+    
+    // dist : float = distance(operation.coordinate, .{0, 0, 0});
+    // operation.lod = cast (u8) 1 << cast (int) clamp(pow(dist/12, .75), 0, 4);  
+
+    // queue_chunk_operation(world, operation);
 }
 
 tick_voxel_world :: (world : *VoxelWorld) {

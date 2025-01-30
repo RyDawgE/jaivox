@@ -211,7 +211,7 @@ create_voxel_buffer :: () {
     glBufferData(GL_ARRAY_BUFFER, vertex_buffer_size, voxel_render_data.vertex_buffer.data, GL_DYNAMIC_DRAW);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, index_buffer_size, voxel_render_data.index_buffer.data, GL_DYNAMIC_DRAW);
     
-    if USE_INDIRECTION then glBufferData(GL_DRAW_INDIRECT_BUFFER, 262144 * size_of(VoxelIndirectCommand), cast (*void) 0, GL_DYNAMIC_DRAW);
+    if USE_INDIRECTION then glBufferData(GL_DRAW_INDIRECT_BUFFER, xx (RENDER_DISTANCE * RENDER_DISTANCE) * size_of(VoxelIndirectCommand), cast (*void) 0, GL_DYNAMIC_DRAW);
 
     //array_free(voxel_render_data.vertex_buffer);
  

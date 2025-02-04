@@ -1,4 +1,3 @@
-
 GLFW_VERSION_MAJOR ::          3;
 GLFW_VERSION_MINOR ::          2;
 GLFW_VERSION_REVISION ::       1;

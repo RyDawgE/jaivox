@@ -32,8 +32,8 @@ main :: () {
 		frame_start = current_time_monotonic ();
 
         poll_events();
-        simulate_game();
         simulate_physics();
+        simulate_game();
         draw_frame();
         
 		frame_end = current_time_monotonic ();

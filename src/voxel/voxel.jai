@@ -15,7 +15,7 @@ CHUNK_VOLUME        : u32       : CHUNK_SIZE_PADDED * CHUNK_SIZE_PADDED * CHUNK_
 
 MAX_LOD_DEFORM      : u8        : 0b00000010;
 
-RENDER_DISTANCE     : float     : 256;
+RENDER_DISTANCE     : float     : 32;
 
 VoxelChunkData :: struct {
     voxels     : [] u8; // @TODO: Change to *u8  

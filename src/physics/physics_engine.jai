@@ -3,22 +3,9 @@ PhysicsHandle :: struct {
     activation_listener : *JPH_BodyActivationListener = null; 
 }
 
-//@TODO: move these to another file probably idfk.
-on_body_activated :: (userData: *void, bodyID: JPH_BodyID, bodyUserData: u64) -> void #c_call {
-    push_context {
-        print("Body Activated!\n");
-    } 
-}
-
-on_body_deactivated :: (userData: *void, bodyID: JPH_BodyID, bodyUserData: u64) -> void #c_call {
-    push_context {
-        print("Body Deactivated");
-    }
-}
-
 initialize_physics :: () {
     create_jolt_physics_system();
-    create_activation_listener();
+    create_interaction_listeners();
 }
 
 create_jolt_physics_system :: () {
@@ -47,15 +34,20 @@ create_jolt_physics_system :: () {
     physics_system = JPH_PhysicsSystem_Create(physics_system_settings);        
 }
 
-create_activation_listener :: () {
+create_interaction_listeners :: () {
     using game_state.physics_handle;
     
-    procs : JPH_BodyActivationListener_Procs = .{
+    activation_procs : JPH_BodyActivationListener_Procs = .{
         on_body_activated,
         on_body_deactivated
     };
 
-    activation_listener = JPH_BodyActivationListener_Create(procs, null);
+    activation_listener = JPH_BodyActivationListener_Create(activation_procs, null);
+
+    contact_procs : JPH_ContactListener_Procs = .{
+    
+    
+    };
 }
 
 simulate_physics :: () {
@@ -63,7 +55,6 @@ simulate_physics :: () {
     
 }
 
-
-
 #scope_file
 #import "Jolt";
+#load "physics_listener_callbacks.jai";

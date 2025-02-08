@@ -14,6 +14,7 @@ Entity :: struct @entity {
     velocity            : Vector3 = .{0, 0, 0};
     
     model               : *Model;
+    collider            : *EntityCollider;
     
     input_bindings      : *Table(KeyboardKey, INPUT_BINDING_PROCEDURE_SIGNATURE);
 }

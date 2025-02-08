@@ -11,7 +11,7 @@ main :: () {
     create_render_engine();
     
     camera : *DebugCamera = create_entity(DebugCamera);
-    world  : *VoxelWorld  = create_entity(VoxelWorld);
+  //  world  : *VoxelWorld  = create_entity(VoxelWorld);
     dbg    : *DebugEntity = create_entity(DebugEntity);
     init_debug_entity(dbg);
     dbg.position = GLOBAL_ILLUMINATION_POINT;
@@ -25,7 +25,7 @@ main :: () {
     frame_start : Apollo_Time;
     frame_end   : Apollo_Time;
     
-    create_voxel_world(world);
+//    create_voxel_world(world);
     
     // @MainLoop
     while !game_state.should_close {

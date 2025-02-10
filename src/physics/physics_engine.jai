@@ -6,9 +6,15 @@ PhysicsHandle :: struct {
 }
 
 EntityCollider :: struct {
+    layer           : ObjectLayer       = .NON_MOVING;
     shape           : JPH_ShapeType     = .Convex;
-    subshape        : JPH_ShapeSubType  = .Box;
     physics_body    : *JPH_Body         = null;
+}
+
+ObjectLayer :: enum s32 {
+    MOVING      :: 0;
+    NON_MOVING  :: 1;
+    COUNT       :: 2;
 }
 
 initialize_physics :: () {
@@ -72,18 +78,18 @@ set_body_interface :: () {
 create_physics_body :: (entity : *Entity) { // alias for u32
     using game_state.physics_handle;
     
-    yaw   : Quaternion;
-    pitch : Quaternion;
-    roll  : Quaternion; 
-    rotation : Quaternion;    
+    // yaw   : Quaternion;
+    // pitch : Quaternion;
+    // roll  : Quaternion; 
+    // rotation : Quaternion;    
     
-    set_from_axis_and_angle(*yaw, 0, 0, -1, radians(entity.rotation.x));
-    set_from_axis_and_angle(*pitch, -1, 0, 0, radians(entity.rotation.y));
-    set_from_axis_and_angle(*roll, 0, -1, 0, radians(entity.rotation.z));
-    rotation = yaw * pitch * roll;
+    // set_from_axis_and_angle(*yaw, 0, 0, -1, radians(entity.rotation.x));
+    // set_from_axis_and_angle(*pitch, -1, 0, 0, radians(entity.rotation.y));
+    // set_from_axis_and_angle(*roll, 0, -1, 0, radians(entity.rotation.z));
+    // rotation = yaw * pitch * roll;
 
-    body_settings : *JPH_BodyCreationSettings = JPH_BodyCreationSettings_Create3(xx JPH_SphereShape_Create(2), xx *entity.position, xx *rotation, .Dynamic, 0);
-    JPH_BodyInterface_CreateAndAddBody(body_interface, body_settings, .Activate);
+    // body_settings : *JPH_BodyCreationSettings = JPH_BodyCreationSettings_Create3(xx JPH_SphereShape_Create(2), xx *entity.position, xx *rotation, .Dynamic, 0);
+    // JPH_BodyInterface_CreateAndAddBody(body_interface, body_settings, .Activate);
 }
 
 simulate_physics :: () {

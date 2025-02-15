@@ -1,32 +1,32 @@
 main :: () {
-    game_state.start_time = cast (float) to_float64_seconds (current_time_monotonic()); 
+    game_state.start_time = cast (float) to_float64_seconds (current_time_monotonic());
 
     game_state.entity_handle  = New(EntityHandle);
     game_state.render_handle  = New(RenderHandle);
     game_state.input_handle   = New(InputHandle);
     game_state.physics_handle = New(PhysicsHandle);
-    
+
     initialize_entity_handle();
     initialize_physics();
     create_render_engine();
-    
+
     camera : *DebugCamera = create_entity(DebugCamera);
-  //  world  : *VoxelWorld  = create_entity(VoxelWorld);
+    world  : *VoxelWorld  = create_entity(VoxelWorld);
     dbg    : *DebugEntity = create_entity(DebugEntity);
     init_debug_entity(dbg);
     dbg.position = GLOBAL_ILLUMINATION_POINT;
 
     init_debug_camera(camera);
     game_state.render_handle.bound_camera = camera;
-    
+
     camera.position = .{0, 10, 0};
     camera.rotation = .{0, 0, 0};
-    
+
     frame_start : Apollo_Time;
     frame_end   : Apollo_Time;
-    
-//    create_voxel_world(world);
-    
+
+    create_voxel_world(world);
+
     // @MainLoop
     while !game_state.should_close {
 		frame_start = current_time_monotonic ();
@@ -35,13 +35,13 @@ main :: () {
         simulate_physics();
         simulate_game();
         draw_frame();
-        
+
 		frame_end = current_time_monotonic ();
-		
+
 		game_state.delta_time = cast (float) to_float64_seconds (frame_end - frame_start);
-		
+
 		// Print FPS
-		print("%\n", 1 / game_state.delta_time);
+		//print("%\n", 1 / game_state.delta_time);
     }
     cleanup();
 }
@@ -51,7 +51,7 @@ simulate_game :: () {
          // it_index of table is the hasmap key
         tick_proc(get_entity(it_index));
     }
-    
+
     update_game_state();
 }
 

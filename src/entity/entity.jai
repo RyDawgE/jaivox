@@ -155,12 +155,18 @@ subscribe_entity_to_input :: (entity : *Entity) {
     using game_state.input_handle;
     
     entity.input_bindings = New(Table(KeyboardKey, INPUT_BINDING_PROCEDURE_SIGNATURE));
-    
     array_add(*subscribed_entities, entity.id);
     
     return;
 }
 
+// TODO: THIS SUCKS FOR A REAL REASON
+// Every time this happens for entities of the same type, the exact
+// same functions get added to the table multiple times under different keys for
+// same entity types.
+
+// To remedy, make the key based on Type and not entity ID, and add it to the table at compile time.
+// Then, make should_tick be a boolean that checks if it should even enter the table to begin with.
 subscribe_entity_to_tick :: (entity : *Entity, proc_callback : ENTITY_TICK_PROCEDURE_SIGNATURE = tick_entity) {
     using game_state.entity_handle;
     

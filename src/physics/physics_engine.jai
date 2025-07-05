@@ -3,6 +3,8 @@ PhysicsHandle :: struct {
     activation_listener     : *JPH_BodyActivationListener   = null;
     contact_listener        : *JPH_ContactListener          = null;
     body_interface          : *JPH_BodyInterface            = null;
+    job_system              : *JPH_JobSystem                = null;
+    //temp_allocator          : *JPH_TempAllocator            = null;
 
     global_gravity          : JPH_Vec3                      = .{0, 0, 0};
 }
@@ -19,16 +21,16 @@ ObjectLayer :: enum s32 {
     COUNT       :: 2;
 }
 
-initialize_physics :: () {
-    create_jolt_physics_system();
-    create_interaction_listeners();
-    set_body_interface();
-}
+VEC3_ZERO : Vector3 : .{0, 0, 0};
+QUAT_ZERO : Quaternion : .{0, 0, 0, 0};
 
-create_jolt_physics_system :: () {
+initialize_physics :: () {
     using game_state.physics_handle;
 
     if !JPH_Init() then return;
+    print("Physics initialized");
+
+    job_system = JPH_JobSystemThreadPool_Create(null);
 
     //@TODO These are heap allocations! Free them. When? Not sure. Find out!
     broad_phase_layer_interface : *JPH_BroadPhaseLayerInterface          = JPH_BroadPhaseLayerInterfaceMask_Create(1);
@@ -51,10 +53,6 @@ create_jolt_physics_system :: () {
 
     physics_system = JPH_PhysicsSystem_Create(*physics_system_settings);
     JPH_PhysicsSystem_SetGravity(physics_system, *global_gravity);
-}
-
-create_interaction_listeners :: () {
-    using game_state.physics_handle;
 
     activation_procs : JPH_BodyActivationListener_Procs = .{
         on_body_activated,
@@ -70,13 +68,11 @@ create_interaction_listeners :: () {
 
     activation_listener = JPH_BodyActivationListener_Create(activation_procs, null);
     contact_listener    = JPH_ContactListener_Create(contact_procs, null);
-}
-
-set_body_interface :: () {
-    using game_state.physics_handle;
 
     body_interface = JPH_PhysicsSystem_GetBodyInterface(physics_system);
 }
+
+
 
 create_physics_body :: (entity : *Entity) { // alias for u32
     using game_state.physics_handle;
@@ -98,6 +94,48 @@ create_physics_body :: (entity : *Entity) { // alias for u32
 simulate_physics :: () {
     using game_state.physics_handle;
 
+}
+
+create_voxel_chunk_shape :: (voxel_chunk : *VoxelChunk) -> *JPH_Shape {
+    using game_state.render_handle;
+
+    jph_shape : *JPH_Shape;
+    compound_shape_settings := JPH_StaticCompoundShapeSettings_Create();
+    defer JPH_ShapeSettings_Destroy(xx compound_shape_settings);
+
+    vmodel : *VoxelModel            = voxel_chunk.voxel_model;
+    vwrld  : *VoxelWorldRenderData  = voxel_render_data;
+
+    ntris := vmodel.element_count / 3;
+    triangles : [..] JPH_Triangle;
+    triangles.allocator = temp;
+    array_reserve(*triangles, ntris);
+    for 0..ntris - 1 {
+        v1_index := vwrld.index_buffer[vmodel.base_element + it * 3    ];
+        v2_index := vwrld.index_buffer[vmodel.base_element + it * 3 + 1];
+        v3_index := vwrld.index_buffer[vmodel.base_element + it * 3 + 2];
+
+        v1       := vwrld.vertex_buffer[vmodel.base_vertex + v1_index].position;
+        v2       := vwrld.vertex_buffer[vmodel.base_vertex + v2_index].position;
+        v3       := vwrld.vertex_buffer[vmodel.base_vertex + v3_index].position;
+
+        tri      := JPH_Triangle.{
+            v1 = .{v1.x, v1.y, v1.z},
+            v2 = .{v2.x, v2.y, v2.z},
+            v3 = .{v3.x, v3.y, v3.z},
+        };
+
+        array_add(*triangles, tri);
+    }
+
+    mesh_shape_settings := JPH_MeshShapeSettings_Create(triangles.data, xx triangles.count);
+    defer JPH_ShapeSettings_Destroy(xx mesh_shape_settings);
+    mesh_shape := JPH_MeshShapeSettings_CreateShape(mesh_shape_settings);
+    JPH_CompoundShapeSettings_AddShape2(xx compound_shape_settings, xx *VEC3_ZERO, xx *QUAT_ZERO, cast(*JPH_Shape) mesh_shape, 0);
+
+    jph_shape = xx JPH_StaticCompoundShape_Create(compound_shape_settings);
+
+    return jph_shape;
 }
 
 #scope_file

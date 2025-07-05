@@ -3,7 +3,7 @@ GLOBAL_ILLUMINATION_POINT : Vector3 : .{25, 100, 25};
 RENDER_NAMES := string.[
     "Vulkan",
     "OpenGL",
-];  
+];
 
 RenderEngine :: enum u8 {
     VULKAN :: 0;
@@ -62,7 +62,7 @@ SAMPLE_INDXS : [..] u32 = xx u32.[
 
 create_model_registry :: () {
     using game_state.render_handle;
-    
+
     model_registry = New(Table(u32, Model));
 }
 
@@ -72,9 +72,9 @@ create_game_window :: () {
     window_title  : string : WindowCreationInfo.title;
 
     game_state.render_handle.window = xx create_window(xx window_width, xx window_height,
-                                                    tprint(window_title, RENDER_NAMES[RENDERER]), 
-                                                    wanted_msaa = 0); 
-                                                
+                                                    tprint(window_title, RENDER_NAMES[RENDERER]),
+                                                    wanted_msaa = 0);
+
     return;
 }
 
@@ -86,11 +86,11 @@ create_render_engine :: () {
 
 cleanup_render_engine :: () {
     using game_state.render_handle;
-    
+
     cleanup_render();
     deinit(model_registry);
     free(model_registry);
-    
+
 }
 
 register_model :: () {}
@@ -100,7 +100,7 @@ register_model :: () {}
         #load "./opengl/opengl_engine.jai";
     case .VULKAN;
         #load "./vulkan/vulkan_engine.jai";
-        
+
     case;
         #run print("invalid renderer argument supplied: %\n", RENDERER);
         #run assert(false);

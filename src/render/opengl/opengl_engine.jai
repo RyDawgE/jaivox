@@ -57,14 +57,14 @@ create_model :: (in_vertex_buffer : [..] Vertex, in_index_buffer : [..] u32) -> 
     return model;
 }
 
-create_voxel_model :: (world_render : *VoxelWorldRenderData, chunk_id : u64) {
+create_voxel_model :: (world_render : *VoxelWorldRenderData, chunk_id : u64) -> *VoxelModel {
     using game_state.render_handle;
 
     chunk := cast (*VoxelChunk) get_entity(chunk_id);
 
     if (!chunk.voxel_data) {
             print("Bad Voxel Data during model creation.\n");
-            return;
+            return null;
     }
 
 
@@ -108,7 +108,7 @@ create_voxel_model :: (world_render : *VoxelWorldRenderData, chunk_id : u64) {
     // print("Chunk Buffer: %\n", model);
     // print("World Vertex Buffer Size: %mb\n", (size_of(Vertex) * world_render.vertex_buffer.count) / 1_000_000);
 
-    return;
+    return chunk.voxel_model;
 }
 
 initialize_render :: (render_handle : *RenderHandle) {

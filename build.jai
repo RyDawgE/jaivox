@@ -1,5 +1,18 @@
-DEBUG    : bool = true;
-RENDERER : u8   = 0;
+EngineType :: enum u8 {
+    ENGINE_3D   :: 0;
+    ENGINE_2D   :: 1;
+    ENGINE_VR   :: 2;
+}
+
+EngineRenderer :: enum u8 {
+    ENGINE_VK   :: 0;
+    ENGINE_OGL  :: 1;
+}
+
+DEBUG       : bool  = true;
+ENGINE_TYPE : EngineType        = .ENGINE_2D; //Probably rename this to game type?
+RENDERER    : EngineRenderer    = .ENGINE_OGL;
+
 
 #run build();
 
@@ -45,6 +58,12 @@ build :: () {
             case "vulkan";
                 RENDERER = 0;
                 compile_shaders(tprint("%/shaders", build_dir));
+            case "e3d";
+                ENGINE_TYPE = .ENGINE_3D;
+            case "e2d";
+                ENGINE_TYPE = .ENGINE_2D;
+            case "evr";
+                ENGINE_TYPE = .ENGINE_VR;
             case;
                 compiler_report(tprint("Command-line argument #%, '%', is invalid. Valid options are: 'debug', 'release', 'no_output'.\n", it_index+1, arg));
         }
@@ -69,9 +88,12 @@ build :: () {
         STRING
         DEBUG :: %;
         RENDERER :: %;
+        ENGINETYPE :: %;
         STRING,
         ifx DEBUG then "true" else "false",
-        RENDERER,
+        cast(u8) RENDERER,
+        cast(u8) ENGINE_TYPE,
+
     );
 
     add_build_string(build_constants, w);

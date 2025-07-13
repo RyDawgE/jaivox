@@ -1,3 +1,14 @@
+EngineType :: enum u8 {
+    ENGINE_3D   :: 0;
+    ENGINE_2D   :: 1;
+    //ENGINE_VR   :: 2; Make this a seperate flag later
+}
+
+EngineRenderer :: enum u8 {
+    ENGINE_VK   :: 0;
+    ENGINE_OGL  :: 1;
+}
+
 main :: () {
     game_state.start_time = cast (float) to_float64_seconds (current_time_monotonic());
 
@@ -7,32 +18,16 @@ main :: () {
     game_state.physics_handle = New(PhysicsHandle);
 
     initialize_entity_handle();
-    initialize_physics();
     create_render_engine();
-
-    camera : *DebugCamera = create_entity(DebugCamera);
-    world  : *VoxelWorld  = create_entity(VoxelWorld);
-    dbg    : *DebugEntity = create_entity(DebugEntity);
-    init_debug_entity(dbg);
-    dbg.position = GLOBAL_ILLUMINATION_POINT;
-
-    init_debug_camera(camera);
-    game_state.render_handle.bound_camera = camera;
-
-    camera.position = .{0, 10, 0};
-    camera.rotation = .{0, 0, 0};
 
     frame_start : Apollo_Time;
     frame_end   : Apollo_Time;
-
-    create_voxel_world(world);
 
     // @MainLoop
     while !game_state.should_close {
 		frame_start = current_time_monotonic ();
 
         poll_events();
-        simulate_physics();
         simulate_game();
         draw_frame();
 
@@ -62,7 +57,6 @@ cleanup :: () {
 print_size_info :: () #compile_time {
     print("\nDebug size info: \n");
     print("Largest Entity: % bytes.\n", LARGEST_ENTITY_SIZE);
-    print("Chunk Data: % bytes.\n", size_of(VoxelChunkData));
     print("\n");
 }
 
@@ -70,7 +64,6 @@ print_size_info :: () #compile_time {
 
 #load "./game/game.jai";
 #load "./entity/entity.jai";
-#load "./voxel/voxel.jai";
 #load "./render/render.jai";
 #load "./input/input.jai";
 #load "./file_utilities.jai";
@@ -78,11 +71,6 @@ print_size_info :: () #compile_time {
 #load "./math_utilities.jai";
 #load "./voxel/noise/perlin_noise.jai";
 #load "./physics/physics_engine.jai";
-
-#load "./game/entities/debug_entity.jai";
-#load "./game/entities/debug_camera.jai";
-#load "./game/entities/voxel_chunk.jai";
-#load "./game/entities/voxel_world.jai";
 
 
 

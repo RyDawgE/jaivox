@@ -7,9 +7,15 @@ Entity :: struct @entity {
     
     active              : bool    = false;
     
-    position            : Vector3 = .{0, 0, 0};
-    rotation            : Vector3 = .{0, 0, 0};
-    scale               : Vector3 = .{1, 1, 1};
+    #if ENGINE2D { // Engine is in 3d mode
+        position            : Vector2 = .{0, 0};
+        rotation            : float   = 0;
+        scale               : Vector2 = .{1, 1};   
+    } else {                        // Engine is in 2d mode
+        position            : Vector3 = .{0, 0, 0};
+        rotation            : Vector3 = .{0, 0, 0};
+        scale               : Vector3 = .{1, 1, 1}; 
+    }
     
     velocity            : Vector3 = .{0, 0, 0};
     

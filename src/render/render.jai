@@ -109,7 +109,6 @@ register_model :: () {}
 #scope_file
 #import "Window_Creation";
 #import "File";
-#load "../voxel/voxel_render.jai";
 #load "texture.jai";
 #load "textures.jai";
 

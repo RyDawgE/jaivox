@@ -41,6 +41,8 @@ create_opengl_context :: () {
     glCullFace(GL_BACK);
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_MULTISAMPLE);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
     glDebugMessageCallback(debug_message_callback,xx  0);
 }
 
@@ -147,7 +149,6 @@ draw_entities :: () {
         // Begin Render
         glBindBuffer(GL_ARRAY_BUFFER, sprite_vbo);
         glBindTexture(GL_TEXTURE_2D, entity.sprite.texture_object);
-        print("Tex: %\n", entity.sprite.texture_object);
 
         glDrawArrays(GL_TRIANGLES, 0, 6);
     }

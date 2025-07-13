@@ -27,10 +27,10 @@ init_debug_camera :: (camera : *DebugCamera) {
     create_input_binding(camera,  141,   xx toggle_fast);
     create_input_binding(camera,  27,    xx close_game_binding);
 
-    camera.scale = .{64, 64};
+    camera.scale = .{19*2, 38*2};
 
     camera.sprite = New(Sprite);
-    camera.sprite.texture_object = create_texture(TEX_UNDEFINED);
+    camera.sprite.texture_object = create_texture(TEX_KRIS);
 }
 
 tick_debug_camera :: (camera : *DebugCamera) {

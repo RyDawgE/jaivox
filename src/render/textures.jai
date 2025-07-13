@@ -5,3 +5,5 @@ TEX_ENV_SAND   : string : #run bake_texture("C:/Users/RyDaw/Documents/jaivox/dat
 TEX_UNDEFINED  : string : #run bake_texture("C:/Users/RyDaw/Documents/jaivox/data/texture/tex_undef.png");
 
 TEX_ENV_GRASS_62  : string : #run bake_texture("C:/Users/RyDaw/Documents/jaivox/data/texture/environment/tex_environment_grass_big.png");
+
+TEX_KRIS  : string : #run bake_texture("C:/Users/RyDaw/Documents/jaivox/data/texture/tex_kris.png");

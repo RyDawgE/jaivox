@@ -4,25 +4,25 @@ ENTITY_TICK_PROCEDURE_SIGNATURE :: #type (entity: *Entity);
 
 Entity :: struct @entity {
     id : u64;
-    
+
     active              : bool    = false;
-    
-    #if ENGINE2D { // Engine is in 3d mode
+    input_bindings      : *Table(KeyboardKey, INPUT_BINDING_PROCEDURE_SIGNATURE);
+
+    #if ENGINE2D {  // Engine is in 2d mode
         position            : Vector2 = .{0, 0};
         rotation            : float   = 0;
-        scale               : Vector2 = .{1, 1};   
-    } else {                        // Engine is in 2d mode
+        scale               : Vector2 = .{1, 1};
+        velocity            : Vector2 = .{0, 0};
+        sprite              : *Sprite;
+
+    } else {        // Engine is in 3d mode
         position            : Vector3 = .{0, 0, 0};
         rotation            : Vector3 = .{0, 0, 0};
-        scale               : Vector3 = .{1, 1, 1}; 
+        scale               : Vector3 = .{1, 1, 1};
+        velocity            : Vector3 = .{0, 0, 0};
+        model               : *Model;
+        collider            : *EntityCollider;
     }
-    
-    velocity            : Vector3 = .{0, 0, 0};
-    
-    model               : *Model;
-    collider            : *EntityCollider;
-    
-    input_bindings      : *Table(KeyboardKey, INPUT_BINDING_PROCEDURE_SIGNATURE);
 }
 
 EntityBlock :: struct {
@@ -37,7 +37,7 @@ EntityHandle :: struct {
 
 initialize_entity_handle :: () {
     using game_state.entity_handle;
-    
+
     tickable_entities  = New(Table(u64, ENTITY_TICK_PROCEDURE_SIGNATURE));
 }
 
@@ -56,17 +56,17 @@ get_entity_slot_size :: () -> s64 #compile_time {
 }
 
 
-get_entity_mem_info :: (id : u64) -> u32, u32 { 
+get_entity_mem_info :: (id : u64) -> u32, u32 {
     //block, slot
     return (cast,no_check(u32) id >> 32) - 1, (cast,no_check(u32) id) - 1;
 }
 
-create_entity :: ($T : Type) -> *void {    
+create_entity :: ($T : Type) -> *void {
 
     // find first block with available slot
     available_block : *EntityBlock;
     available_block_index := 0;
-    
+
     for block : game_state.entity_handle.entity_blocks {
         if !(block.member_mask == ~0) { // ~ flips all bits. so ~0b00000000 -> 0b11111111
             //if block not full
@@ -74,7 +74,7 @@ create_entity :: ($T : Type) -> *void {
             available_block_index = it_index;
         }
     }
-    
+
     //if theres no available block create a new one
     if (available_block == null) {
         available_block = array_add(*game_state.entity_handle.entity_blocks);
@@ -83,57 +83,63 @@ create_entity :: ($T : Type) -> *void {
         available_block_index = game_state.entity_handle.entity_blocks.count - 1;
         //print("New entity block created with size of % bytes\n", block_size);
     }
-    
-    available_slot : s32 = bit_scan_forward(~available_block.member_mask) - 1;  
+
+    available_slot : s32 = bit_scan_forward(~available_block.member_mask) - 1;
     bit_slot : u64 = (cast(u64) 1) << available_slot;
     available_block.member_mask |= bit_slot;
-    
+
     //Create entity data, write it to block, pop original entity off stack.
     entity : *T = cast(*T)(available_block.memory + (available_slot * LARGEST_ENTITY_SIZE));
     entity.* = .{}; // default initialize as type T
-    
+
     id : u64 = 0;
     id |= ((cast(u64) available_block_index + 1) << 32) | (cast(u64) available_slot + 1);
-        
+
     entity.id = id;
     entity.active = true;
-        
+
     return entity;
 }
 
-// destroy example: 
+// destroy example:
 // in:
 // 00110100 - member_mask
 // 11111011 - ~(1 << slot)
 
-// out: 
+// out:
 // 00110000
 destroy_entity :: (entity : *Entity) -> bool {
     if (entity.id == 0 || entity.active == false) {
         return false; //Already inactive
     }
-    
+
     entity.active = false;
     block, slot := get_entity_mem_info(entity.id);
-    
+
     game_state.entity_handle.entity_blocks[block].member_mask &= ~((cast(u64) 1) << slot);
-    
+
     input_subscription := *game_state.input_handle.subscribed_entities;
     if array_find(<<input_subscription, entity.id) {
         array_unordered_remove_by_value(input_subscription, entity.id);
         deinit(entity.input_bindings);
         free(entity.input_bindings);
-    }    
-    
+    }
+
     render_subscription := *game_state.render_handle.subscribed_entities;
     if array_find(<<render_subscription, entity.id) {
         array_unordered_remove_by_value(input_subscription, entity.id);
-    }    
-    
-    if entity.model {
-        free(entity.model);
     }
-    
+
+    #if ENGINE2D {
+        if entity.sprite {
+            free(entity.sprite);
+        }
+    } else {
+        if entity.model {
+            free(entity.model);
+        }
+    }
+
     return true;
 }
 
@@ -145,24 +151,24 @@ get_entity :: (id : u64) -> *void {
     block_index : u64 = (id >> 32) - 1; // only back half
     slot_mask   : u64 = (ones >> 32);
     slot_index  : u64 = slot_mask & id; // only front half
-    
+
     // print("block: %\n", formatInt(block_index, 2, 64));
     // print("mask: %\n", formatInt(slot_mask, 2, 64));
     // print("slot:  %\n", formatInt(slot_index, 2, 64));
 
-    
+
     memory : *void = entity_blocks[block_index].memory;
     memory += (slot_index - 1) * LARGEST_ENTITY_SIZE;
-    
+
     return memory;
 }
 
 subscribe_entity_to_input :: (entity : *Entity) {
     using game_state.input_handle;
-    
+
     entity.input_bindings = New(Table(KeyboardKey, INPUT_BINDING_PROCEDURE_SIGNATURE));
     array_add(*subscribed_entities, entity.id);
-    
+
     return;
 }
 
@@ -175,17 +181,17 @@ subscribe_entity_to_input :: (entity : *Entity) {
 // Then, make should_tick be a boolean that checks if it should even enter the table to begin with.
 subscribe_entity_to_tick :: (entity : *Entity, proc_callback : ENTITY_TICK_PROCEDURE_SIGNATURE = tick_entity) {
     using game_state.entity_handle;
-    
+
     table_add(tickable_entities, entity.id, proc_callback);
-    
+
     return;
 }
 
 subscribe_entity_to_render :: (entity : *Entity) {
     using game_state.render_handle;
-    
+
     array_add(*subscribed_entities, entity.id);
-    
+
     return;
 }
 

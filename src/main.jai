@@ -23,6 +23,10 @@ main :: () {
     frame_start : Apollo_Time;
     frame_end   : Apollo_Time;
 
+    //Main stuff goes here
+    camera := create_entity(DebugCamera);
+    init_debug_camera(camera);
+
     // @MainLoop
     while !game_state.should_close {
 		frame_start = current_time_monotonic ();
@@ -71,6 +75,8 @@ print_size_info :: () #compile_time {
 #load "./math_utilities.jai";
 #load "./voxel/noise/perlin_noise.jai";
 #load "./physics/physics_engine.jai";
+
+#load "./game/entities/debug_camera.jai";
 
 
 

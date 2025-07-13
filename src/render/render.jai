@@ -11,8 +11,8 @@ RenderEngine :: enum u8 {
 }
 
 WindowCreationInfo :: struct {
-    width  : float    :  1280;
-    height : float    :  720;
+    width  : float    :  640;
+    height : float    :  480;
     title  : string : "JaiDawgEngine - Renderer: %";
 }
 
@@ -42,10 +42,15 @@ Camera :: struct {
 Model :: struct {
     vertices : [..] Vertex;
     indices  : [..] u32;
-    vertex_attributes  : u32;
-    vertex_buffer      : u32;
-    index_buffer       : u32;
-    texture_object     : u32;
+    vertex_attributes   : u32;
+    vertex_buffer       : u32;
+    index_buffer        : u32;
+    texture_object      : u32;
+}
+
+Sprite :: struct {
+    texture_object      : u32;
+    shader_object       : u32;
 }
 
 SAMPLE_VERTS : [..] Vertex = xx Vertex.[
@@ -58,6 +63,16 @@ SAMPLE_VERTS : [..] Vertex = xx Vertex.[
 SAMPLE_INDXS : [..] u32 = xx u32.[
     0, 1, 2,
     2, 3, 0
+];
+
+SPRITE_QUAD : [..] Vector4 = xx Vector4.[
+    .{0.0, 1.0, 0.0, 1.0},
+    .{1.0, 0.0, 1.0, 0.0},
+    .{0.0, 0.0, 0.0, 0.0},
+
+    .{0.0, 1.0, 0.0, 1.0},
+    .{1.0, 1.0, 1.0, 1.0},
+    .{1.0, 0.0, 1.0, 0.0},
 ];
 
 create_model_registry :: () {

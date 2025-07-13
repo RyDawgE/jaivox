@@ -8,60 +8,22 @@ RenderHandle :: struct {
     entity_vertex_attributes   : u32;
     IBO                        : u32;
     bound_camera               : *Entity                  = null;
-
-    //voxel_render_data          : *VoxelWorldRenderData    = null;
+    sprite_vbo                 : u32;
 
     subscribed_entities        : [..] u64;
-}
-
-VoxelIndirectCommand :: struct {
-    count           : u32;
-    instance_count  : u32;
-    first_index     : u32;
-    base_vertex     : s32;
-    base_instance   : u32;
 }
 
 // Currently broken when rendering both Entities and Voxels
 USE_INDIRECTION : bool  = false;
 MSAA_LEVEL      : s32   = 2;
 
-create_model :: (in_vertex_buffer : [..] Vertex, in_index_buffer : [..] u32) -> *Model {
-    model : *Model = New(Model);
-
-    VBO   : u32 = 0;
-    EBO   : u32 = 0;
-
-    glGenBuffers(1, *VBO);
-    glGenBuffers(1, *EBO);
-
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-
-
-    vertex_buffer_size : s64 = in_vertex_buffer.count * size_of(Vertex);
-    index_buffer_size  : s64 = in_index_buffer.count * size_of(u32);
-
-    glNamedBufferData(VBO, vertex_buffer_size, in_vertex_buffer.data, GL_DYNAMIC_DRAW);
-    glNamedBufferData(EBO, index_buffer_size, in_index_buffer.data, GL_DYNAMIC_DRAW);
-
-    {
-        using model;
-
-        vertices = in_vertex_buffer;
-        indices = in_index_buffer;
-        vertex_buffer = VBO;
-        index_buffer  = EBO;
-    }
-
-    return model;
-}
-
 initialize_render :: (render_handle : *RenderHandle) {
     create_opengl_context();
     create_shader_programs();
-    //create_voxel_buffer(); Move this for later in the pipeline
     create_attribute_descriptors();
+    #if ENGINE2D {
+        create_sprite_vertex_buffer();
+    }
 }
 
 create_opengl_context :: () {
@@ -84,8 +46,8 @@ create_opengl_context :: () {
 
 create_shader_programs :: () {
     using game_state.render_handle;
-    vert_file_location := tprint("%/../src/shaders/shader.vert", get_program_data_dir());
-    frag_file_location := tprint("%/../src/shaders/shader.frag", get_program_data_dir());
+    vert_file_location := tprint("%/../src/shaders/sprite.vert", get_program_data_dir());
+    frag_file_location := tprint("%/../src/shaders/sprite.frag", get_program_data_dir());
 
     vert, vert_loaded := read_entire_file(vert_file_location);
     frag, frag_loaded := read_entire_file(frag_file_location);
@@ -115,10 +77,20 @@ create_attribute_descriptors :: () {
     using game_state.render_handle;
 
     glGenVertexArrays(1, *entity_vertex_attributes);
-    //glGenVertexArrays(1, *voxel_render_data.VAO);
-
     glBindVertexArray(entity_vertex_attributes);
 
+}
+
+create_sprite_vertex_buffer :: () {
+    using game_state.render_handle;
+
+    glGenBuffers(1, *sprite_vbo);
+    glBindBuffer(GL_ARRAY_BUFFER, sprite_vbo);
+    glBufferData(GL_ARRAY_BUFFER, size_of(Vector4) * SPRITE_QUAD.count, SPRITE_QUAD.data, GL_STATIC_DRAW);
+
+    glBindVertexArray(entity_vertex_attributes);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 4 * size_of(float), cast(*void) 0);
 }
 
 swap_buffers :: (window: Window_Type, vsync := true) {  //@TODO: Implement other platforms and vsync
@@ -135,54 +107,49 @@ draw_entities :: () {
     glBindVertexArray(entity_vertex_attributes);
 
     glEnableVertexAttribArray(0);
-    glEnableVertexAttribArray(1);
-    glEnableVertexAttribArray(2);
 
     //@TODO: Filter this out by entities that actually need rendering.
     //This should be for each model, rather than each entity. Each model would
     //Have a reference to every entity that uses it, or at least the transform of such.
 
-    // For each entity
-    yaw   : Quaternion;
-    pitch : Quaternion;
-    roll  : Quaternion;
-
-    rotation : Quaternion;
-
     transform : Matrix4;
+    pos       : Vector3 = .{0, 0, 0};
+    scl       : Vector3 = .{1, 1, 1};
+    qrot      : Quaternion;
 
     for id : subscribed_entities {
         entity : *Entity = get_entity(id);
 
-        //bad way to do it.
-        if !entity.model {
+        if !entity.sprite {
             continue;
         }
 
         //print("Entity: %\n", entity);
+        pos = .{entity.position.x, entity.position.y, 0};
+        scl = .{entity.scale.x, entity.scale.y, 1};
 
-        // Begin transformation
-        set_from_axis_and_angle(*yaw, 0, 0, -1, radians(entity.rotation.x));
-        set_from_axis_and_angle(*pitch, -1, 0, 0, radians(entity.rotation.y));
-        set_from_axis_and_angle(*roll, 0, -1, 0, radians(entity.rotation.z));
+         //translate
+        transform = make_translation_matrix4(pos);
 
-        rotation = yaw * pitch * roll;
+        //rotate (move origin to center, rotate, move origin back to 0,0)
+        transform = transform * make_translation_matrix4(.{0.5 * entity.scale.x, 0.5 * entity.scale.y, 0.0});
+        set_from_axis_and_angle(*qrot, 0, 0, 1, radians(entity.rotation));
+        transform = transform * rotation_matrix(Matrix4, qrot);
+        transform = transform * make_translation_matrix4(.{-0.5 * entity.scale.x, -0.5 * entity.scale.y, 0.0});
 
-        transform = make_translation_matrix4(entity.position) * rotation_matrix(Matrix4, rotation);
-
-        // Begin Render
-        glBindBuffer(GL_ARRAY_BUFFER, entity.model.vertex_buffer);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, entity.model.index_buffer);
-        glBindTexture(GL_TEXTURE_2D, entity.model.texture_object);
-
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_TRUE,  size_of(Vertex), cast(*void) 0); // Position Attribute
-        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, size_of(Vertex), cast(*void) (3 * size_of(float))); // Color Attribute
-        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, size_of(Vertex), cast(*void) (6 * size_of(float))); // Tex CoordAttribute
+        //scale
+        transform = transform * make_scale_matrix4(scl);
 
         model_location := glGetUniformLocation(shader_program, "model");
         glUniformMatrix4fv(model_location, 1, GL_FALSE, *transpose(transform).coef[0][0]);
 
-        glDrawElements(GL_TRIANGLES, xx entity.model.indices.count, GL_UNSIGNED_INT, cast(*void) 0);
+
+        // Begin Render
+        glBindBuffer(GL_ARRAY_BUFFER, sprite_vbo);
+        glBindTexture(GL_TEXTURE_2D, entity.sprite.texture_object);
+        print("Tex: %\n", entity.sprite.texture_object);
+
+        glDrawArrays(GL_TRIANGLES, 0, 6);
     }
 
 }
@@ -219,57 +186,18 @@ handle_lighting :: () {
 draw_frame :: () {
     using game_state.render_handle;
 
-    view : Matrix4;
-
     glClearColor(.5, .5, 1, 0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     glUseProgram(shader_program);
 
-    if bound_camera {
-        yaw   : Quaternion;
-        pitch : Quaternion;
-        roll  : Quaternion;
-
-        transform : Matrix4 = Matrix4_Identity;
-
-        set_from_axis_and_angle(*yaw, 0, -1, 0, radians(bound_camera.rotation.x));
-        set_from_axis_and_angle(*pitch, -1, 0, 0, radians(bound_camera.rotation.y));
-        set_from_axis_and_angle(*roll, 0, 0, -1, radians(bound_camera.rotation.z));
-
-        rotation : Quaternion = yaw * pitch * roll;
-
-        transform = make_translation_matrix4(bound_camera.position) * rotation_matrix(Matrix4, rotation);
-
-        view = inverse(transform); //type mat4
-
-        //view = make_look_at_matrix(bound_camera.position, .{0, 0, 0}, .{0, 0, 1}, false);
-    } else {
-        view = make_look_at_matrix(.{2, 2, 2}, .{0, 0, 0}, .{0, 0, 1}, false);
-    }
-
-    aspect_ratio : float = (WindowCreationInfo.width / WindowCreationInfo.height);
-
-    proj  := transpose(make_projection_matrix(75.0 * PI / 180.0, aspect_ratio, 0.1, 10000.0, 0, 0, true));
-
-    view_location := glGetUniformLocation(shader_program, "view");
-    glUniformMatrix4fv(view_location, 1, GL_FALSE, *transpose(view).coef[0][0]);
+    proj := orthographic_projection_matrix(0.0, WindowCreationInfo.width, WindowCreationInfo.height, 0.0, -1, 1.0);
 
     projection_location := glGetUniformLocation(shader_program, "proj");
-    glUniformMatrix4fv(projection_location, 1, GL_FALSE, *proj.coef[0][0]);
+    glUniformMatrix4fv(projection_location, 1, GL_FALSE, *transpose(proj).coef[0][0]);
 
-    handle_lighting();
-
-    // if USE_INDIRECTION {
-    //     draw_voxels_indirect();
-    // } else {
-    //     draw_voxels();
-    // }
-    
     draw_entities();
     swap_buffers(window);
-
-
 }
 
 cleanup_render :: () {

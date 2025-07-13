@@ -11,38 +11,30 @@ DebugCamera :: struct @entity {
     using #as entity : Entity;
 
     movement : Movement = 0;
-    speed    : float    = 3;
+    speed    : float    = 100;
     current_chunk : Vector3 = .{0, 0, 0};
 }
 
 init_debug_camera :: (camera : *DebugCamera) {
     subscribe_entity_to_input(camera);
     subscribe_entity_to_tick(camera, xx tick_debug_camera);
+    subscribe_entity_to_render(camera);
 
-    create_input_binding(camera, .KEY_W, xx move_forward);
     create_input_binding(camera, .KEY_A, xx move_left);
-    create_input_binding(camera, .KEY_S, xx move_backward);
     create_input_binding(camera, .KEY_D, xx move_right);
-    create_input_binding(camera, .KEY_E, xx move_up);
-    create_input_binding(camera, .KEY_Q, xx move_down);
+    create_input_binding(camera, .KEY_W, xx move_up);
+    create_input_binding(camera, .KEY_S, xx move_down);
     create_input_binding(camera,  141,   xx toggle_fast);
     create_input_binding(camera,  27,    xx close_game_binding);
-    create_input_binding(camera,  130,   xx rotate_left);
-    create_input_binding(camera,  131,   xx rotate_right);
 
+    camera.scale = .{64, 64};
+
+    camera.sprite = New(Sprite);
+    camera.sprite.texture_object = create_texture(TEX_UNDEFINED);
 }
 
 tick_debug_camera :: (camera : *DebugCamera) {
     using camera;
-
-    // Forward Backward
-    if movement & .FWD_BIT {
-        entity.velocity.z = 1;
-    } else if movement & .BWD_BIT {
-        entity.velocity.z = -1;
-    } else {
-        entity.velocity.z = 0;
-    }
 
     // Left Right
     if movement & .RGT_BIT {
@@ -62,30 +54,10 @@ tick_debug_camera :: (camera : *DebugCamera) {
         entity.velocity.y = 0;
     }
 
-    rotate_from_mouse(camera);
-    camera.position += ((camera.velocity.z * -get_forward_vector(camera.rotation)) + (camera.velocity.x * -get_right_vector(camera.rotation)) + (camera.velocity.y * .{0, 1, 0})) * camera.speed * game_state.delta_time;
+    camera.position += normalize(Vector2.{camera.velocity.x, -camera.velocity.y}) * (camera.speed * game_state.delta_time);
 
-    chunk_pos_x := floor((camera.position.x / VOXEL_SIZE) / CHUNK_SIZE);
-    chunk_pos_y := floor((camera.position.y / VOXEL_SIZE) / CHUNK_SIZE);
-    chunk_pos_z := floor((camera.position.z / VOXEL_SIZE) / CHUNK_SIZE);
-
-    camera.current_chunk = .{chunk_pos_x, chunk_pos_y, chunk_pos_z};
-
-    //print("Position: %\nRotation: %\n", entity.position, entity.rotation);
-    // print("Forward: %\nRight: %\n", get_forward_vector(camera.rotation), get_right_vector(camera.rotation));
-    // print("Chunk Position: %\n", camera.current_chunk);
-}
-
-move_forward :: (camera: *DebugCamera, event : *Event) {
-    using camera;
-
-    movement = ifx event.key_pressed then movement | .FWD_BIT else movement & ~.FWD_BIT;
-}
-
-move_backward :: (camera: *DebugCamera, event : *Event) {
-    using camera;
-
-    movement = ifx event.key_pressed then movement | .BWD_BIT else movement & ~.BWD_BIT;
+    print("Position: %\nRotation: %\n", entity.position, entity.rotation);
+    //print("Forward: %\nRight: %\n", get_forward_vector(camera.rotation), get_right_vector(camera.rotation));
 }
 
 move_up :: (camera: *DebugCamera, event : *Event) {
@@ -114,26 +86,8 @@ toggle_fast :: (camera: *DebugCamera, event : *Event) {
     using camera;
 
     if event.key_pressed {
-        speed = 50;
+        speed = 200;
     } else {
-        speed = 3;
+        speed = 100;
     }
 }
-
-rotate_from_mouse :: (entity: *Entity) {
-    using game_state.input_handle;
-
-    dt : float = game_state.delta_time;
-
-    entity.rotation.x += mouse_delta.x * dt * 100;
-    entity.rotation.y += mouse_delta.y * dt * 100;
-}
-
-rotate_left :: (entity: *Entity, event : *Event) {
-    entity.rotation.z += 1;
-}
-
-rotate_right :: (entity: *Entity, event : *Event) {
-    entity.rotation.z += -1;
-}
-

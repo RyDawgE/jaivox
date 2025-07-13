@@ -6,7 +6,7 @@ ENGINE_OGL  : u8 : 1;
 
 
 DEBUG       : bool  = true;
-ENGINE_TYPE : u8        = ENGINE_3D; //Probably rename this to game type?
+ENGINE_TYPE : u8        = ENGINE_2D; //Probably rename this to game type?
 RENDERER    : u8        = ENGINE_OGL;
 
 
@@ -32,7 +32,7 @@ build :: () {
     set_working_directory(#filepath);
 
     set_optimization(*options, .DEBUG);
-    
+
     for arg: args {
         if arg == {
             case "release";
@@ -48,7 +48,7 @@ build :: () {
                 // useful if you want to compile to show errors, but not generate a build output
                 // which saves compile time
                 options.output_type = .NO_OUTPUT;
-                
+
             case "opengl";
                 RENDERER = 1;
             case "vulkan";
@@ -61,8 +61,8 @@ build :: () {
             case;
                 compiler_report(tprint("Command-line argument #%, '%', is invalid. Valid options are: 'debug', 'release', 'no_output'.\n", it_index+1, arg));
         }
-        
-         
+
+
     }
 
     make_directory_if_it_does_not_exist(build_dir);
@@ -78,7 +78,7 @@ build :: () {
 
     // allows main program to use:
     // #if DEBUG
-    build_constants := tprint(#string 
+    build_constants := tprint(#string
         STRING
         DEBUG :: %;
         RENDERER :: %;

@@ -129,16 +129,20 @@ draw_entities :: () {
 
         //print("Entity: %\n", entity);
         pos = .{entity.position.x, entity.position.y, 0};
-        scl = .{entity.scale.x, entity.scale.y, 1};
+        scl = .{
+            entity.scale.x * entity.sprite.scale.x,
+            entity.scale.y * entity.sprite.scale.y,
+            1,
+        };
 
          //translate
         transform = make_translation_matrix4(pos);
 
         //rotate (move origin to center, rotate, move origin back to 0,0)
-        transform = transform * make_translation_matrix4(.{0.5 * entity.scale.x, 0.5 * entity.scale.y, 0.0});
+        transform = transform * make_translation_matrix4(.{0.5 * scl.x, 0.5 * scl.y, 0.0});
         set_from_axis_and_angle(*qrot, 0, 0, 1, radians(entity.rotation));
         transform = transform * rotation_matrix(Matrix4, qrot);
-        transform = transform * make_translation_matrix4(.{-0.5 * entity.scale.x, -0.5 * entity.scale.y, 0.0});
+        transform = transform * make_translation_matrix4(.{-0.5 * scl.x, -0.5 * scl.y, 0.0});
 
         //scale
         transform = transform * make_scale_matrix4(scl);

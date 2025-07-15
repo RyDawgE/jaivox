@@ -56,6 +56,7 @@ Sprite :: struct {
     texture_data        : TextureData;
     shader_program      : u32 = 0;
     animation_frame     : s32 = 0;
+    animation_lock      : bool = false;
 }
 
 SAMPLE_VERTS : [..] Vertex = xx Vertex.[
@@ -110,6 +111,25 @@ cleanup_render_engine :: () {
     cleanup_render();
     deinit(model_registry);
     free(model_registry);
+}
+
+play_sprite_animation :: (entity : *Entity, anim : TextureData, duration : float) {
+    entity.sprite.texture_data      = anim;
+    entity.sprite.animation_frame   = 0;
+    scale : Vector2 = .{
+        xx (anim.x / anim.anim_data.frames),
+        xx anim.y
+    };
+    entity.sprite.scale = scale;
+}
+
+set_sprite_texture :: (entity : *Entity, texture : TextureData) {
+        entity.sprite.texture_data      = texture;
+        scale : Vector2 = .{
+            xx (texture.x / texture.anim_data.frames),
+            xx texture.y
+        };
+        entity.sprite.scale = scale;
 }
 
 register_model :: () {}

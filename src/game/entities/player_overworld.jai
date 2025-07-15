@@ -41,13 +41,15 @@ init_player_overworld :: (entity : *PlayerOverworld) {
     create_input_binding(entity, .KEY_D, xx move_right);
     create_input_binding(entity, .KEY_W, xx move_up);
     create_input_binding(entity, .KEY_S, xx move_down);
+    create_input_binding(entity, .KEY_SPACE, xx play_anim);
+
     create_input_binding(entity,  141,   xx toggle_fast);
     create_input_binding(entity,  27,    xx close_game_binding);
 
     // Configure sprite defaults
-    entity.scale = .{19*2, 38*2};
+    entity.scale = .{2, 2};
     entity.sprite = New(Sprite);
-    entity.sprite.texture_data = WALK_DOWN;
+    set_sprite_texture(entity, WALK_DOWN);
 }
 
 tick_player_overworld :: (player : *PlayerOverworld) {
@@ -56,7 +58,7 @@ tick_player_overworld :: (player : *PlayerOverworld) {
     // Left Right
     if movement & .RGT_BIT {
         entity.velocity.x = 1;
-        entity.sprite.texture_data = WALK_RIGHT;
+        set_sprite_texture(*entity, WALK_RIGHT);
         // Next big TODO. Make a procedure for playing
         // One-off animations. Have an interruptable thingy
         // where it cant be inaterupted by another
@@ -66,7 +68,7 @@ tick_player_overworld :: (player : *PlayerOverworld) {
 
     } else if movement & .LFT_BIT {
         entity.velocity.x = -1;
-        entity.sprite.texture_data = WALK_LEFT;
+        set_sprite_texture(*entity, WALK_LEFT);
 
     } else {
         entity.velocity.x = 0;
@@ -75,11 +77,11 @@ tick_player_overworld :: (player : *PlayerOverworld) {
     // Up Down
     if movement & .UPD_BIT {
         entity.velocity.y = 1;
-        entity.sprite.texture_data = WALK_UP;
+        set_sprite_texture(*entity, WALK_UP);
 
     } else if movement & .DWD_BIT {
         entity.velocity.y = -1;
-        entity.sprite.texture_data = WALK_DOWN;
+        set_sprite_texture(*entity, WALK_DOWN);
 
     } else {
         entity.velocity.y = 0;
@@ -117,6 +119,10 @@ move_left :: (player: *PlayerOverworld, event : *Event) {
 move_right :: (player: *PlayerOverworld, event : *Event) {
     using player;
     movement = ifx event.key_pressed then movement | .RGT_BIT else movement & ~.RGT_BIT;
+}
+
+play_anim :: (player: *PlayerOverworld, event : *Event) {
+    play_sprite_animation(*player.entity, BATTLE_INTRO, 1);
 }
 
 toggle_fast :: (entity: *PlayerOverworld, event : *Event) {

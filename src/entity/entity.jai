@@ -10,9 +10,10 @@ Entity :: struct @entity {
 
     #if ENGINE2D {  // Engine is in 2d mode
         position            : Vector2 = .{0, 0};
-        rotation            : float   = 0;
         scale               : Vector2 = .{1, 1};
         velocity            : Vector2 = .{0, 0};
+        rotation            : float   = 0;
+
         sprite              : *Sprite;
 
     } else {        // Engine is in 3d mode

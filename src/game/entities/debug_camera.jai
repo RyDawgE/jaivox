@@ -56,7 +56,7 @@ tick_debug_camera :: (camera : *DebugCamera) {
 
     camera.position += normalize(Vector2.{camera.velocity.x, -camera.velocity.y}) * (camera.speed * game_state.delta_time);
 
-    print("Position: %\nRotation: %\n", entity.position, entity.rotation);
+    //print("Position: %\nRotation: %\n", entity.position, entity.rotation);
     //print("Forward: %\nRight: %\n", get_forward_vector(camera.rotation), get_right_vector(camera.rotation));
 }
 

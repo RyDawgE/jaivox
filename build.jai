@@ -93,7 +93,7 @@ build :: () {
     add_build_string(build_constants, w);
     add_build_file(tprint("%src/main.jai", #filepath), w);
 
-    compile_shaders(tprint("%/shaders", build_dir));
+    //compile_shaders(tprint("%/shaders", build_dir));
 }
 
 #import "Compiler";

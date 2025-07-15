@@ -30,7 +30,7 @@ run_working_dir:        C:\Users\RyDaw\Documents\jaivox     # working dir for th
 key_binding:            Ctrl-Alt-F11
 
 [Build]   # <- command name. Can be arbitrary
-build_command:          jai build.jai  # should be an executable or a script
+build_command:          jai build.jai - opengl # should be an executable or a script
 build_working_dir:      C:\Users\RyDaw\Documents\jaivox
 # timeout_in_seconds:     5             # if you don't want a timeout, don't specify it
 key_binding:            F5

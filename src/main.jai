@@ -24,8 +24,8 @@ main :: () {
     frame_end   : Apollo_Time;
 
     //Main stuff goes here
-    camera := create_entity(DebugCamera);
-    init_debug_camera(camera);
+    player := create_entity(PlayerOverworld);
+    init_player_overworld(player);
 
     // @MainLoop
     while !game_state.should_close {
@@ -39,6 +39,8 @@ main :: () {
 
 		game_state.delta_time = cast (float) to_float64_seconds (frame_end - frame_start);
 
+        game_state.time     += game_state.delta_time;
+        game_state.frame    += 1;
 		//Print FPS
 		//print("%\n", 1 / game_state.delta_time);
     }
@@ -76,7 +78,7 @@ print_size_info :: () #compile_time {
 #load "./voxel/noise/perlin_noise.jai";
 #load "./physics/physics_engine.jai";
 
-#load "./game/entities/debug_camera.jai";
+#load "./game/entities/player_overworld.jai";
 
 
 

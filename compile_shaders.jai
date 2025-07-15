@@ -42,7 +42,7 @@ compile_shader :: (shader_compiler: string, shader_path: string, flags: string, 
 
     output_path := tprint("%/%.spv", output_directory, filename);
     compiler_command := string.[shader_compiler, shader_path, "-o", output_path, flags];
-    log("Compiling % to % (%)", filename, output_path, get_quoted_command_string(compiler_command));
+    log("Compiling % to % (%)\n", filename, output_path, get_quoted_command_string(compiler_command));
     result := run_command(..compiler_command);
     if result.exit_code != 0 {
         return false;

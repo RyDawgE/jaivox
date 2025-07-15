@@ -49,8 +49,13 @@ Model :: struct {
 }
 
 Sprite :: struct {
-    texture_object      : u32;
-    shader_object       : u32;
+    position            : Vector2 = .{0, 0};
+    scale               : Vector2 = .{1, 1};
+    rotation            : float   = 0;
+
+    texture_data        : TextureData;
+    shader_program      : u32 = 0;
+    animation_frame     : s32 = 0;
 }
 
 SAMPLE_VERTS : [..] Vertex = xx Vertex.[
@@ -105,7 +110,6 @@ cleanup_render_engine :: () {
     cleanup_render();
     deinit(model_registry);
     free(model_registry);
-
 }
 
 register_model :: () {}

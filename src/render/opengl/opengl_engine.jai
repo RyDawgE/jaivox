@@ -3,14 +3,22 @@
 RenderHandle :: struct {
     window                     : Window_Type;
     instance                   : *void                    = null;
-    shader_program             : u32                      = 0;
+    default_shader_program     : u32;
     model_registry             : *Table(u32, Model);
     entity_vertex_attributes   : u32;
     IBO                        : u32;
+    UBO                        : u32;
     bound_camera               : *Entity                  = null;
     sprite_vbo                 : u32;
 
     subscribed_entities        : [..] u64;
+}
+
+GameStateUniform :: struct {
+    projection  : Matrix4;
+    frame       : u32;
+    time        : float;
+    dt          : float;
 }
 
 // Currently broken when rendering both Entities and Voxels
@@ -21,6 +29,7 @@ initialize_render :: (render_handle : *RenderHandle) {
     create_opengl_context();
     create_shader_programs();
     create_attribute_descriptors();
+    create_uniform_buffer_object();
     #if ENGINE2D {
         create_sprite_vertex_buffer();
     }
@@ -48,32 +57,15 @@ create_opengl_context :: () {
 
 create_shader_programs :: () {
     using game_state.render_handle;
-    vert_file_location := tprint("%/../src/shaders/sprite.vert", get_program_data_dir());
-    frag_file_location := tprint("%/../src/shaders/sprite.frag", get_program_data_dir());
 
-    vert, vert_loaded := read_entire_file(vert_file_location);
-    frag, frag_loaded := read_entire_file(frag_file_location);
 
-    vertex_shader : u32;
-    vertex_shader = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(vertex_shader, 1, *vert.data, null);
-    glCompileShader(vertex_shader);
-
-    fragment_shader : u32;
-    fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragment_shader, 1, *frag.data, null);
-    glCompileShader(fragment_shader);
-
-    shader_program = glCreateProgram();
-
-    glAttachShader(shader_program, vertex_shader);
-    glAttachShader(shader_program, fragment_shader);
-    glLinkProgram(shader_program);
-
-    glDeleteShader(vertex_shader);
-    glDeleteShader(fragment_shader);
-
+    sprite_vshader := create_shader_object("%/../src/shaders/sprite.vert", GL_VERTEX_SHADER);
+    sprite_fshader := create_shader_object("%/../src/shaders/anim_sprite.frag", GL_FRAGMENT_SHADER);
+    //animated_sprite_vshader := create_shader_object("%/../src/shaders/sprite.vert", GL_VERTEX_SHADER);
+    default_shader_program = create_shader_program(sprite_vshader, sprite_fshader);
 }
+
+
 
 create_attribute_descriptors :: () {
     using game_state.render_handle;
@@ -81,6 +73,15 @@ create_attribute_descriptors :: () {
     glGenVertexArrays(1, *entity_vertex_attributes);
     glBindVertexArray(entity_vertex_attributes);
 
+}
+
+create_uniform_buffer_object :: () {
+    using game_state.render_handle;
+
+    glGenBuffers(1, *UBO);
+    glBindBuffer(GL_UNIFORM_BUFFER, UBO);
+    glBufferData(GL_UNIFORM_BUFFER, size_of(GameStateUniform), null, GL_STATIC_DRAW);
+    glBindBufferBase(GL_UNIFORM_BUFFER, 0, UBO);
 }
 
 create_sprite_vertex_buffer :: () {
@@ -142,20 +143,25 @@ draw_entities :: () {
         //scale
         transform = transform * make_scale_matrix4(scl);
 
-        model_location := glGetUniformLocation(shader_program, "model");
-        glUniformMatrix4fv(model_location, 1, GL_FALSE, *transpose(transform).coef[0][0]);
+        model_loc := glGetUniformLocation(default_shader_program, "model");
+        glUniformMatrix4fv(model_loc, 1, GL_FALSE, *transpose(transform).coef[0][0]);
 
+        curr_frame_loc := glGetUniformLocation(default_shader_program, "curr_frame");
+        glUniform1iv(curr_frame_loc, 1, *entity.sprite.animation_frame);
+
+        num_frames_loc := glGetUniformLocation(default_shader_program, "num_frames");
+        glUniform1iv(num_frames_loc, 1, *entity.sprite.texture_data.anim_data.frames);
 
         // Begin Render
         glBindBuffer(GL_ARRAY_BUFFER, sprite_vbo);
-        glBindTexture(GL_TEXTURE_2D, entity.sprite.texture_object);
+        glBindTexture(GL_TEXTURE_2D, entity.sprite.texture_data.texture_object);
 
         glDrawArrays(GL_TRIANGLES, 0, 6);
     }
 
 }
 
-create_texture :: (texture_memory : string) -> u32 {
+create_texture :: (texture_memory : string) -> TextureData {
     using game_state.render_handle;
     texture_object : u32;
 
@@ -173,13 +179,38 @@ create_texture :: (texture_memory : string) -> u32 {
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, cast (u32) td.x, cast (u32) td.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, buffer.data);
     glGenerateMipmap(GL_TEXTURE_2D);
 
-    return texture_object;
+    td.texture_object = texture_object;
+
+    return td;
+}
+
+create_texture_animated :: (texture_memory : string, num_frames : s32) -> TextureData {
+    using game_state.render_handle;
+    texture_object : u32;
+
+    glGenTextures(1, *texture_object);
+    glBindTexture(GL_TEXTURE_2D, texture_object);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+    buffer : [] u8;
+    td : TextureData = load_animated_texture_from_data (*buffer, texture_memory, num_frames);
+    defer unload_texture(buffer);
+
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, cast (u32) td.x, cast (u32) td.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, buffer.data);
+    glGenerateMipmap(GL_TEXTURE_2D);
+
+    td.texture_object = texture_object;
+
+    return td;
 }
 
 handle_lighting :: () {
     using game_state.render_handle;
 
-    light_uniform := glGetUniformLocation(shader_program, "lightPos");
+    light_uniform := glGetUniformLocation(default_shader_program, "lightPos");
     point := GLOBAL_ILLUMINATION_POINT;
     glUniform3f(light_uniform, point.x, point.y, point.z);
 }
@@ -190,12 +221,19 @@ draw_frame :: () {
     glClearColor(.5, .5, 1, 0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    glUseProgram(shader_program);
+    glUseProgram(default_shader_program);
 
     proj := orthographic_projection_matrix(0.0, WindowCreationInfo.width, WindowCreationInfo.height, 0.0, -1, 1.0);
 
-    projection_location := glGetUniformLocation(shader_program, "proj");
-    glUniformMatrix4fv(projection_location, 1, GL_FALSE, *transpose(proj).coef[0][0]);
+    state_uniform : GameStateUniform = .{
+        transpose(proj),
+        game_state.frame,
+        game_state.time,
+        game_state.delta_time,
+    };
+
+    glBindBuffer(GL_UNIFORM_BUFFER, UBO);
+    glBufferData(GL_UNIFORM_BUFFER, size_of(GameStateUniform), *state_uniform, GL_STATIC_DRAW);
 
     draw_entities();
     swap_buffers(window);
@@ -224,3 +262,4 @@ debug_message_callback :: (source : GLenum, type : GLenum, id : GLuint, severity
         #import "Windows";
     case;
 }
+#load "../shader.jai";

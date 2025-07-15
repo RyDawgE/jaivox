@@ -1,0 +1,128 @@
+#scope_file
+Movement :: enum_flags u8 {
+    FWD_BIT  :: 0b00000001;
+    BWD_BIT  :: 0b00000010;
+    LFT_BIT  :: 0b00000100;
+    RGT_BIT  :: 0b00001000;
+    UPD_BIT  :: 0b00010000;
+    DWD_BIT  :: 0b00100000;
+}
+
+WALK_UP         : TextureData;
+WALK_DOWN       : TextureData;
+WALK_LEFT       : TextureData;
+WALK_RIGHT      : TextureData;
+BATTLE_INTRO    : TextureData;
+#scope_export
+
+PlayerOverworld :: struct @entity {
+    using #as entity : Entity;
+
+    movement : Movement = 0;
+    speed    : float    = 100;
+    time_moving : float = 0;
+}
+
+init_player_overworld :: (entity : *PlayerOverworld) {
+    // Create textures and buffer to GPU
+    WALK_UP     = create_texture_animated(TEX_KRIS_UP, 4);
+    WALK_DOWN   = create_texture_animated(TEX_KRIS_DOWN, 4);
+    WALK_LEFT   = create_texture_animated(TEX_KRIS_LEFT, 4);
+    WALK_RIGHT  = create_texture_animated(TEX_KRIS_RIGHT, 4);
+    BATTLE_INTRO= create_texture_animated(TEX_KRIS_BATTLE_INTRO, 8);
+
+    // Subscriptions
+    subscribe_entity_to_input(entity);
+    subscribe_entity_to_tick(entity, xx tick_player_overworld);
+    subscribe_entity_to_render(entity);
+
+    // Input
+    create_input_binding(entity, .KEY_A, xx move_left);
+    create_input_binding(entity, .KEY_D, xx move_right);
+    create_input_binding(entity, .KEY_W, xx move_up);
+    create_input_binding(entity, .KEY_S, xx move_down);
+    create_input_binding(entity,  141,   xx toggle_fast);
+    create_input_binding(entity,  27,    xx close_game_binding);
+
+    // Configure sprite defaults
+    entity.scale = .{19*2, 38*2};
+    entity.sprite = New(Sprite);
+    entity.sprite.texture_data = WALK_DOWN;
+}
+
+tick_player_overworld :: (player : *PlayerOverworld) {
+    using player;
+
+    // Left Right
+    if movement & .RGT_BIT {
+        entity.velocity.x = 1;
+        entity.sprite.texture_data = WALK_RIGHT;
+        // Next big TODO. Make a procedure for playing
+        // One-off animations. Have an interruptable thingy
+        // where it cant be inaterupted by another
+        // animation. Probably shouldnt manually set texture data like this.
+        // Can also make it so the sprite auto resizes. Im so tired, so this
+        // code might be really bad. Who knows!
+
+    } else if movement & .LFT_BIT {
+        entity.velocity.x = -1;
+        entity.sprite.texture_data = WALK_LEFT;
+
+    } else {
+        entity.velocity.x = 0;
+    }
+
+    // Up Down
+    if movement & .UPD_BIT {
+        entity.velocity.y = 1;
+        entity.sprite.texture_data = WALK_UP;
+
+    } else if movement & .DWD_BIT {
+        entity.velocity.y = -1;
+        entity.sprite.texture_data = WALK_DOWN;
+
+    } else {
+        entity.velocity.y = 0;
+    }
+
+    if (movement != 0) {
+        time_moving += game_state.delta_time;
+    } else {
+        time_moving = 0;
+    }
+
+    entity.position += normalize(Vector2.{entity.velocity.x, -entity.velocity.y}) * (player.speed * game_state.delta_time);
+    entity.sprite.animation_frame = cast(s32)( (time_moving*(4*(speed/100))) ) + cast(s32) (movement != 0);
+
+    //print("%\n", entity.animation_frame);
+    //print("Position: %\nRotation: %\n", entity.position, entity.rotation);
+    //print("Forward: %\nRight: %\n", get_forward_vector(camera.rotation), get_right_vector(camera.rotation));
+}
+
+move_up :: (player: *PlayerOverworld, event : *Event) {
+    using player;
+    movement = ifx event.key_pressed then movement | .UPD_BIT else movement & ~.UPD_BIT;
+}
+
+move_down :: (player: *PlayerOverworld, event : *Event) {
+    using player;
+    movement = ifx event.key_pressed then movement | .DWD_BIT else movement & ~.DWD_BIT;
+}
+
+move_left :: (player: *PlayerOverworld, event : *Event) {
+    using player;
+    movement = ifx event.key_pressed then movement | .LFT_BIT else movement & ~.LFT_BIT;
+}
+
+move_right :: (player: *PlayerOverworld, event : *Event) {
+    using player;
+    movement = ifx event.key_pressed then movement | .RGT_BIT else movement & ~.RGT_BIT;
+}
+
+toggle_fast :: (entity: *PlayerOverworld, event : *Event) {
+    if event.key_pressed {
+        entity.speed = 200;
+    } else {
+        entity.speed = 100;
+    }
+}

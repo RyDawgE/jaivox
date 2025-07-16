@@ -13,11 +13,11 @@ InputBindType :: enum u8 {
 
 poll_events :: () {
     update_window_events();
-    
+
     game_state.input_handle.mouse_delta = .{xx mouse_delta_x, xx mouse_delta_y};
 
     for events_this_frame {
-            
+
         if it.type == .QUIT {
             game_state.should_close = true;
         } else if it.type == .KEYBOARD && it.repeat == false {
@@ -29,7 +29,7 @@ poll_events :: () {
                     callback(entity, *it);
                 }
             }
-        } 
+        }
     }
 }
 
@@ -105,10 +105,10 @@ KeyboardKey :: enum u32 {
     KEY_BACKSPACE       :: 259;
     KEY_INSERT          :: 260;
     KEY_DELETE          :: 261;
-    KEY_RIGHT           :: 262;
-    KEY_LEFT            :: 263;
-    KEY_DOWN            :: 264;
-    KEY_UP              :: 265;
+    KEY_RIGHT           :: 131;
+    KEY_LEFT            :: 130;
+    KEY_DOWN            :: 129;
+    KEY_UP              :: 128;
     KEY_PAGE_UP         :: 266;
     KEY_PAGE_DOWN       :: 267;
     KEY_HOME            :: 268;
@@ -162,7 +162,7 @@ KeyboardKey :: enum u32 {
     KEY_KP_ADD          :: 334;
     KEY_KP_ENTER        :: 335;
     KEY_KP_EQUAL        :: 336;
-    
+
     // Android key buttons
     KEY_BACK            :: 4;
     KEY_MENU            :: 82;

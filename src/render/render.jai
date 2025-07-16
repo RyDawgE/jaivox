@@ -56,7 +56,7 @@ Sprite :: struct {
     texture_data        : TextureData;
     shader_program      : u32 = 0;
     animation_frame     : s32 = 0;
-    animation_lock      : bool = false;
+    animating           : bool = false;
 }
 
 SAMPLE_VERTS : [..] Vertex = xx Vertex.[
@@ -121,6 +121,7 @@ play_sprite_animation :: (entity : *Entity, anim : TextureData, duration : float
         xx anim.y
     };
     entity.sprite.scale = scale;
+    entity.sprite.animating = true;
 }
 
 set_sprite_texture :: (entity : *Entity, texture : TextureData) {

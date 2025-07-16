@@ -161,6 +161,14 @@ draw_entities :: () {
         glBindTexture(GL_TEXTURE_2D, entity.sprite.texture_data.texture_object);
 
         glDrawArrays(GL_TRIANGLES, 0, 6);
+
+        if (entity.sprite.animating) {
+            entity.sprite.animation_frame += 1;
+
+            if (entity.sprite.animation_frame >= entity.sprite.texture_data.anim_data.frames) {
+                entity.sprite.animation_frame = 0;
+            }
+        };
     }
 
 }

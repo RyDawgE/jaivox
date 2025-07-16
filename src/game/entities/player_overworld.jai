@@ -37,11 +37,11 @@ init_player_overworld :: (entity : *PlayerOverworld) {
     subscribe_entity_to_render(entity);
 
     // Input
-    create_input_binding(entity, .KEY_A, xx move_left);
-    create_input_binding(entity, .KEY_D, xx move_right);
-    create_input_binding(entity, .KEY_W, xx move_up);
-    create_input_binding(entity, .KEY_S, xx move_down);
-    create_input_binding(entity, .KEY_SPACE, xx play_anim);
+    create_input_binding(entity, .KEY_LEFT,     xx move_left);
+    create_input_binding(entity, .KEY_RIGHT,    xx move_right);
+    create_input_binding(entity, .KEY_UP,       xx move_up);
+    create_input_binding(entity, .KEY_DOWN,     xx move_down);
+    create_input_binding(entity, .KEY_Z,        xx play_anim);
 
     create_input_binding(entity,  141,   xx toggle_fast);
     create_input_binding(entity,  27,    xx close_game_binding);
@@ -59,12 +59,6 @@ tick_player_overworld :: (player : *PlayerOverworld) {
     if movement & .RGT_BIT {
         entity.velocity.x = 1;
         set_sprite_texture(*entity, WALK_RIGHT);
-        // Next big TODO. Make a procedure for playing
-        // One-off animations. Have an interruptable thingy
-        // where it cant be inaterupted by another
-        // animation. Probably shouldnt manually set texture data like this.
-        // Can also make it so the sprite auto resizes. Im so tired, so this
-        // code might be really bad. Who knows!
 
     } else if movement & .LFT_BIT {
         entity.velocity.x = -1;
@@ -94,7 +88,10 @@ tick_player_overworld :: (player : *PlayerOverworld) {
     }
 
     entity.position += normalize(Vector2.{entity.velocity.x, -entity.velocity.y}) * (player.speed * game_state.delta_time);
-    entity.sprite.animation_frame = cast(s32)( (time_moving*(4*(speed/100))) ) + cast(s32) (movement != 0);
+
+    if (!entity.sprite.animating) {
+        entity.sprite.animation_frame = cast(s32)( (time_moving*(4*(speed/100))) ) + cast(s32) (movement != 0);
+    }
 
     //print("%\n", entity.animation_frame);
     //print("Position: %\nRotation: %\n", entity.position, entity.rotation);

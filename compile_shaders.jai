@@ -32,7 +32,7 @@ compile_shaders :: (output_directory: string) -> bool {
         }
     }
 
-    log("Shader compilation succeeded");
+    log("\nShader compilation succeeded\n");
 
     return true;
 }

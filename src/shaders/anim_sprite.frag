@@ -18,5 +18,5 @@ uniform int curr_frame=0;
 void main()
 {
     float pos = mod(curr_frame, num_frames);
-    color = texture(image, vec2((TexCoords.x + pos) / num_frames, TexCoords.y));
+    color = texture(image, vec2(((TexCoords.x + pos) / num_frames), TexCoords.y));
 }

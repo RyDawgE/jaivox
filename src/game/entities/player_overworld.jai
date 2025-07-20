@@ -82,7 +82,7 @@ tick_player_overworld :: (player : *PlayerOverworld) {
     }
 
     if (movement != 0) {
-        time_moving += game_state.delta_time;
+        time_moving += game_state.delta_time * (speed/100);
     } else {
         time_moving = 0;
     }
@@ -90,7 +90,7 @@ tick_player_overworld :: (player : *PlayerOverworld) {
     entity.position += normalize(Vector2.{entity.velocity.x, -entity.velocity.y}) * (player.speed * game_state.delta_time);
 
     if (!entity.sprite.animating) {
-        entity.sprite.animation_frame = cast(s32)( (time_moving*(4*(speed/100))) ) + cast(s32) (movement != 0);
+        entity.sprite.animation_frame = cast(s32)( (time_moving*(4)) ) + cast(s32) (movement != 0);
     }
 
     //print("%\n", entity.animation_frame);

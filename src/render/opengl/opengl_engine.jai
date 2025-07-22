@@ -120,38 +120,14 @@ draw_entities :: () {
     for id : subscribed_entities {
         entity : *Entity = get_entity(id);
 
-        sprite      : *Sprite = null;
-        animator    : bool    = false;
+        sprite          : *Sprite = null;
+        texture_object  : u32;
+        use_animator    : bool    = false;
+        current_frame, num_frames  : s32;
 
-        if (entity.animator != null) {
-            animator = true;
-            sprite = entity.animator.sprite;
-            //print("valid_animator % \n", current_time_monotonic());
-        } else {
-            sprite = entity.sprite;
-        }
+        sprite, use_animator, texture_object, current_frame, num_frames =
+            get_entity_render_info(entity);
 
-        // this should all go in some "handle animator" procedure
-        // and just spit out what is needed for rendering.
-        // This needs a major cleenup.
-        if !sprite {
-            continue;
-        }
-
-        current_frame  : s32;
-        if (animator) {
-            delta_time := current_time_monotonic() - entity.animator.start_time;
-            seconds : float64 = to_float64_seconds (delta_time);
-            //print("%\n", seconds);
-
-            // I'll keep it a stack, idk how I figured this math out.. but it works. So I'm happy.
-            duration_per_frame := entity.animator.duration / sprite.texture_data.anim_data.frames;
-            current_frame = cast (s32) floor(seconds / duration_per_frame);
-        } else {
-            current_frame = sprite.animation_frame;
-        }
-
-        //print("Entity: %\n", entity);
         pos = .{
             entity.position.x + sprite.position.x,
             entity.position.y + sprite.position.y,
@@ -182,20 +158,53 @@ draw_entities :: () {
         glUniform1iv(curr_frame_loc, 1, *current_frame);
 
         num_frames_loc := glGetUniformLocation(default_shader_program, "num_frames");
-        glUniform1iv(num_frames_loc, 1, *sprite.texture_data.anim_data.frames);
+        glUniform1iv(num_frames_loc, 1, *num_frames);
 
         // Begin Render
         glBindBuffer(GL_ARRAY_BUFFER, sprite_vbo);
-        glBindTexture(GL_TEXTURE_2D, sprite.texture_data.texture_object);
+        glBindTexture(GL_TEXTURE_2D, texture_object);
 
         glDrawArrays(GL_TRIANGLES, 0, 6);
 
-        if (animator && !entity.animator.looping) {
+        if (use_animator && !entity.animator.looping) {
             if (current_frame == sprite.texture_data.anim_data.frames) {
                 entity.animator = cleanup_animator(entity.animator);
             }
         }
     }
+}
+
+get_entity_render_info :: (entity : *Entity) -> *Sprite, bool, u32, s32, s32 {
+    //Return order: sprite, use_animator, texture_object, current_frame, num_frames
+    texture_object             : u32;
+    current_frame, num_frames  : s32;
+    sprite                     : *Sprite = null;
+    use_animator               : bool    = false;
+
+    if (!entity) then return null,false,0,0,0;
+
+    if (entity.animator != null) {
+        sprite = entity.animator.sprite;
+        use_animator = true;
+    } else {
+        sprite = entity.sprite;
+    }
+
+    texture_object = sprite.texture_data.texture_object;
+
+    if (use_animator) {
+        delta_time := current_time_monotonic() - entity.animator.start_time;
+        seconds : float64 = to_float64_seconds (delta_time);
+        // I'll keep it a stack, idk how I figured this math out.. but it works. So I'm happy.
+        duration_per_frame := entity.animator.duration / sprite.texture_data.anim_data.frames;
+        current_frame = cast (s32) (seconds / duration_per_frame);
+    } else {
+        current_frame = sprite.animation_frame;
+    }
+
+    num_frames = sprite.texture_data.anim_data.frames;
+
+    return sprite, use_animator, texture_object, current_frame, num_frames;
 }
 
 create_texture :: (texture_memory : string) -> TextureData {

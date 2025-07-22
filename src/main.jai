@@ -9,6 +9,13 @@ EngineRenderer :: enum u8 {
     ENGINE_OGL  :: 1;
 }
 
+//TODO: Overall engine todo:
+//Collisions
+//Timer, proc runs after x amt of time. should run immediately, should loop, etc
+//Sound
+//Animation on finished maybe?
+
+
 main :: () {
     game_state.start_time = cast (float) to_float64_seconds (current_time_monotonic());
 

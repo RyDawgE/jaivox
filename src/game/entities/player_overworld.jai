@@ -89,9 +89,7 @@ tick_player_overworld :: (player : *PlayerOverworld) {
 
     entity.position += normalize(Vector2.{entity.velocity.x, -entity.velocity.y}) * (player.speed * game_state.delta_time);
 
-    if (!entity.sprite.animating) {
-        entity.sprite.animation_frame = cast(s32)( (time_moving*(4)) ) + cast(s32) (movement != 0);
-    }
+    entity.sprite.animation_frame = cast(s32)( (time_moving*(4)) ) + cast(s32) (movement != 0);
 
     //print("%\n",time_moving);
     //print("Position: %\nRotation: %\n", entity.position, entity.rotation);
@@ -124,6 +122,7 @@ play_anim :: (player: *PlayerOverworld, event : *Event) {
     set_sprite_texture(sprite, BATTLE_INTRO);
     sprite.position += .{42,0};
     play_sprite_animation(*player.entity, sprite, .5, false, true);
+    set_sprite_texture(player.sprite, WALK_RIGHT);
 }
 
 toggle_fast :: (entity: *PlayerOverworld, event : *Event) {

@@ -57,7 +57,6 @@ Sprite :: struct {
     shader_program      : u32 = 0;
 
     animation_frame     : s32 = 0;
-    animating           : bool = false;
 }
 
 Animator :: struct {

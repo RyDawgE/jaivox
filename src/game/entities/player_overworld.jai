@@ -119,14 +119,15 @@ move_right :: (player: *PlayerOverworld, event : *Event) {
 }
 
 play_anim :: (player: *PlayerOverworld, event : *Event) {
+    if !event.key_pressed then return;
     sprite : *Sprite = New(Sprite);
     set_sprite_texture(sprite, BATTLE_INTRO);
     sprite.position += .{42,0};
-    play_sprite_animation(*player.entity, sprite, 1.0, false, true);
+    play_sprite_animation(*player.entity, sprite, .5, false, true);
 }
 
 toggle_fast :: (entity: *PlayerOverworld, event : *Event) {
-    if event.key_pressed { 
+    if event.key_pressed {
         entity.speed = 200;
     } else {
         entity.speed = 100;

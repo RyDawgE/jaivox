@@ -131,6 +131,9 @@ draw_entities :: () {
             sprite = entity.sprite;
         }
 
+        // this should all go in some "handle animator" procedure
+        // and just spit out what is needed for rendering.
+        // This needs a major cleenup.
         if !sprite {
             continue;
         }
@@ -139,6 +142,7 @@ draw_entities :: () {
         if (animator) {
             delta_time := current_time_monotonic() - entity.animator.start_time;
             seconds : float64 = to_float64_seconds (delta_time);
+            //print("%\n", seconds);
 
             // I'll keep it a stack, idk how I figured this math out.. but it works. So I'm happy.
             duration_per_frame := entity.animator.duration / sprite.texture_data.anim_data.frames;

@@ -168,7 +168,7 @@ draw_entities :: () {
 }
 
 get_entity_render_info :: (entity : *Entity) -> *Sprite, u32, s32, s32 {
-    //Return order: sprite, use_animator, texture_object, current_frame, num_frames
+    //Return order: sprite, texture_object, current_frame, num_frames
     texture_object             : u32;
     current_frame, num_frames  : s32;
     sprite                     : *Sprite = null;
@@ -184,8 +184,8 @@ get_entity_render_info :: (entity : *Entity) -> *Sprite, u32, s32, s32 {
     
     texture_object = sprite.texture_data.texture_object;
     num_frames = sprite.texture_data.anim_data.frames;
-   
-    //print("%\n", num_frames);
+
+    // Calculate current animation frame   
     if (use_animator) {
         delta_time := current_time_monotonic() - entity.animator.start_time;
         seconds : float64 = to_float64_seconds (delta_time);
@@ -212,7 +212,6 @@ get_entity_render_info :: (entity : *Entity) -> *Sprite, u32, s32, s32 {
             use_animator = true;
         }      
     }
-
 
     return sprite, texture_object, current_frame, num_frames;
 }

@@ -42,7 +42,7 @@ main :: () {
         game_state.time     += game_state.delta_time;
         game_state.frame    += 1;
 		//Print FPS
-		//print("%\n", 1 / game_state.delta_time);
+		//print("%\n", frame_end);
     }
     cleanup();
 }

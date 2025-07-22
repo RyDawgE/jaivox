@@ -4,7 +4,6 @@ RenderHandle :: struct {
     window                     : Window_Type;
     instance                   : *void                    = null;
     default_shader_program     : u32;
-    model_registry             : *Table(u32, Model);
     entity_vertex_attributes   : u32;
     IBO                        : u32;
     UBO                        : u32;
@@ -65,8 +64,6 @@ create_shader_programs :: () {
     default_shader_program = create_shader_program(sprite_vshader, sprite_fshader);
 }
 
-
-
 create_attribute_descriptors :: () {
     using game_state.render_handle;
 
@@ -123,15 +120,42 @@ draw_entities :: () {
     for id : subscribed_entities {
         entity : *Entity = get_entity(id);
 
-        if !entity.sprite {
+        sprite      : *Sprite = null;
+        animator    : bool    = false;
+
+        if (entity.animator != null) {
+            animator = true;
+            sprite = entity.animator.sprite;
+            //print("valid_animator % \n", current_time_monotonic());
+        } else {
+            sprite = entity.sprite;
+        }
+
+        if !sprite {
             continue;
         }
 
+        current_frame  : s32;
+        if (animator) {
+            delta_time := current_time_monotonic() - entity.animator.start_time;
+            seconds : float64 = to_float64_seconds (delta_time);
+
+            // I'll keep it a stack, idk how I figured this math out.. but it works. So I'm happy.
+            duration_per_frame := entity.animator.duration / sprite.texture_data.anim_data.frames;
+            current_frame = cast (s32) floor(seconds / duration_per_frame);
+        } else {
+            current_frame = sprite.animation_frame;
+        }
+
         //print("Entity: %\n", entity);
-        pos = .{entity.position.x, entity.position.y, 0};
+        pos = .{
+            entity.position.x + sprite.position.x,
+            entity.position.y + sprite.position.y,
+            0
+        };
         scl = .{
-            entity.scale.x * entity.sprite.scale.x,
-            entity.scale.y * entity.sprite.scale.y,
+            entity.scale.x * sprite.scale.x,
+            entity.scale.y * sprite.scale.y,
             1,
         };
 
@@ -151,26 +175,23 @@ draw_entities :: () {
         glUniformMatrix4fv(model_loc, 1, GL_FALSE, *transpose(transform).coef[0][0]);
 
         curr_frame_loc := glGetUniformLocation(default_shader_program, "curr_frame");
-        glUniform1iv(curr_frame_loc, 1, *entity.sprite.animation_frame);
+        glUniform1iv(curr_frame_loc, 1, *current_frame);
 
         num_frames_loc := glGetUniformLocation(default_shader_program, "num_frames");
-        glUniform1iv(num_frames_loc, 1, *entity.sprite.texture_data.anim_data.frames);
+        glUniform1iv(num_frames_loc, 1, *sprite.texture_data.anim_data.frames);
 
         // Begin Render
         glBindBuffer(GL_ARRAY_BUFFER, sprite_vbo);
-        glBindTexture(GL_TEXTURE_2D, entity.sprite.texture_data.texture_object);
+        glBindTexture(GL_TEXTURE_2D, sprite.texture_data.texture_object);
 
         glDrawArrays(GL_TRIANGLES, 0, 6);
 
-        if (entity.sprite.animating) {
-            entity.sprite.animation_frame += 1;
-
-            if (entity.sprite.animation_frame >= entity.sprite.texture_data.anim_data.frames) {
-                entity.sprite.animation_frame = 0;
+        if (animator && !entity.animator.looping) {
+            if (current_frame == sprite.texture_data.anim_data.frames) {
+                entity.animator = cleanup_animator(entity.animator);
             }
-        };
+        }
     }
-
 }
 
 create_texture :: (texture_memory : string) -> TextureData {

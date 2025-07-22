@@ -55,8 +55,17 @@ Sprite :: struct {
 
     texture_data        : TextureData;
     shader_program      : u32 = 0;
+
     animation_frame     : s32 = 0;
     animating           : bool = false;
+}
+
+Animator :: struct {
+    sprite          : *Sprite;
+    duration        : float;
+    start_time      : Apollo_Time;
+    interruptable   : bool = true;
+    looping         : bool = false;
 }
 
 SAMPLE_VERTS : [..] Vertex = xx Vertex.[
@@ -81,12 +90,6 @@ SPRITE_QUAD : [..] Vector4 = xx Vector4.[
     .{1.0, 0.0, 1.0, 0.0},
 ];
 
-create_model_registry :: () {
-    using game_state.render_handle;
-
-    model_registry = New(Table(u32, Model));
-}
-
 create_game_window :: () {
     window_width  : float  : WindowCreationInfo.width;
     window_height : float  : WindowCreationInfo.height;
@@ -100,7 +103,6 @@ create_game_window :: () {
 }
 
 create_render_engine :: () {
-    create_model_registry();
     create_game_window();
     initialize_render(game_state.render_handle);
 }
@@ -109,28 +111,41 @@ cleanup_render_engine :: () {
     using game_state.render_handle;
 
     cleanup_render();
-    deinit(model_registry);
-    free(model_registry);
 }
 
-play_sprite_animation :: (entity : *Entity, anim : TextureData, duration : float) {
-    entity.sprite.texture_data      = anim;
-    entity.sprite.animation_frame   = 0;
-    scale : Vector2 = .{
-        xx (anim.x / anim.anim_data.frames),
-        xx anim.y
-    };
-    entity.sprite.scale = scale;
-    entity.sprite.animating = true;
+play_sprite_animation :: (entity : *Entity, sprite : *Sprite, duration : float, looping : bool = false, interruptable : bool = true) {
+    if (entity.animator) {
+        if !entity.animator.interruptable then return;
+        cleanup_animator(entity.animator);
+    }
+
+    // entity.sprite.scale = scale;
+    // entity.sprite.animating = true;
+
+    entity.animator                 = New(Animator);
+    entity.animator.start_time      = current_time_monotonic();
+    entity.animator.sprite          = sprite;
+    entity.animator.interruptable   = interruptable;
+    entity.animator.duration        = duration;
+    entity.animator.looping         = looping;
+
+    return;
 }
 
-set_sprite_texture :: (entity : *Entity, texture : TextureData) {
-        entity.sprite.texture_data      = texture;
+// I'm pretty sure this fucking sucks
+cleanup_animator :: (animator : *Animator) -> *Animator {
+    free(animator.sprite);
+    free(animator);
+    return null;
+}
+
+set_sprite_texture :: (sprite : *Sprite, texture : TextureData) {
+        sprite.texture_data      = texture;
         scale : Vector2 = .{
             xx (texture.x / texture.anim_data.frames),
             xx texture.y
         };
-        entity.sprite.scale = scale;
+        sprite.scale = scale;
 }
 
 register_model :: () {}

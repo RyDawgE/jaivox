@@ -14,7 +14,9 @@ Entity :: struct @entity {
         velocity            : Vector2 = .{0, 0};
         rotation            : float   = 0;
 
+         // TODO: These need to be freed after destruction
         sprite              : *Sprite;
+        animator            : *Animator;
 
     } else {        // Engine is in 3d mode
         position            : Vector3 = .{0, 0, 0};

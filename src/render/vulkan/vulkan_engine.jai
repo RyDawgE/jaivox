@@ -46,8 +46,7 @@ RenderHandle :: struct {
     uniform_buffers_mapped     : [..] *void;
     descriptor_pool            : VkDescriptorPool;
     descriptor_sets            : [..] VkDescriptorSet;
-    
-    model_registry             : *Table(u32, Model);
+
     bound_camera               : *Entity                  = null;
     voxel_render_data          : *VoxelWorldRenderData    = null;
 }
@@ -151,24 +150,24 @@ create_vulkan_instance :: () {
 
 cleanup_render :: () {
     using game_state.render_handle;
-    
+
     cleanup_swap_chain();
-    
+
     for i: 0..MAX_FRAMES_IN_FLIGHT - 1 {
         vkDestroyBuffer(logical_device, uniform_buffers[i], null);
         vkFreeMemory(logical_device, uniform_buffers_memory[i], null);
     }
-    
+
     vkDestroyDescriptorPool(logical_device, descriptor_pool, null);
-    
+
     vkDestroyDescriptorSetLayout(logical_device, descriptor_set_layout, null);
-    
+
     vkDestroyBuffer(logical_device, index_buffer, null);
     vkFreeMemory(logical_device, index_buffer_memory, null);
-    
+
     vkDestroyBuffer(logical_device, vertex_buffer, null);
     vkFreeMemory(logical_device, vertex_buffer_memory, null);
-    
+
     vkDestroyPipeline(logical_device, graphics_pipeline, null);
     vkDestroyPipelineLayout(logical_device, pipeline_layout, null);
     vkDestroyRenderPass(logical_device, render_pass, null);
@@ -334,30 +333,30 @@ cleanup_swap_chain :: () {
     for buffer : swap_chain_framebuffers {
         vkDestroyFramebuffer(logical_device, buffer, null);
     }
-    
+
     for image : swap_chain_image_views {
         vkDestroyImageView(logical_device, image, null);
     }
-    
+
     vkDestroySwapchainKHR(logical_device, swap_chain, null);
 }
 
 recreate_swap_chain :: () {
     using game_state.render_handle;
-    
+
     width, height := get_window_dimensions(xx window);
-	
+
 	if width == 0 || height == 0 {
         return;
 	}
-	
+
     vkDeviceWaitIdle(logical_device);
-    
+
 	swap_chain_extent.width = xx width;
 	swap_chain_extent.height == xx height;
-    
+
     cleanup_swap_chain();
-    
+
     create_swap_chain();
     create_image_views();
     create_framebuffers();
@@ -774,25 +773,25 @@ create_descriptor_set_layout :: () {
     ubo_layout_binding : VkDescriptorSetLayoutBinding = .{};
     {
         using ubo_layout_binding;
-        
+
         binding             = 0;
         descriptorType      = .UNIFORM_BUFFER;
         descriptorCount     = 1;
         stageFlags          = .VERTEX_BIT;
         pImmutableSamplers  = null;
     }
-    
+
     layout_create_info : VkDescriptorSetLayoutCreateInfo = .{};
     {
         using layout_create_info;
-        
+
         sType = .DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
         bindingCount = 1;
         pBindings    = *ubo_layout_binding;
     }
-    
+
     result := vkCreateDescriptorSetLayout(logical_device, *layout_create_info, null, *descriptor_set_layout);
-    
+
     assert(result == .SUCCESS, "Could not create descriptor set layout");
 }
 
@@ -837,10 +836,10 @@ create_render_pipeline :: () {
         dynamicStateCount = cast (u32) dynamic_states.count;
         pDynamicStates    = dynamic_states.data;
     }
-    
+
     binding_description    := get_binding_description();
     attribute_descriptions := get_attribute_descriptions();
-    
+
     vertex_input_info : VkPipelineVertexInputStateCreateInfo = .{};
     {
         using vertex_input_info;
@@ -997,33 +996,33 @@ create_framebuffers :: () {
 create_buffer :: (size : VkDeviceSize, usage  : VkBufferUsageFlags, properties : VkMemoryPropertyFlags,
                                        buffer : *VkBuffer,        buffer_memory : *VkDeviceMemory)     {
     using game_state.render_handle;
-    
+
     buffer_create_info : VkBufferCreateInfo = .{};
     buffer_create_info.sType       = .BUFFER_CREATE_INFO;
     buffer_create_info.size        = size;
     buffer_create_info.usage       = usage;
-    buffer_create_info.sharingMode = .EXCLUSIVE;  
-    
+    buffer_create_info.sharingMode = .EXCLUSIVE;
+
     result := vkCreateBuffer(logical_device, *buffer_create_info, null, buffer);
-    
+
     assert(result == .SUCCESS, "Failed to create Vertex Buffer");
-    
-    memory_requirements : VkMemoryRequirements;   
+
+    memory_requirements : VkMemoryRequirements;
     vkGetBufferMemoryRequirements(logical_device, <<buffer, *memory_requirements);
 
     allocate_info : VkMemoryAllocateInfo = .{};
     {
         using allocate_info;
-        
+
         sType = .MEMORY_ALLOCATE_INFO;
         allocationSize = memory_requirements.size;
         memoryTypeIndex = find_memory_type(memory_requirements.memoryTypeBits, properties);
     }
-    
+
     result = vkAllocateMemory(logical_device, *allocate_info, null, buffer_memory);
-    
+
     assert(result == .SUCCESS, "Failed to allocate VBuffer Memory");
-    
+
     vkBindBufferMemory(logical_device, <<buffer, <<buffer_memory, 0);
 }
 
@@ -1033,88 +1032,88 @@ copy_buffer :: (src_buffer : VkBuffer, dst_buffer : VkBuffer, size : VkDeviceSiz
     allocate_info : VkCommandBufferAllocateInfo = .{};
     {
         using allocate_info;
-        
+
         sType = .COMMAND_BUFFER_ALLOCATE_INFO;
         level = .PRIMARY;
         commandPool = command_pool;
         commandBufferCount = 1;
     }
-    
+
     command_buffer : VkCommandBuffer;
     vkAllocateCommandBuffers(logical_device, *allocate_info, *command_buffer);
-    
+
     begin_info : VkCommandBufferBeginInfo = .{};
     {
         using begin_info;
-        
+
         sType = .COMMAND_BUFFER_BEGIN_INFO;
         flags = .ONE_TIME_SUBMIT_BIT;
     }
-    
+
     vkBeginCommandBuffer(command_buffer, *begin_info);
-    
+
     copy_region : VkBufferCopy = .{};
     copy_region.size = size;
     vkCmdCopyBuffer(command_buffer, src_buffer, dst_buffer, 1, *copy_region);
-    
+
     vkEndCommandBuffer(command_buffer);
-    
+
     submit_info : VkSubmitInfo = .{};
     {
         using submit_info;
-        
+
         sType = .SUBMIT_INFO;
         commandBufferCount = 1;
         pCommandBuffers = *command_buffer;
     }
-    
+
     vkQueueSubmit(graphics_queue, 1, *submit_info, VK_NULL_HANDLE);
     vkQueueWaitIdle(graphics_queue);
-    
+
     vkFreeCommandBuffers(logical_device, command_pool, 1, *command_buffer);
 }
 
 create_vertex_buffer :: () {
     using game_state.render_handle;
-    
+
     // Creating the buffer. There is nothing allocated, would in theory have size 0.
     buffer_size             : VkDeviceSize = cast (u64) (size_of(Vertex) * SAMPLE_VERTS.count);
     staging_buffer          : VkBuffer;
     staging_buffer_memory   : VkDeviceMemory;
     create_buffer(buffer_size, .TRANSFER_SRC_BIT, .HOST_VISIBLE_BIT | .HOST_COHERENT_BIT, *staging_buffer, *staging_buffer_memory);
 
-    data : *void;    
+    data : *void;
     vkMapMemory(logical_device, staging_buffer_memory, 0, buffer_size, 0, *data);
     memcpy(data, SAMPLE_VERTS.data, xx buffer_size);
     vkUnmapMemory(logical_device, staging_buffer_memory);
-    
+
     create_buffer(buffer_size, .TRANSFER_DST_BIT | .VERTEX_BUFFER_BIT, .DEVICE_LOCAL_BIT, *vertex_buffer, *vertex_buffer_memory);
-    
+
     copy_buffer(staging_buffer, vertex_buffer, buffer_size);
-    
+
     vkDestroyBuffer(logical_device, staging_buffer, null);
     vkFreeMemory(logical_device, staging_buffer_memory, null);
 }
 
 create_index_buffer :: () {
     using game_state.render_handle;
-    
+
     buffer_size : VkDeviceSize = cast (u64) (size_of(u32) * SAMPLE_INDXS.count);
-    
+
     staging_buffer : VkBuffer;
     staging_buffer_memory : VkDeviceMemory;
-    
+
     create_buffer(buffer_size, .TRANSFER_SRC_BIT, .HOST_VISIBLE_BIT | .HOST_COHERENT_BIT, *staging_buffer, *staging_buffer_memory);
 
-    data : *void;    
+    data : *void;
     vkMapMemory(logical_device, staging_buffer_memory, 0, buffer_size, 0, *data);
     memcpy(data, SAMPLE_INDXS.data, cast (s64) buffer_size);
     vkUnmapMemory(logical_device, staging_buffer_memory);
-    
+
     create_buffer(buffer_size, .TRANSFER_DST_BIT | .INDEX_BUFFER_BIT, .DEVICE_LOCAL_BIT, *index_buffer, *index_buffer_memory);
-    
+
     copy_buffer(staging_buffer, index_buffer, buffer_size);
-    
+
     vkDestroyBuffer(logical_device, staging_buffer, null);
     vkFreeMemory(logical_device, staging_buffer_memory, null);
 }
@@ -1123,41 +1122,41 @@ create_uniform_buffers :: () {
     using game_state.render_handle;
 
     buffer_size : VkDeviceSize = #run size_of(UniformBufferObject);
-    
+
     array_resize(*uniform_buffers, MAX_FRAMES_IN_FLIGHT);
     array_resize(*uniform_buffers_memory, MAX_FRAMES_IN_FLIGHT);
     array_resize(*uniform_buffers_mapped, MAX_FRAMES_IN_FLIGHT);
-    
+
     for i: 0..MAX_FRAMES_IN_FLIGHT - 1 {
         create_buffer(buffer_size, .UNIFORM_BUFFER_BIT, .HOST_VISIBLE_BIT | .HOST_COHERENT_BIT, *uniform_buffers[i], *uniform_buffers_memory[i]);
         vkMapMemory(logical_device, uniform_buffers_memory[i], 0, buffer_size, 0, *uniform_buffers_mapped[i]);
     }
-    
+
 }
 
 create_descriptor_pool :: () {
     using game_state.render_handle;
-    
+
     pool_size : VkDescriptorPoolSize = .{};
     {
         using pool_size;
-        
+
         type = .UNIFORM_BUFFER;
         descriptorCount = xx MAX_FRAMES_IN_FLIGHT;
     }
-    
+
     pool_create_info : VkDescriptorPoolCreateInfo = .{};
     {
         using pool_create_info;
-        
+
         sType = .DESCRIPTOR_POOL_CREATE_INFO;
         poolSizeCount   = 1;
         pPoolSizes      = *pool_size;
         maxSets         = xx MAX_FRAMES_IN_FLIGHT;
     }
-    
+
     result := vkCreateDescriptorPool(logical_device, *pool_create_info, null, *descriptor_pool);
-    
+
     assert (result == .SUCCESS, "Could not create descriptor pool");
 }
 
@@ -1168,36 +1167,36 @@ create_descriptor_sets :: () {
     for i: 0..MAX_FRAMES_IN_FLIGHT - 1 {
         array_add(*layouts, descriptor_set_layout);
     }
-    
+
     allocate_info : VkDescriptorSetAllocateInfo = .{};
     {
         using allocate_info;
-        
+
         sType = .DESCRIPTOR_SET_ALLOCATE_INFO;
         descriptorPool = descriptor_pool;
         descriptorSetCount = xx MAX_FRAMES_IN_FLIGHT;
         pSetLayouts = layouts.data;
     }
-    
+
     array_resize(*descriptor_sets, MAX_FRAMES_IN_FLIGHT);
     result := vkAllocateDescriptorSets(logical_device, *allocate_info, descriptor_sets.data);
-    
-    assert(result == .SUCCESS, "Could not allocate descriptor sets"); 
-    
+
+    assert(result == .SUCCESS, "Could not allocate descriptor sets");
+
     for i: 0..MAX_FRAMES_IN_FLIGHT - 1 {
         buffer_info : VkDescriptorBufferInfo = .{};
         {
             using buffer_info;
-            
+
             buffer = uniform_buffers[i];
             offset = 0;
             range  = #run size_of(UniformBufferObject);
         }
-        
+
         descriptor_write : VkWriteDescriptorSet = .{};
         {
             using descriptor_write;
-            
+
             sType = .WRITE_DESCRIPTOR_SET;
             dstSet           = descriptor_sets[i];
             dstBinding       = 0;
@@ -1208,10 +1207,10 @@ create_descriptor_sets :: () {
             pImageInfo       = null;
             pTexelBufferView = null;
         }
-        
+
         vkUpdateDescriptorSets(logical_device, 1, *descriptor_write, 0, null);
     }
-    
+
 }
 
 create_command_pool :: () {
@@ -1283,10 +1282,10 @@ record_command_buffer :: (in_command_buffer : VkCommandBuffer, image_index : u32
 
     vkCmdBeginRenderPass(in_command_buffer, *render_pass_begin_info, .INLINE);
     vkCmdBindPipeline(in_command_buffer, .GRAPHICS, graphics_pipeline);
-    
+
     vertex_buffers := VkBuffer.[vertex_buffer];
     offsets        := VkDeviceSize.[0];
-    
+
     vkCmdBindVertexBuffers(in_command_buffer, 0, 1, vertex_buffers.data, offsets.data);
 
     vkCmdBindIndexBuffer(in_command_buffer, index_buffer, 0, .UINT32);
@@ -1310,7 +1309,7 @@ record_command_buffer :: (in_command_buffer : VkCommandBuffer, image_index : u32
         extent = swap_chain_extent;
     }
     vkCmdSetScissor(in_command_buffer, 0, 1, *scissor);
-    
+
     vkCmdBindDescriptorSets(in_command_buffer, .GRAPHICS, pipeline_layout, 0, 1, *descriptor_sets[current_frame], 0, null);
     vkCmdDrawIndexed(in_command_buffer, xx SAMPLE_INDXS.count, 1, 0, 0, 0);
 
@@ -1360,26 +1359,26 @@ update_uniform_buffer :: (current_image : u32) {
     ubo : UniformBufferObject = .{};
     {
         using ubo;
-        
+
         model = transpose(rotation_matrix(Matrix4, model_rotate));
 
         if bound_camera {
             yaw   : Quaternion;
             pitch : Quaternion;
             roll  : Quaternion;
-            
+
             transform : Matrix4 = Matrix4_Identity;
-            
+
             set_from_axis_and_angle(*yaw, 0, -1, 0, radians(bound_camera.rotation.x));
             set_from_axis_and_angle(*pitch, -1, 0, 0, radians(bound_camera.rotation.y));
             set_from_axis_and_angle(*roll, 0, 0, -1, radians(bound_camera.rotation.z));
-            
+
             rotation : Quaternion = yaw * pitch * roll;
-            
+
             transform = make_translation_matrix4(bound_camera.position) * rotation_matrix(Matrix4, rotation);
-            
+
             view = transpose(inverse(transform)); //type mat4
-        
+
             //view = make_look_at_matrix(bound_camera.position, .{0, 0, 0}, .{0, 0, 1}, false);
         } else {
             view = make_look_at_matrix(.{2, 2, 2}, .{0, 0, 0}, .{0, 0, 1}, false);
@@ -1387,9 +1386,9 @@ update_uniform_buffer :: (current_image : u32) {
 
         proj  = transpose(make_projection_matrix(45.0 * PI / 180.0, xx (swap_chain_extent.width / swap_chain_extent.height), 0.1, 100.0));
     }
-    
+
     ubo.proj.coef[1][1] *= -1;
-    
+
     memcpy(uniform_buffers_mapped[current_image], *ubo, size_of(UniformBufferObject));
 }
 
@@ -1408,7 +1407,7 @@ draw_frame :: () {
     } else if result != .SUCCESS && result != .SUBOPTIMAL_KHR {
         assert(false, "Failed to acquire swap chain image");
     }
-    
+
     vkResetFences(logical_device, 1, *in_flight_fences[current_frame]);
 
     wait_semaphores   := VkSemaphore.[image_available_semaphores[current_frame]];
@@ -1417,11 +1416,11 @@ draw_frame :: () {
     swap_chains       := VkSwapchainKHR.[swap_chain];
 
     update_uniform_buffer(current_frame);
-    
+
     vkResetCommandBuffer(command_buffers[current_frame], 0);
-    
+
     record_command_buffer(command_buffers[current_frame], image_index);
-    
+
 
     submit_info : VkSubmitInfo = .{};
     {
@@ -1461,9 +1460,9 @@ draw_frame :: () {
         framebuffer_resized = false;
         recreate_swap_chain();
     }
-    
+
     current_frame = (current_frame + 1) % xx MAX_FRAMES_IN_FLIGHT;
-    
+
     vkDeviceWaitIdle(logical_device);
 }
 
@@ -1471,12 +1470,12 @@ get_binding_description :: () -> VkVertexInputBindingDescription {
     binding_description : VkVertexInputBindingDescription = .{};
     {
         using binding_description;
-        
+
         binding = 0;
         stride  = size_of(Vertex);
         inputRate = .VERTEX;
     }
-    
+
     return binding_description;
 }
 
@@ -1484,37 +1483,37 @@ get_attribute_descriptions :: () -> [2] VkVertexInputAttributeDescription {
     attribute_descriptions : [2] VkVertexInputAttributeDescription;
     {
         using attribute_descriptions[0];
-        
+
         binding  = 0;
         location = 0;
         format   = .R32G32B32_SFLOAT;
         offset   = #run offset_of(Vertex, "position");
     }
-    
+
     {
         using attribute_descriptions[1];
-        
+
         binding  = 0;
         location = 1;
         format   = .R32G32B32_SFLOAT;
         offset   = #run offset_of(Vertex, "color");
     }
-    
+
     return attribute_descriptions;
 }
 
 find_memory_type :: (filter : u32, properties : VkMemoryPropertyFlags) -> u32 {
     using game_state.render_handle;
-    
+
     memory_properties : VkPhysicalDeviceMemoryProperties;
     vkGetPhysicalDeviceMemoryProperties(physical_device, *memory_properties);
-    
+
     for i: 0..memory_properties.memoryTypeCount -1 {
         if (filter & (1 << i) && (memory_properties.memoryTypes[i].propertyFlags & properties) == properties) {
             return i;
         }
     }
-    
+
     assert(false, "Could not find suitable memory type");
     return 0;
 }

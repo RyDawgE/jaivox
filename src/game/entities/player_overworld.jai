@@ -49,7 +49,7 @@ init_player_overworld :: (entity : *PlayerOverworld) {
     // Configure sprite defaults
     entity.scale = .{2, 2};
     entity.sprite = New(Sprite);
-    set_sprite_texture(entity, WALK_DOWN);
+    set_sprite_texture(entity.sprite, WALK_DOWN);
 }
 
 tick_player_overworld :: (player : *PlayerOverworld) {
@@ -58,11 +58,11 @@ tick_player_overworld :: (player : *PlayerOverworld) {
     // Left Right
     if movement & .RGT_BIT {
         entity.velocity.x = 1;
-        set_sprite_texture(*entity, WALK_RIGHT);
+        set_sprite_texture(entity.sprite, WALK_RIGHT);
 
     } else if movement & .LFT_BIT {
         entity.velocity.x = -1;
-        set_sprite_texture(*entity, WALK_LEFT);
+        set_sprite_texture(entity.sprite, WALK_LEFT);
 
     } else {
         entity.velocity.x = 0;
@@ -71,11 +71,11 @@ tick_player_overworld :: (player : *PlayerOverworld) {
     // Up Down
     if movement & .UPD_BIT {
         entity.velocity.y = 1;
-        set_sprite_texture(*entity, WALK_UP);
+        set_sprite_texture(entity.sprite, WALK_UP);
 
     } else if movement & .DWD_BIT {
         entity.velocity.y = -1;
-        set_sprite_texture(*entity, WALK_DOWN);
+        set_sprite_texture(entity.sprite, WALK_DOWN);
 
     } else {
         entity.velocity.y = 0;
@@ -93,7 +93,7 @@ tick_player_overworld :: (player : *PlayerOverworld) {
         entity.sprite.animation_frame = cast(s32)( (time_moving*(4)) ) + cast(s32) (movement != 0);
     }
 
-    //print("%\n", entity.animation_frame);
+    //print("%\n",time_moving);
     //print("Position: %\nRotation: %\n", entity.position, entity.rotation);
     //print("Forward: %\nRight: %\n", get_forward_vector(camera.rotation), get_right_vector(camera.rotation));
 }
@@ -119,11 +119,14 @@ move_right :: (player: *PlayerOverworld, event : *Event) {
 }
 
 play_anim :: (player: *PlayerOverworld, event : *Event) {
-    play_sprite_animation(*player.entity, BATTLE_INTRO, 1);
+    sprite : *Sprite = New(Sprite);
+    set_sprite_texture(sprite, BATTLE_INTRO);
+    sprite.position += .{42,0};
+    play_sprite_animation(*player.entity, sprite, 1.0, false, true);
 }
 
 toggle_fast :: (entity: *PlayerOverworld, event : *Event) {
-    if event.key_pressed {
+    if event.key_pressed { 
         entity.speed = 200;
     } else {
         entity.speed = 100;

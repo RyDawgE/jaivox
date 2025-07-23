@@ -13,7 +13,9 @@ EngineRenderer :: enum u8 {
 //Collisions
 //Timer, proc runs after x amt of time. should run immediately, should loop, etc
 //Sound
-//Animation on finished maybe?
+//Animation on finished lambda maybe?
+//GUI
+//Invest in better shader system. Not my proudest nut.
 
 
 main :: () {

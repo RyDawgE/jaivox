@@ -10,6 +10,8 @@ RenderHandle :: struct {
     bound_camera               : *Entity                  = null;
     sprite_vbo                 : u32;
 
+    shader_objects             : *Table(string, u32);
+
     subscribed_entities        : [..] u64;
 }
 
@@ -56,11 +58,11 @@ create_opengl_context :: () {
 
 create_shader_programs :: () {
     using game_state.render_handle;
+    shader_objects = New(Table(string, u32));
+    create_shader_objects();
 
-
-    sprite_vshader := create_shader_object("%/../src/shaders/sprite.vert", GL_VERTEX_SHADER);
-    sprite_fshader := create_shader_object("%/../src/shaders/anim_sprite.frag", GL_FRAGMENT_SHADER);
-    //animated_sprite_vshader := create_shader_object("%/../src/shaders/sprite.vert", GL_VERTEX_SHADER);
+    sprite_vshader := get_shader_object("SPRITE_VERT");
+    sprite_fshader := get_shader_object("ANIMATED_SPRITE_FRAG");
     default_shader_program = create_shader_program(sprite_vshader, sprite_fshader);
 }
 
@@ -69,7 +71,6 @@ create_attribute_descriptors :: () {
 
     glGenVertexArrays(1, *entity_vertex_attributes);
     glBindVertexArray(entity_vertex_attributes);
-
 }
 
 create_uniform_buffer_object :: () {
@@ -121,10 +122,10 @@ draw_entities :: () {
         entity : *Entity = get_entity(id);
 
         sprite          : *Sprite = null;
-        texture_object  : u32;
-        current_frame, num_frames  : s32;
+        texture_object, shader_program  : u32;
+        current_frame,  num_frames      : s32;
 
-        sprite, texture_object, current_frame, num_frames =
+        sprite, texture_object, shader_program, current_frame, num_frames =
             get_entity_render_info(entity);
 
         pos = .{
@@ -150,6 +151,8 @@ draw_entities :: () {
         //scale
         transform = transform * make_scale_matrix4(scl);
 
+        glUseProgram(ifx shader_program != 0 then shader_program else default_shader_program);
+
         model_loc := glGetUniformLocation(default_shader_program, "model");
         glUniformMatrix4fv(model_loc, 1, GL_FALSE, *transpose(transform).coef[0][0]);
 
@@ -159,6 +162,7 @@ draw_entities :: () {
         num_frames_loc := glGetUniformLocation(default_shader_program, "num_frames");
         glUniform1iv(num_frames_loc, 1, *num_frames);
 
+
         // Begin Render
         glBindBuffer(GL_ARRAY_BUFFER, sprite_vbo);
         glBindTexture(GL_TEXTURE_2D, texture_object);
@@ -167,25 +171,27 @@ draw_entities :: () {
     }
 }
 
-get_entity_render_info :: (entity : *Entity) -> *Sprite, u32, s32, s32 {
-    //Return order: sprite, texture_object, current_frame, num_frames
+get_entity_render_info :: (entity : *Entity) -> *Sprite, u32, u32, s32, s32 {
+    //Return order: sprite, texture_object, shader_program, current_frame, num_frames
     texture_object             : u32;
+    shader_program             : u32;
     current_frame, num_frames  : s32;
     sprite                     : *Sprite = null;
     use_animator               : bool    = false;
 
-    if (!entity) then return null,0,0,0;
+    if (!entity) then return null,0,0,0,0;
 
     sprite = entity.sprite;
     if (entity.animator != null) {
         sprite = entity.animator.sprite;
         use_animator = true;
-    }    
-    
+    }
+
     texture_object = sprite.texture_data.texture_object;
     num_frames = sprite.texture_data.anim_data.frames;
+    shader_program = sprite.shader_program;
 
-    // Calculate current animation frame   
+    // Calculate current animation frame
     if (use_animator) {
         delta_time := current_time_monotonic() - entity.animator.start_time;
         seconds : float64 = to_float64_seconds (delta_time);
@@ -195,14 +201,14 @@ get_entity_render_info :: (entity : *Entity) -> *Sprite, u32, s32, s32 {
     } else {
         current_frame = sprite.animation_frame;
     }
-    
+
     // This check is to see if the animation should end, if so
     // Delete the animator and revert back to rendering
     // with the entity sprite.
     if (use_animator) {
         if (current_frame == num_frames) {
             entity.animator = cleanup_animator(entity.animator);
-            
+
             sprite = entity.sprite;
             use_animator = false;
             texture_object = sprite.texture_data.texture_object;
@@ -210,10 +216,10 @@ get_entity_render_info :: (entity : *Entity) -> *Sprite, u32, s32, s32 {
         } else {
             sprite = entity.animator.sprite;
             use_animator = true;
-        }      
+        }
     }
 
-    return sprite, texture_object, current_frame, num_frames;
+    return sprite, texture_object, shader_program, current_frame, num_frames;
 }
 
 create_texture :: (texture_memory : string) -> TextureData {
@@ -318,3 +324,4 @@ debug_message_callback :: (source : GLenum, type : GLenum, id : GLuint, severity
     case;
 }
 #load "../shader.jai";
+#load "../shaders.jai";

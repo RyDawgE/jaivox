@@ -20,12 +20,32 @@ create_shader_object :: (path : string, type : GLenum) -> u32 {
     return shader_object;
 }
 
-create_shader_program :: (vertex_shader : u32, fragment_shader : u32) -> u32 {
+create_shader_program :: (vertex_shader : u32, fragment_shader : u32, delete_objects : bool = false) -> u32 {
     shader_program := glCreateProgram();
 
     glAttachShader(shader_program, vertex_shader);
     glAttachShader(shader_program, fragment_shader);
     glLinkProgram(shader_program);
 
+    if (delete_objects) {
+        glDeleteShader(vertex_shader);
+        glDeleteShader(fragment_shader);
+    }
+
     return shader_program;
 }
+
+define_shader :: (name : string, type : GLenum, path : string) {
+    using game_state.render_handle;
+
+    shader : u32 = create_shader_object(path, type);
+    table_add(shader_objects, name, shader);
+};
+
+get_shader_object :: (name : string) -> u32 {
+    using game_state.render_handle;
+
+    shader_object, success := table_find(shader_objects, name);
+
+    return ifx success then shader_object else 0;
+};

@@ -14,7 +14,6 @@ Entity :: struct @entity {
         velocity            : Vector2 = .{0, 0};
         rotation            : float   = 0;
 
-         // TODO: These need to be freed after destruction
         sprite              : *Sprite;
         animator            : *Animator;
 
@@ -136,6 +135,9 @@ destroy_entity :: (entity : *Entity) -> bool {
     #if ENGINE2D {
         if entity.sprite {
             free(entity.sprite);
+        }
+        if entity.animator {
+            cleanup_animator(entity.animator);
         }
     } else {
         if entity.model {

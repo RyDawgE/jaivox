@@ -13,6 +13,8 @@ WALK_DOWN       : TextureData;
 WALK_LEFT       : TextureData;
 WALK_RIGHT      : TextureData;
 BATTLE_INTRO    : TextureData;
+
+WOBBLE_SHADER   : u32;
 #scope_export
 
 PlayerOverworld :: struct @entity {
@@ -21,15 +23,21 @@ PlayerOverworld :: struct @entity {
     movement : Movement = 0;
     speed    : float    = 100;
     time_moving : float = 0;
+    is_wobbly   : bool = false;
 }
 
 init_player_overworld :: (entity : *PlayerOverworld) {
     // Create textures and buffer to GPU
-    WALK_UP     = create_texture_animated(TEX_KRIS_UP, 4);
-    WALK_DOWN   = create_texture_animated(TEX_KRIS_DOWN, 4);
-    WALK_LEFT   = create_texture_animated(TEX_KRIS_LEFT, 4);
-    WALK_RIGHT  = create_texture_animated(TEX_KRIS_RIGHT, 4);
-    BATTLE_INTRO= create_texture_animated(TEX_KRIS_BATTLE_INTRO, 8);
+    WALK_UP      = create_texture_animated(TEX_KRIS_UP, 4);
+    WALK_DOWN    = create_texture_animated(TEX_KRIS_DOWN, 4);
+    WALK_LEFT    = create_texture_animated(TEX_KRIS_LEFT, 4);
+    WALK_RIGHT   = create_texture_animated(TEX_KRIS_RIGHT, 4);
+    BATTLE_INTRO = create_texture_animated(TEX_KRIS_BATTLE_INTRO, 8);
+
+    WOBBLE_SHADER = create_shader_program(
+        get_shader_object("WOBBLE_SPRITE_VERT"),
+        get_shader_object("ANIMATED_SPRITE_FRAG"),
+    );
 
     // Subscriptions
     subscribe_entity_to_input(entity);
@@ -42,6 +50,7 @@ init_player_overworld :: (entity : *PlayerOverworld) {
     create_input_binding(entity, .KEY_UP,       xx move_up);
     create_input_binding(entity, .KEY_DOWN,     xx move_down);
     create_input_binding(entity, .KEY_Z,        xx play_anim);
+    create_input_binding(entity, .KEY_X,        xx wobble);
 
     create_input_binding(entity,  141,   xx toggle_fast);
     create_input_binding(entity,  27,    xx close_game_binding);
@@ -116,12 +125,22 @@ move_right :: (player: *PlayerOverworld, event : *Event) {
     movement = ifx event.key_pressed then movement | .RGT_BIT else movement & ~.RGT_BIT;
 }
 
+wobble :: (player: *PlayerOverworld, event : *Event) {
+    using player;
+    if !event.key_pressed then return;
+
+
+    entity.sprite.shader_program = ifx is_wobbly then 0 else WOBBLE_SHADER;
+    is_wobbly = !is_wobbly;
+}
+
 play_anim :: (player: *PlayerOverworld, event : *Event) {
     if !event.key_pressed then return;
     sprite : *Sprite = New(Sprite);
     set_sprite_texture(sprite, BATTLE_INTRO);
     sprite.position += .{42,0};
     play_sprite_animation(*player.entity, sprite, .5, false, true);
+
     set_sprite_texture(player.sprite, WALK_RIGHT);
 }
 

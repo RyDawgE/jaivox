@@ -5,5 +5,7 @@ create_shader_objects :: () {
 
     //Fragment Shaders
     define_shader("ANIMATED_SPRITE_FRAG", GL_FRAGMENT_SHADER, "%/../src/shaders/anim_sprite.frag");
+    define_shader("RAINBOW_SPRITE_FRAG", GL_FRAGMENT_SHADER, "%/../src/shaders/rainbow_sprite.frag");
+
 }
 

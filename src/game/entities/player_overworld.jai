@@ -36,7 +36,7 @@ init_player_overworld :: (entity : *PlayerOverworld) {
 
     WOBBLE_SHADER = create_shader_program(
         get_shader_object("WOBBLE_SPRITE_VERT"),
-        get_shader_object("ANIMATED_SPRITE_FRAG"),
+        get_shader_object("RAINBOW_SPRITE_FRAG"),
     );
 
     // Subscriptions

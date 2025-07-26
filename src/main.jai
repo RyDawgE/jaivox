@@ -24,7 +24,6 @@ main :: () {
     game_state.entity_handle  = New(EntityHandle);
     game_state.render_handle  = New(RenderHandle);
     game_state.input_handle   = New(InputHandle);
-    game_state.physics_handle = New(PhysicsHandle);
 
     initialize_entity_handle();
     create_render_engine();
@@ -85,7 +84,6 @@ print_size_info :: () #compile_time {
 #load "./memory_utilities.jai";
 #load "./math_utilities.jai";
 #load "./voxel/noise/perlin_noise.jai";
-#load "./physics/physics_engine.jai";
 
 #load "./game/entities/player_overworld.jai";
 
@@ -107,4 +105,3 @@ print_size_info :: () #compile_time {
 #import "String";
 #import "System";
 #import "File";
-#import "Jolt";

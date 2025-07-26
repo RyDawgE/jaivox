@@ -8,7 +8,6 @@ GameState :: struct {
     entity_handle  : *EntityHandle;
     render_handle  : *RenderHandle;
     input_handle   : *InputHandle;
-    physics_handle : *PhysicsHandle;
 }
 
 game_state : GameState = .{};

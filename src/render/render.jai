@@ -79,7 +79,7 @@ SAMPLE_INDXS : [..] u32 = xx u32.[
     2, 3, 0
 ];
 
-SPRITE_QUAD : [..] Vector4 = xx Vector4.[
+SPRITE_QUAD_ : [..] Vector4 = xx Vector4.[
     .{0.0, 1.0, 0.0, 1.0},
     .{1.0, 0.0, 1.0, 0.0},
     .{0.0, 0.0, 0.0, 0.0},
@@ -88,6 +88,35 @@ SPRITE_QUAD : [..] Vector4 = xx Vector4.[
     .{1.0, 1.0, 1.0, 1.0},
     .{1.0, 0.0, 1.0, 0.0},
 ];
+
+SPRITE_QUAD : [4*4*6] Vector4 = #run generate_grid_vec4(4);
+
+
+generate_grid_vec4 :: (n: int) -> []Vector4 #compile_time {
+    result : [..]Vector4;
+    //array_reserve(*result, n * n * 6);
+
+    for y : 0..n-1 {
+        for x : 0..n-1 {
+            x0: float32 = cast(float32)(x) / cast(float32)(n);
+            x1: float32 = cast(float32)(x + 1) / cast(float32)(n);
+            y0: float32 = cast(float32)(y) / cast(float32)(n);
+            y1: float32 = cast(float32)(y + 1) / cast(float32)(n);
+
+            // Triangle 1: top-left, bottom-right, bottom-left
+            array_add(*result, .{ x0, y1, x0, y1 });
+            array_add(*result, .{ x1, y0, x1, y0 });
+            array_add(*result, .{ x0, y0, x0, y0 });
+
+            // Triangle 2: top-left, top-right, bottom-right
+            array_add(*result, .{ x0, y1, x0, y1 });
+            array_add(*result, .{ x1, y1, x1, y1 });
+            array_add(*result, .{ x1, y0, x1, y0 });
+        }
+    }
+
+    return result;
+}
 
 create_game_window :: () {
     window_width  : float  : WindowCreationInfo.width;

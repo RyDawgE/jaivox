@@ -16,5 +16,9 @@ out vec2 TexCoords;
 void main()
 {
     TexCoords = vertex.zw;
-    gl_Position = projection * model * vec4(vertex.x + (sin(time * 3 - vertex.y)/3), vertex.y, 0.0, 1.0);
+    gl_Position = projection * model * vec4(vertex.x +
+         (sin(time * 3 - vertex.y * 16) / 10),
+         vertex.y,
+         0.0,
+         1.0);
 }

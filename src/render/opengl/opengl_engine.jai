@@ -166,7 +166,7 @@ draw_entities :: () {
         glBindBuffer(GL_ARRAY_BUFFER, sprite_vbo);
         glBindTexture(GL_TEXTURE_2D, texture_object);
 
-        glDrawArrays(GL_TRIANGLES, 0, 6);
+        glDrawArrays(GL_TRIANGLES, 0, 96);
     }
 }
 

@@ -131,6 +131,7 @@ wobble :: (player: *PlayerOverworld, event : *Event) {
 
 
     entity.sprite.shader_program = ifx is_wobbly then 0 else WOBBLE_SHADER;
+
     is_wobbly = !is_wobbly;
 }
 
@@ -140,6 +141,8 @@ play_anim :: (player: *PlayerOverworld, event : *Event) {
     set_sprite_texture(sprite, BATTLE_INTRO);
     sprite.position += .{42,0};
     play_sprite_animation(*player.entity, sprite, .5, false, true);
+    player.animator.sprite.shader_program = ifx !player.is_wobbly then 0 else WOBBLE_SHADER;
+
 
     set_sprite_texture(player.sprite, WALK_RIGHT);
 }

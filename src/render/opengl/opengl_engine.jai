@@ -62,12 +62,14 @@ create_shader_programs :: () {
 
     sprite_vshader := get_shader_object("SPRITE_VERT");
     sprite_fshader := get_shader_object("ANIMATED_SPRITE_FRAG");
+    // If an entity shader program is 0, it will default to this.
     default_shader_program = create_shader_program(sprite_vshader, sprite_fshader);
 }
 
 create_attribute_descriptors :: () {
     using game_state.render_handle;
 
+    // I'll be honest, im still not sure what this does.
     glGenVertexArrays(1, *entity_vertex_attributes);
     glBindVertexArray(entity_vertex_attributes);
 }
@@ -265,14 +267,6 @@ create_texture_animated :: (texture_memory : string, num_frames : s32) -> Textur
     td.texture_object = texture_object;
 
     return td;
-}
-
-handle_lighting :: () {
-    using game_state.render_handle;
-
-    light_uniform := glGetUniformLocation(default_shader_program, "lightPos");
-    point := GLOBAL_ILLUMINATION_POINT;
-    glUniform3f(light_uniform, point.x, point.y, point.z);
 }
 
 draw_frame :: () {

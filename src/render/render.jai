@@ -1,5 +1,3 @@
-GLOBAL_ILLUMINATION_POINT : Vector3 : .{25, 100, 25};
-
 RENDER_NAMES := string.[
     "Vulkan",
     "OpenGL",
@@ -89,13 +87,13 @@ SPRITE_QUAD_ : [..] Vector4 = xx Vector4.[
     .{1.0, 0.0, 1.0, 0.0},
 ];
 
-SPRITE_QUAD : [4*4*6] Vector4 = #run generate_grid_vec4(4);
+SPRITE_QUAD : [96] Vector4 = #run generate_grid_vec4(4);
 
 
-generate_grid_vec4 :: (n: int) -> []Vector4 #compile_time {
-    result : [..]Vector4;
+generate_grid_vec4 :: ($n: int) -> []Vector4 #compile_time {
+    result : [n*n*6]Vector4;
     //array_reserve(*result, n * n * 6);
-
+    i : int = 0;
     for y : 0..n-1 {
         for x : 0..n-1 {
             x0: float32 = cast(float32)(x) / cast(float32)(n);
@@ -104,14 +102,15 @@ generate_grid_vec4 :: (n: int) -> []Vector4 #compile_time {
             y1: float32 = cast(float32)(y + 1) / cast(float32)(n);
 
             // Triangle 1: top-left, bottom-right, bottom-left
-            array_add(*result, .{ x0, y1, x0, y1 });
-            array_add(*result, .{ x1, y0, x1, y0 });
-            array_add(*result, .{ x0, y0, x0, y0 });
+            result[i]   = .{ x0, y1, x0, y1 };
+            result[i+1] = .{ x1, y0, x1, y0 };
+            result[i+2] = .{ x0, y0, x0, y0 };
 
             // Triangle 2: top-left, top-right, bottom-right
-            array_add(*result, .{ x0, y1, x0, y1 });
-            array_add(*result, .{ x1, y1, x1, y1 });
-            array_add(*result, .{ x1, y0, x1, y0 });
+            result[i+3] = .{ x0, y1, x0, y1 };
+            result[i+4] = .{ x1, y1, x1, y1 };
+            result[i+5] = .{ x1, y0, x1, y0 };
+            i += 6;
         }
     }
 

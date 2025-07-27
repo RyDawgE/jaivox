@@ -9,3 +9,4 @@ create_shader_objects :: () {
 
 }
 
+// TODO, this needs to bake source into the binary just like the textures do.

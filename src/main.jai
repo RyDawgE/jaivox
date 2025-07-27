@@ -35,6 +35,10 @@ main :: () {
     player := create_entity(PlayerOverworld);
     init_player_overworld(player);
 
+    enemy : *EnemyOverworld = xx create_entity(EnemyOverworld);
+    init_enemy_overworld(enemy);
+    enemy.position = .{480, 240};
+
     // @MainLoop
     while !game_state.should_close {
 		frame_start = current_time_monotonic ();
@@ -86,6 +90,8 @@ print_size_info :: () #compile_time {
 #load "./voxel/noise/perlin_noise.jai";
 
 #load "./game/entities/player_overworld.jai";
+#load "./game/entities/enemy_overworld.jai";
+
 
 
 

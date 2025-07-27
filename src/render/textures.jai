@@ -13,4 +13,6 @@ TEX_KRIS_RIGHT : string : #run bake_texture("%/../data/texture/tex_kris_right.pn
 
 TEX_KRIS_BATTLE_INTRO : string : #run bake_texture("%/../data/texture/tex_kris_battle_intro.png");
 
+TEX_KNIGHT_IDLE : string : #run bake_texture("%/../data/texture/tex_knight_idle.png");
+
 //Should do a similar process for shader code files.

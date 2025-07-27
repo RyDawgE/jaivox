@@ -87,7 +87,7 @@ SPRITE_QUAD_ : [..] Vector4 = xx Vector4.[
     .{1.0, 0.0, 1.0, 0.0},
 ];
 
-SPRITE_QUAD : [96] Vector4 = #run generate_grid_vec4(4);
+SPRITE_QUAD : [8*8*6] Vector4 = #run generate_grid_vec4(8);
 
 
 generate_grid_vec4 :: ($n: int) -> []Vector4 #compile_time {

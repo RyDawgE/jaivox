@@ -48,7 +48,7 @@ create_opengl_context :: () {
     glViewport(0, 0, xx width, xx height);
 
     glEnable(GL_CULL_FACE);
-    glEnable(GL_DEPTH_TEST);
+    //glEnable(GL_DEPTH_TEST);
     glEnable(GL_MULTISAMPLE);
     glEnable(GL_BLEND);
     glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
@@ -168,7 +168,7 @@ draw_entities :: () {
         glBindBuffer(GL_ARRAY_BUFFER, sprite_vbo);
         glBindTexture(GL_TEXTURE_2D, texture_object);
 
-        glDrawArrays(GL_TRIANGLES, 0, 96);
+        glDrawArrays(GL_TRIANGLES, 0, 8*8*6);
     }
 }
 

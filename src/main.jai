@@ -32,6 +32,10 @@ main :: () {
     frame_end   : Apollo_Time;
 
     //Main stuff goes here
+    
+    bg := create_texture(TEX_BG_HOMETOWN);
+    set_background_texture(bg);
+    
     player := create_entity(PlayerOverworld);
     init_player_overworld(player);
 

@@ -77,7 +77,7 @@ SAMPLE_INDXS : [..] u32 = xx u32.[
     2, 3, 0
 ];
 
-SPRITE_QUAD_ : [..] Vector4 = xx Vector4.[
+BG_QUAD : [..] Vector4 = xx Vector4.[
     .{0.0, 1.0, 0.0, 1.0},
     .{1.0, 0.0, 1.0, 0.0},
     .{0.0, 0.0, 0.0, 0.0},

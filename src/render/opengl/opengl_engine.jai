@@ -1,5 +1,9 @@
 // opengl
 
+#scope_file
+DEFAULT_BACKGROUND : TextureData;
+#scope_export
+
 RenderHandle :: struct {
     window                     : Window_Type;
     instance                   : *void                    = null;
@@ -9,7 +13,10 @@ RenderHandle :: struct {
     UBO                        : u32;
     bound_camera               : *Entity                  = null;
     sprite_vbo                 : u32;
-
+    
+    background_vbo             : u32;
+    background_sprite          : *Sprite                  = null;
+    
     shader_objects             : *Table(string, u32);
 
     subscribed_entities        : [..] u64;
@@ -33,6 +40,7 @@ initialize_render :: (render_handle : *RenderHandle) {
     create_uniform_buffer_object();
     #if ENGINE2D {
         create_sprite_vertex_buffer();
+        create_background();
     }
 }
 
@@ -93,6 +101,69 @@ create_sprite_vertex_buffer :: () {
     glBindVertexArray(entity_vertex_attributes);
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 4 * size_of(float), cast(*void) 0);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+}
+
+// GL_ARRAY_BUFFER does not work like this. Its global- once this is called it
+// overrides the one created in create_sprite_vertex_buffer (above)
+// how to fix? Not sure. lol!
+create_background :: () {
+    using game_state.render_handle;
+    using WindowCreationInfo;
+
+    DEFAULT_BACKGROUND = create_texture_animated(TEX_UNDEFINED, 1);
+    
+    glGenBuffers(1, *background_vbo);
+    glBindBuffer(GL_ARRAY_BUFFER, background_vbo);
+    glBufferData(GL_ARRAY_BUFFER, size_of(Vector4) * BG_QUAD.count, BG_QUAD.data, GL_STATIC_DRAW);
+
+    glBindVertexArray(entity_vertex_attributes);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 4 * size_of(float), cast(*void) 0);
+    
+    background_sprite = New(Sprite);
+    background_sprite.scale = .{
+        width,
+        height
+    };
+    
+    set_sprite_texture(background_sprite, DEFAULT_BACKGROUND);
+}
+
+draw_background :: () {
+    using game_state.render_handle;
+    glEnableVertexAttribArray(0);
+    
+    transform : Matrix4;
+    pos       : Vector3 = .{0, 0, 0};
+    scl       : Vector3 = .{640, 480, 1};
+    qrot      : Quaternion;
+    
+    transform = make_translation_matrix4(.{0.0, 0.0, 0.0});
+    transform = transform * make_scale_matrix4(scl);
+
+    program : u32 = ifx background_sprite.shader_program != 0 then background_sprite.shader_program else default_shader_program;
+    
+    glUseProgram(program);
+
+    model_loc := glGetUniformLocation(program, "model");
+    glUniformMatrix4fv(model_loc, 1, GL_FALSE, *transpose(transform).coef[0][0]);
+
+    curr_frame_loc := glGetUniformLocation(program, "curr_frame");
+    glUniform1iv(curr_frame_loc, 1, *background_sprite.animation_frame);
+
+    num_frames_loc := glGetUniformLocation(program, "num_frames");
+    glUniform1iv(num_frames_loc, 1, *background_sprite.texture_data.anim_data.frames);
+    
+    glBindBuffer(GL_ARRAY_BUFFER, background_vbo);
+    glBindTexture(GL_TEXTURE_2D, background_sprite.texture_data.texture_object);
+
+    glDrawArrays(GL_TRIANGLES, 0, 6);
+}
+
+set_background_texture :: (bg : TextureData) {
+    using game_state.render_handle;
+    set_sprite_texture(background_sprite, bg);
 }
 
 swap_buffers :: (window: Window_Type, vsync := true) {  //@TODO: Implement other platforms and vsync
@@ -151,16 +222,18 @@ draw_entities :: () {
 
         //scale
         transform = transform * make_scale_matrix4(scl);
+        
+        program : u32 = ifx shader_program != 0 then shader_program else default_shader_program;
+        
+        glUseProgram(program);
 
-        glUseProgram(ifx shader_program != 0 then shader_program else default_shader_program);
-
-        model_loc := glGetUniformLocation(default_shader_program, "model");
+        model_loc := glGetUniformLocation(program, "model");
         glUniformMatrix4fv(model_loc, 1, GL_FALSE, *transpose(transform).coef[0][0]);
 
-        curr_frame_loc := glGetUniformLocation(default_shader_program, "curr_frame");
+        curr_frame_loc := glGetUniformLocation(program, "curr_frame");
         glUniform1iv(curr_frame_loc, 1, *current_frame);
 
-        num_frames_loc := glGetUniformLocation(default_shader_program, "num_frames");
+        num_frames_loc := glGetUniformLocation(program, "num_frames");
         glUniform1iv(num_frames_loc, 1, *num_frames);
 
 
@@ -289,6 +362,7 @@ draw_frame :: () {
     glBindBuffer(GL_UNIFORM_BUFFER, UBO);
     glBufferData(GL_UNIFORM_BUFFER, size_of(GameStateUniform), *state_uniform, GL_STATIC_DRAW);
 
+    draw_background();
     draw_entities();
     swap_buffers(window);
 }

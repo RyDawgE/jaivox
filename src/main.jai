@@ -90,9 +90,6 @@ print_size_info :: () #compile_time {
 #load "./math_utilities.jai";
 #load "./voxel/noise/perlin_noise.jai";
 
-#load "./game/entities/player_overworld.jai";
-#load "./game/entities/enemy_overworld.jai";
-
 // platform dependent file inclusion
 #if OS ==  {
     case .WINDOWS;

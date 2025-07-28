@@ -49,7 +49,7 @@ init_player_overworld :: (entity : *PlayerOverworld) {
     create_input_binding(entity, .KEY_RIGHT,    xx move_right);
     create_input_binding(entity, .KEY_UP,       xx move_up);
     create_input_binding(entity, .KEY_DOWN,     xx move_down);
-    create_input_binding(entity, .KEY_Z,        xx play_anim);
+    create_input_binding(entity, .KEY_Z,        xx start_battle);
     create_input_binding(entity, .KEY_X,        xx wobble);
 
     create_input_binding(entity,  141,   xx toggle_fast);
@@ -135,16 +135,9 @@ wobble :: (player: *PlayerOverworld, event : *Event) {
     is_wobbly = !is_wobbly;
 }
 
-play_anim :: (player: *PlayerOverworld, event : *Event) {
+start_battle :: (player: *PlayerOverworld, event : *Event) {
     if !event.key_pressed then return;
     
-    sprite : *Sprite = New(Sprite);
-    set_sprite_texture(sprite, BATTLE_INTRO);
-    sprite.position += .{42,0};
-    play_sprite_animation(*player.entity, sprite, .5, false, true);
-    player.animator.sprite.shader_program = ifx !player.is_wobbly then 0 else WOBBLE_SHADER;
-
-
     set_sprite_texture(player.sprite, WALK_RIGHT);
 
     scene : *Scene = New(Scene);

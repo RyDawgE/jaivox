@@ -13,6 +13,7 @@ layout (std140, binding = 0) uniform GameState
 };
 
 const vec2 iResolution = vec2(640, 480);
+float atime = time / 10;
 
 vec3 hueShift( vec3 color, float hueAdjust ){
 
@@ -115,12 +116,12 @@ float fbm( vec2 p )
 {
     float f = 0.0;
 
-    f += 0.500000*noise( p + time  ); p = mtx*p*2.02;
+    f += 0.500000*noise( p + atime  ); p = mtx*p*2.02;
     f += 0.031250*noise( p ); p = mtx*p*2.01;
     f += 0.250000*noise( p ); p = mtx*p*2.03;
     f += 0.125000*noise( p ); p = mtx*p*2.01;
     f += 0.062500*noise( p ); p = mtx*p*2.04;
-    f += 0.015625*noise( p + sin(time) );
+    f += 0.015625*noise( p + sin(atime) );
 
     return f/0.96875;
 }

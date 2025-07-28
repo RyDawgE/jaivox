@@ -21,27 +21,29 @@ EngineRenderer :: enum u8 {
 main :: () {
     game_state.start_time = cast (float) to_float64_seconds (current_time_monotonic());
 
-    game_state.entity_handle  = New(EntityHandle);
     game_state.render_handle  = New(RenderHandle);
     game_state.input_handle   = New(InputHandle);
 
-    initialize_entity_handle();
     create_render_engine();
 
     frame_start : Apollo_Time;
     frame_end   : Apollo_Time;
 
     //Main stuff goes here
-    
-    bg := create_texture(TEX_BG_HOMETOWN);
-    set_background_texture(bg);
-    
-    player := create_entity(PlayerOverworld);
-    init_player_overworld(player);
+    scene : *Scene = New(Scene);
+    scene.background = create_texture(TEX_BG_HOMETOWN);
+    scene.entry_procedure = (scene) => {
+        player := create_entity(PlayerOverworld);
+        init_player_overworld(player);
 
-    enemy : *EnemyOverworld = xx create_entity(EnemyOverworld);
-    init_enemy_overworld(enemy);
-    enemy.position = .{480, 240};
+        enemy : *EnemyOverworld = xx create_entity(EnemyOverworld);
+        init_enemy_overworld(enemy);
+        enemy.position = .{480, 240};
+    };
+
+
+    load_scene(scene);
+
 
     // @MainLoop
     while !game_state.should_close {
@@ -88,6 +90,7 @@ print_size_info :: () #compile_time {
 #load "./entity/entity.jai";
 #load "./render/render.jai";
 #load "./input/input.jai";
+#load "./scene/scene.jai";
 #load "./file_utilities.jai";
 #load "./memory_utilities.jai";
 #load "./math_utilities.jai";
@@ -95,9 +98,6 @@ print_size_info :: () #compile_time {
 
 #load "./game/entities/player_overworld.jai";
 #load "./game/entities/enemy_overworld.jai";
-
-
-
 
 // platform dependent file inclusion
 #if OS ==  {

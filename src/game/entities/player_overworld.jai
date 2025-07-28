@@ -145,6 +145,15 @@ play_anim :: (player: *PlayerOverworld, event : *Event) {
 
 
     set_sprite_texture(player.sprite, WALK_RIGHT);
+
+    scene : *Scene = New(Scene);
+    scene.background = WALK_RIGHT;
+    scene.entry_procedure = (scene) => {
+        print("I loded :C\n");
+    };
+    load_scene(scene);
+    game_state.render_handle.background_sprite.shader_program = WOBBLE_SHADER;
+
 }
 
 toggle_fast :: (entity: *PlayerOverworld, event : *Event) {

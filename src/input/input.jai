@@ -24,6 +24,7 @@ poll_events :: () {
             //print("%\n", cast (KeyboardKey) it.key_code);
             for id : game_state.input_handle.subscribed_entities {
                 entity : *Entity = cast (*Entity) get_entity(id);
+                if !entity then continue;
                 callback, success := table_find(entity.input_bindings, cast (KeyboardKey) it.key_code);
                 if success {
                     callback(entity, *it);

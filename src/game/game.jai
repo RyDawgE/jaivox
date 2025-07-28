@@ -5,6 +5,8 @@ GameState :: struct {
     frame         : u32     = 0;
     time          : float   = 0;
 
+    scene          : *Scene;
+
     entity_handle  : *EntityHandle;
     render_handle  : *RenderHandle;
     input_handle   : *InputHandle;
@@ -23,5 +25,23 @@ close_game_binding :: (entity: *Entity, event : *Event) {
 update_game_state :: () {
     // Main game loop goes here, if any
 }
+
+load_scene :: (scene : *Scene) {
+    if (game_state.scene) {
+        cleanup_scene(game_state.scene);
+    };
+
+    if (!scene.entity_handle) {
+        scene.entity_handle = New(EntityHandle);
+        initialize_entity_handle(scene.entity_handle);
+    }
+
+    game_state.entity_handle = scene.entity_handle;
+
+    game_state.scene = scene;
+    set_background_texture(scene.background);
+
+    scene.entry_procedure(scene);
+};
 
 

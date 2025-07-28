@@ -13,11 +13,11 @@ RenderHandle :: struct {
     UBO                        : u32;
     bound_camera               : *Entity                  = null;
     sprite_vbo                 : u32;
-    
+
     background_vbo             : u32;
     background_vao             : u32;
     background_sprite          : *Sprite                  = null;
-    
+
     shader_objects             : *Table(string, u32);
 
     subscribed_entities        : [..] u64;
@@ -110,23 +110,23 @@ create_background :: () {
     using WindowCreationInfo;
 
     DEFAULT_BACKGROUND = create_texture_animated(TEX_UNDEFINED, 1);
-    
+
     glGenVertexArrays(1, *background_vao);
     glBindVertexArray(background_vao);
-    
+
     glGenBuffers(1, *background_vbo);
     glBindBuffer(GL_ARRAY_BUFFER, background_vbo);
     glBufferData(GL_ARRAY_BUFFER, size_of(Vector4) * BG_QUAD.count, BG_QUAD.data, GL_STATIC_DRAW);
 
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 4 * size_of(float), cast(*void) 0);
-    
+
     background_sprite = New(Sprite);
     background_sprite.scale = .{
         width,
         height
     };
-    
+
     set_sprite_texture(background_sprite, DEFAULT_BACKGROUND);
 }
 
@@ -135,17 +135,17 @@ draw_background :: () {
     glBindVertexArray(background_vao);
 
     glEnableVertexAttribArray(0);
-    
+
     transform : Matrix4;
     pos       : Vector3 = .{0, 0, 0};
     scl       : Vector3 = .{640, 480, 1};
     qrot      : Quaternion;
-    
+
     transform = make_translation_matrix4(.{0.0, 0.0, 0.0});
     transform = transform * make_scale_matrix4(scl);
 
     program : u32 = ifx background_sprite.shader_program != 0 then background_sprite.shader_program else default_shader_program;
-    
+
     glUseProgram(program);
 
     model_loc := glGetUniformLocation(program, "model");
@@ -156,7 +156,7 @@ draw_background :: () {
 
     num_frames_loc := glGetUniformLocation(program, "num_frames");
     glUniform1iv(num_frames_loc, 1, *background_sprite.texture_data.anim_data.frames);
-    
+
     glBindBuffer(GL_ARRAY_BUFFER, background_vbo);
     glBindTexture(GL_TEXTURE_2D, background_sprite.texture_data.texture_object);
 
@@ -194,6 +194,7 @@ draw_entities :: () {
 
     for id : subscribed_entities {
         entity : *Entity = get_entity(id);
+        if !entity then continue;
 
         sprite          : *Sprite = null;
         texture_object, shader_program  : u32;
@@ -224,9 +225,9 @@ draw_entities :: () {
 
         //scale
         transform = transform * make_scale_matrix4(scl);
-        
+
         program : u32 = ifx shader_program != 0 then shader_program else default_shader_program;
-        
+
         glUseProgram(program);
 
         model_loc := glGetUniformLocation(program, "model");

@@ -37,10 +37,18 @@ EntityHandle :: struct {
     tickable_entities : *Table(u64, ENTITY_TICK_PROCEDURE_SIGNATURE);
 }
 
-initialize_entity_handle :: () {
-    using game_state.entity_handle;
+initialize_entity_handle :: (handle : *EntityHandle) {
+    handle.tickable_entities  = New(Table(u64, ENTITY_TICK_PROCEDURE_SIGNATURE));
+}
 
-    tickable_entities  = New(Table(u64, ENTITY_TICK_PROCEDURE_SIGNATURE));
+cleanup_entity_handle :: (handle : *EntityHandle) {
+    if !handle then return;
+
+    deinit(handle.tickable_entities);
+    for block : handle.entity_blocks {
+        free(block.memory);
+    }
+    array_free(handle.entity_blocks);
 }
 
 get_entity_slot_size :: () -> s64 #compile_time {
@@ -63,13 +71,14 @@ get_entity_mem_info :: (id : u64) -> u32, u32 {
     return (cast,no_check(u32) id >> 32) - 1, (cast,no_check(u32) id) - 1;
 }
 
-create_entity :: ($T : Type) -> *void {
+create_entity :: ($T : Type, _handle : *EntityHandle = null) -> *void {
+    handle : *EntityHandle = ifx _handle then _handle else game_state.entity_handle;
 
     // find first block with available slot
     available_block : *EntityBlock;
     available_block_index := 0;
 
-    for block : game_state.entity_handle.entity_blocks {
+    for block : handle.entity_blocks {
         if !(block.member_mask == ~0) { // ~ flips all bits. so ~0b00000000 -> 0b11111111
             //if block not full
             available_block = *block;
@@ -79,10 +88,10 @@ create_entity :: ($T : Type) -> *void {
 
     //if theres no available block create a new one
     if (available_block == null) {
-        available_block = array_add(*game_state.entity_handle.entity_blocks);
+        available_block = array_add(*handle.entity_blocks);
         block_size := LARGEST_ENTITY_SIZE * 64;
         available_block.memory = alloc(block_size);
-        available_block_index = game_state.entity_handle.entity_blocks.count - 1;
+        available_block_index = handle.entity_blocks.count - 1;
         //print("New entity block created with size of % bytes\n", block_size);
     }
 
@@ -150,6 +159,8 @@ destroy_entity :: (entity : *Entity) -> bool {
 
 get_entity :: (id : u64) -> *void {
     using game_state.entity_handle;
+
+    if entity_blocks.count == 0 then return null;
 
     ones : u64 = ~0;
 

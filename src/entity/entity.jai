@@ -46,6 +46,13 @@ cleanup_entity_handle :: (handle : *EntityHandle) {
 
     deinit(handle.tickable_entities);
     for block : handle.entity_blocks {
+        while (bit_scan_forward(block.member_mask)) > 0 {
+            offset : s32 = bit_scan_forward(block.member_mask) - 1;
+            entity : *Entity = block.memory + (offset * LARGEST_ENTITY_SIZE);
+            if (!entity) then continue;
+            destroy_entity(entity);
+        }
+        
         free(block.memory);
     }
     array_free(handle.entity_blocks);

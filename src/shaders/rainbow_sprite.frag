@@ -39,7 +39,6 @@ vec3 hueShift( vec3 color, float hueAdjust ){
     vec3    yIQ   = vec3 (YPrime, I, Q);
 
     return vec3( dot (yIQ, kYIQToR), dot (yIQ, kYIQToG), dot (yIQ, kYIQToB) );
-
 }
 
 void main()

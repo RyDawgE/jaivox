@@ -32,14 +32,7 @@ main :: () {
     //Main stuff goes here
     scene : *Scene = New(Scene);
     scene.background = create_texture(TEX_BG_HOMETOWN);
-    scene.entry_procedure = (scene) => {
-        player := create_entity(PlayerOverworld);
-        init_player_overworld(player);
-
-        enemy : *EnemyOverworld = xx create_entity(EnemyOverworld);
-        init_enemy_overworld(enemy);
-        enemy.position = .{480, 240};
-    };
+    scene.entry_procedure = load_overworld_scene;
 
 
     load_scene(scene);
@@ -87,6 +80,7 @@ print_size_info :: () #compile_time {
 #run print_size_info();
 
 #load "./game/game.jai";
+#load "./game/scenes.jai";
 #load "./entity/entity.jai";
 #load "./render/render.jai";
 #load "./input/input.jai";

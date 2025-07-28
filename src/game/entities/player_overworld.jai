@@ -38,7 +38,7 @@ init_player_overworld :: (entity : *PlayerOverworld) {
         get_shader_object("WOBBLE_SPRITE_VERT"),
         get_shader_object("RAINBOW_SPRITE_FRAG"),
     );
-
+    
     // Subscriptions
     subscribe_entity_to_input(entity);
     subscribe_entity_to_tick(entity, xx tick_player_overworld);
@@ -137,6 +137,7 @@ wobble :: (player: *PlayerOverworld, event : *Event) {
 
 play_anim :: (player: *PlayerOverworld, event : *Event) {
     if !event.key_pressed then return;
+    
     sprite : *Sprite = New(Sprite);
     set_sprite_texture(sprite, BATTLE_INTRO);
     sprite.position += .{42,0};
@@ -147,13 +148,9 @@ play_anim :: (player: *PlayerOverworld, event : *Event) {
     set_sprite_texture(player.sprite, WALK_RIGHT);
 
     scene : *Scene = New(Scene);
-    scene.background = WALK_RIGHT;
-    scene.entry_procedure = (scene) => {
-        print("I loded :C\n");
-    };
-    load_scene(scene);
-    game_state.render_handle.background_sprite.shader_program = WOBBLE_SHADER;
 
+    scene.entry_procedure = load_battle_scene;
+    load_scene(scene);
 }
 
 toggle_fast :: (entity: *PlayerOverworld, event : *Event) {

@@ -40,6 +40,10 @@ load_scene :: (scene : *Scene) {
 
     game_state.scene = scene;
     set_background_texture(scene.background);
+    flush_events();
+    array_reset(*game_state.render_handle.subscribed_entities);
+    array_reset(*game_state.input_handle.subscribed_entities);
+
 
     scene.entry_procedure(scene);
 };

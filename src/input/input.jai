@@ -34,6 +34,10 @@ poll_events :: () {
     }
 }
 
+flush_events :: () {
+    array_reset(*events_this_frame);
+}
+
 /*
     The input system works by binding a function callback to a given key PER ENTITY.
     You can create a procedure with the same signature as INPIUT_BINDING_PROCEDURE_SIGNATURE,

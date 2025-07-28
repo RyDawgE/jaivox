@@ -15,6 +15,7 @@ RenderHandle :: struct {
     sprite_vbo                 : u32;
     
     background_vbo             : u32;
+    background_vao             : u32;
     background_sprite          : *Sprite                  = null;
     
     shader_objects             : *Table(string, u32);
@@ -104,20 +105,19 @@ create_sprite_vertex_buffer :: () {
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
-// GL_ARRAY_BUFFER does not work like this. Its global- once this is called it
-// overrides the one created in create_sprite_vertex_buffer (above)
-// how to fix? Not sure. lol!
 create_background :: () {
     using game_state.render_handle;
     using WindowCreationInfo;
 
     DEFAULT_BACKGROUND = create_texture_animated(TEX_UNDEFINED, 1);
     
+    glGenVertexArrays(1, *background_vao);
+    glBindVertexArray(background_vao);
+    
     glGenBuffers(1, *background_vbo);
     glBindBuffer(GL_ARRAY_BUFFER, background_vbo);
     glBufferData(GL_ARRAY_BUFFER, size_of(Vector4) * BG_QUAD.count, BG_QUAD.data, GL_STATIC_DRAW);
 
-    glBindVertexArray(entity_vertex_attributes);
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 4 * size_of(float), cast(*void) 0);
     
@@ -132,6 +132,8 @@ create_background :: () {
 
 draw_background :: () {
     using game_state.render_handle;
+    glBindVertexArray(background_vao);
+
     glEnableVertexAttribArray(0);
     
     transform : Matrix4;

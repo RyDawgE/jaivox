@@ -1,8 +1,9 @@
 load_overworld_scene :: (scene : *Scene) {
         player := create_entity(PlayerOverworld);
         init_player_overworld(player);
+        player.position = .{120, 240};
 
-        enemy : *EnemyOverworld = xx create_entity(EnemyOverworld);
+        enemy := create_entity(EnemyOverworld);
         init_enemy_overworld(enemy);
         enemy.position = .{480, 240};
 };
@@ -12,19 +13,25 @@ load_battle_scene :: (scene : *Scene) {
             get_shader_object("SPRITE_VERT"),
             get_shader_object("BATTLEBG_FRAG"),
         );
-        
-        player : *PlayerBattle = xx create_entity(PlayerBattle);
+
+        player := create_entity(PlayerBattle);
         init_player_battle(player);
         player.position = .{120, 240};
         play_anim(player);
-        
-        enemy : *EnemyOverworld = xx create_entity(EnemyOverworld);
-        init_enemy_overworld(enemy);
-        enemy.position = .{480, 240};
 
+        //Example of pre-creating an entity and adding it after
+        enemy : EnemyBattle = .{
+            is_wobbly = true,
+        };
+        enemy.position = .{480, 240};
+        ent := add_entity(*enemy, EnemyBattle);
+
+        init_enemy_battle(ent);
+        play_anim(ent);
 };
 
 #scope_file
 #load "../game/entities/player_overworld.jai";
 #load "../game/entities/player_battle.jai";
 #load "../game/entities/enemy_overworld.jai";
+#load "../game/entities/enemy_battle.jai";

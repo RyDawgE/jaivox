@@ -25,6 +25,10 @@ Entity :: struct @entity {
         model               : *Model;
         collider            : *EntityCollider;
     }
+
+    // stuff for the turn based game move me later
+    health : int = 1;
+    attack : int = 1;
 }
 
 EntityBlock :: struct {
@@ -52,7 +56,7 @@ cleanup_entity_handle :: (handle : *EntityHandle) {
             if (!entity) then continue;
             destroy_entity(entity);
         }
-        
+
         free(block.memory);
     }
     array_free(handle.entity_blocks);
@@ -78,7 +82,7 @@ get_entity_mem_info :: (id : u64) -> u32, u32 {
     return (cast,no_check(u32) id >> 32) - 1, (cast,no_check(u32) id) - 1;
 }
 
-create_entity :: ($T : Type, _handle : *EntityHandle = null) -> *void {
+create_entity :: ($T : Type, _handle : *EntityHandle = null) -> *T {
     handle : *EntityHandle = ifx _handle then _handle else game_state.entity_handle;
 
     // find first block with available slot
@@ -117,6 +121,48 @@ create_entity :: ($T : Type, _handle : *EntityHandle = null) -> *void {
     entity.active = true;
 
     return entity;
+}
+
+add_entity :: (entity : *Entity, $T : Type, _handle : *EntityHandle = null) -> *T {
+    handle : *EntityHandle = ifx _handle then _handle else game_state.entity_handle;
+
+    // find first block with available slot
+    available_block : *EntityBlock;
+    available_block_index := 0;
+
+    for block : handle.entity_blocks {
+        if !(block.member_mask == ~0) { // ~ flips all bits. so ~0b00000000 -> 0b11111111
+            //if block not full
+            available_block = *block;
+            available_block_index = it_index;
+        }
+    }
+
+    //if theres no available block create a new one
+    if (available_block == null) {
+        available_block = array_add(*handle.entity_blocks);
+        block_size := LARGEST_ENTITY_SIZE * 64;
+        available_block.memory = alloc(block_size);
+        available_block_index = handle.entity_blocks.count - 1;
+        //print("New entity block created with size of % bytes\n", block_size);
+    }
+
+    available_slot : s32 = bit_scan_forward(~available_block.member_mask) - 1;
+    bit_slot : u64 = (cast(u64) 1) << available_slot;
+    available_block.member_mask |= bit_slot;
+
+    //Create entity data, write it to block, pop original entity off stack.
+    _entity : *T = cast(*T)(available_block.memory + (available_slot * LARGEST_ENTITY_SIZE));
+    _entity.* = .{}; // default initialize as type T
+    memcpy(_entity, entity, size_of(T));
+
+    id : u64 = 0;
+    id |= ((cast(u64) available_block_index + 1) << 32) | (cast(u64) available_slot + 1);
+
+    _entity.id = id;
+    _entity.active = true;
+
+    return _entity;
 }
 
 // destroy example:

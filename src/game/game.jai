@@ -1,3 +1,11 @@
+Battle :: struct {
+
+}
+
+UserGameState :: struct {
+    battle : *Battle;
+}
+
 GameState :: struct {
     should_close  : bool    = false;
     delta_time    : float   = 0;
@@ -10,11 +18,11 @@ GameState :: struct {
     entity_handle  : *EntityHandle;
     render_handle  : *RenderHandle;
     input_handle   : *InputHandle;
+
+    using user : UserGameState;
 }
 
 game_state : GameState = .{};
-
-square_rotation : float = 0;
 
 close_game_binding :: (entity: *Entity, event : *Event) {
     if event.key_pressed == 1 {
@@ -23,7 +31,7 @@ close_game_binding :: (entity: *Entity, event : *Event) {
 }
 
 update_game_state :: () {
-    // Main game loop goes here, if any
+
 }
 
 load_scene :: (scene : *Scene) {

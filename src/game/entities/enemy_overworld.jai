@@ -10,7 +10,7 @@ Movement :: enum_flags u8 {
 
 IDLE         : TextureData;
 
-WOBBLE_SHADER   : u32;
+DEFAULT_SHADER   : u32;
 #scope_export
 
 EnemyOverworld :: struct @entity {
@@ -26,7 +26,7 @@ init_enemy_overworld :: (entity : *EnemyOverworld) {
     // Create textures and buffer to GPU
     IDLE      = create_texture(TEX_KNIGHT_IDLE);
 
-    WOBBLE_SHADER = create_shader_program(
+    DEFAULT_SHADER = create_shader_program(
         get_shader_object("SPRITE_VERT"),
         get_shader_object("RAINBOW_SPRITE_FRAG"),
     );
@@ -39,7 +39,7 @@ init_enemy_overworld :: (entity : *EnemyOverworld) {
     entity.scale = .{2, 2};
     entity.sprite = New(Sprite);
     set_sprite_texture(entity.sprite, IDLE);
-    entity.sprite.shader_program = WOBBLE_SHADER;
+    entity.sprite.shader_program = DEFAULT_SHADER;
 }
 
 tick_enemy_overworld :: (enemy : *EnemyOverworld) {
@@ -76,6 +76,7 @@ tick_enemy_overworld :: (enemy : *EnemyOverworld) {
     entity.velocity = .{0, sin(game_state.time*3)/1.5};
     entity.position += Vector2.{entity.velocity.x, -entity.velocity.y} * (enemy.speed * game_state.delta_time);
     //print("%\n",entity.position);
+    //print("%\n",game_state.time);
     //print("Position: %\nRotation: %\n", entity.position, entity.rotation);
     //print("Forward: %\nRight: %\n", get_forward_vector(camera.rotation), get_right_vector(camera.rotation));
 }

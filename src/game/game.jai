@@ -1,9 +1,12 @@
 Battle :: struct {
-
+    enemy_kinds : []EnemyKind = .[
+        .ROARING_KNIGHT,
+    ];
 }
 
 UserGameState :: struct {
     battle : *Battle;
+    deck   : [..]Card;
 }
 
 GameState :: struct {
@@ -56,4 +59,4 @@ load_scene :: (scene : *Scene) {
     scene.entry_procedure(scene);
 };
 
-
+#load "./deck.jai";

@@ -19,15 +19,19 @@ load_battle_scene :: (scene : *Scene) {
         player.position = .{120, 240};
         play_anim(player);
 
-        //Example of pre-creating an entity and adding it after
-        enemy : EnemyBattle = .{
-            is_wobbly = true,
-        };
-        enemy.position = .{480, 240};
-        ent := add_entity(*enemy, EnemyBattle);
+        game_state.battle = New(Battle);
 
-        init_enemy_battle(ent);
-        play_anim(ent);
+        for kind : game_state.battle.enemy_kinds {
+            enemy : EnemyBattle = .{
+                kind = kind,
+            };
+            y_pos : float = ( (480/(it_index+2)) ).(float);
+            enemy.position = .{480,y_pos};
+            ent := add_entity(*enemy, EnemyBattle);
+
+            init_enemy_battle(ent);
+            play_anim(ent);
+        }
 };
 
 #scope_file

@@ -1,8 +1,8 @@
 Suit :: enum {
-    HEART;
-    SPADE;
-    DIAMOND;
-    CLUB;
+    CLUB    :: 0;   
+    HEART   :: 1;
+    SPADE   :: 2;
+    DIAMOND :: 3;
 }
 
 // Done like this to detect straights easier

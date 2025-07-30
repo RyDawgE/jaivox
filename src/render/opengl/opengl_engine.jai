@@ -199,9 +199,12 @@ draw_entities :: () {
         sprite          : *Sprite = null;
         texture_object, shader_program  : u32;
         current_frame,  num_frames      : s32;
+        atlas_data      : AtlasData;
 
         sprite, texture_object, shader_program, current_frame, num_frames =
             get_entity_render_info(entity);
+            
+        atlas_data = sprite.texture_data.atlas_data;
 
         pos = .{
             entity.position.x + sprite.position.x,
@@ -238,7 +241,18 @@ draw_entities :: () {
 
         num_frames_loc := glGetUniformLocation(program, "num_frames");
         glUniform1iv(num_frames_loc, 1, *num_frames);
+        
+        atlas_get_x_loc := glGetUniformLocation(program, "atlas_get_x");
+        glUniform1iv(atlas_get_x_loc, 1, *atlas_data.x);
 
+        atlas_get_y_loc := glGetUniformLocation(program, "atlas_get_y");
+        glUniform1iv(atlas_get_y_loc, 1, *atlas_data.y);
+        
+        atlas_size_x_loc := glGetUniformLocation(program, "atlas_size_x");
+        glUniform1iv(atlas_size_x_loc, 1, *atlas_data.size_x);
+        
+        atlas_size_y_loc := glGetUniformLocation(program, "atlas_size_y");
+        glUniform1iv(atlas_size_y_loc, 1, *atlas_data.size_y);
 
         // Begin Render
         glBindBuffer(GL_ARRAY_BUFFER, sprite_vbo);

@@ -21,5 +21,5 @@ uniform int atlas_size_y=1;
 void main()
 {
     TexCoords = vertex.zw;
-    gl_Position = projection * model * vec4(vertex.xy, 0.0, 1.0);
+    gl_Position = projection * model * vec4(vertex.xy, 0.0, 1.0) / vec4(atlas_size_x, atlas_size_y, 1, 1);
 }

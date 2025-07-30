@@ -2,9 +2,15 @@ AnimationData :: struct {
     frames : s32 = 1;
 }
 
+AtlasData :: struct {
+    size_x, size_y : s32 = 1;
+    x, y : s32 = 0;
+}
+
 TextureData :: struct {
     x, y, channels : s32;
     anim_data      : AnimationData;
+    atlas_data     : AtlasData;
     texture_object : u32;
 }
 
@@ -30,6 +36,7 @@ load_texture_from_data :: (buffer : *[]u8, data : string) -> TextureData {
         y,
         channels,
         .{},
+        .{},
         0
     };
 
@@ -52,6 +59,7 @@ load_animated_texture_from_data :: (buffer : *[]u8, data : string, num_frames : 
         AnimationData.{
             num_frames
         },
+        .{},
         0
     };
 

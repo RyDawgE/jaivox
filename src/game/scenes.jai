@@ -32,6 +32,9 @@ load_battle_scene :: (scene : *Scene) {
             init_enemy_battle(ent);
             play_anim(ent);
         }
+        
+        card := create_entity(SelectableCard);
+        init_selectable_card(card);
 };
 
 #scope_file
@@ -39,3 +42,4 @@ load_battle_scene :: (scene : *Scene) {
 #load "../game/entities/player_battle.jai";
 #load "../game/entities/enemy_overworld.jai";
 #load "../game/entities/enemy_battle.jai";
+#load "../game/entities/card.jai";

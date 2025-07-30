@@ -20,8 +20,9 @@ TEX_KNIGHT_IDLE : string : #run bake_texture("%/../data/texture/tex_knight_idle.
 TEX_KNIGHT_BATTLE_INTRO  : string : #run bake_texture("%/../data/texture/tex_knight_battle_intro.png");
 TEX_KNIGHT_BATTLE_ATTACK : string : #run bake_texture("%/../data/texture/tex_knight_battle_attack.png");
 
-
 TEX_BG_HOMETOWN : string : #run bake_texture("%/../data/texture/background/tex_bg_hometown.png");
+
+TEX_CARDS_DECK  : string : #run bake_texture("%/../data/texture/tex_full_deck.png");
 
 
 //Should do a similar process for shader code files.

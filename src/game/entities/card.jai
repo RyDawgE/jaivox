@@ -43,16 +43,18 @@ init_selectable_card :: (entity : *SelectableCard, card : Card = .{}) {
 
 tick_selectable_card :: (entity : *SelectableCard) {
     entity.position = lerp(entity.position, entity.target_position, game_state.delta_time*10);
-    entity.position += .{0, sin(game_state.time*3 + entity.position.x)  /100};
+    entity.position += .{0, sin((game_state.time*3) + entity.position.x)  /50};
 }
 
 set_selected :: (entity : *SelectableCard, selected : bool) {
-    entity.selected = selected;
-    if selected {
-        entity.target_position -= .{0, 25};
-    } else {
-        entity.target_position += .{0, 25};
+    if selected != entity.selected {
+        if selected {
+            entity.target_position -= .{0, 25};
+        } else {
+            entity.target_position += .{0, 25};
+        }
     }
+    entity.selected = selected;
 }
 
 set_hovered :: (entity : *SelectableCard, hovered : bool) {
@@ -64,4 +66,8 @@ set_hovered :: (entity : *SelectableCard, hovered : bool) {
         }
     }
     entity.hovered = hovered;
+}
+
+score_hand :: (hand : [..]*SelectableCard) {
+
 }

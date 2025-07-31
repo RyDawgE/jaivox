@@ -35,17 +35,19 @@ load_battle_scene :: (scene : *Scene) {
             play_anim(ent);
         }
 
-
         array_copy(*game_state.deck, STANDARD_DECK);
-
 
         for i : 1..game_state.hand_size {
             card := draw_random_card(game_state.deck);
 
             entity := create_entity(SelectableCard);
-            entity.position = .{(i.(float) * 20) +210, 400};
+            entity.target_position = .{(i.(float) * 20) +210, 400};
+            entity.position = .{800, 400};
             init_selectable_card(entity, card);
+            array_add(*game_state.hand, entity);
         }
+
+        hover_card(player, 0);
 };
 
 #scope_file

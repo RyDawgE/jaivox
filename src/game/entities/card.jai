@@ -25,7 +25,6 @@ init_selectable_card :: (entity : *SelectableCard, card : Card = .{}) {
 
     // Configure card details
     entity.card = card;
-    entity.target_position = entity.position;
 
     // Configure sprite defaults
     entity.scale = .{2, 2};
@@ -43,5 +42,26 @@ init_selectable_card :: (entity : *SelectableCard, card : Card = .{}) {
 }
 
 tick_selectable_card :: (entity : *SelectableCard) {
-    entity.position = entity.target_position + .{0, sin(game_state.time*3 + entity.position.x) * 1};
+    entity.position = lerp(entity.position, entity.target_position, game_state.delta_time*10);
+    entity.position += .{0, sin(game_state.time*3 + entity.position.x)  /100};
+}
+
+set_selected :: (entity : *SelectableCard, selected : bool) {
+    entity.selected = selected;
+    if selected {
+        entity.target_position -= .{0, 25};
+    } else {
+        entity.target_position += .{0, 25};
+    }
+}
+
+set_hovered :: (entity : *SelectableCard, hovered : bool) {
+    if hovered != entity.hovered {
+        if hovered {
+            entity.target_position -= .{0, 15};
+        } else {
+            entity.target_position += .{0, 15};
+        }
+    }
+    entity.hovered = hovered;
 }

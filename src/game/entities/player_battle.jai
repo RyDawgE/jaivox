@@ -2,13 +2,12 @@
 BATTLE_INTRO    : TextureData;
 BATTLE_IDLE     : TextureData;
 
-WOBBLE_SHADER   : u32;
 #scope_export
 
 PlayerBattle :: struct @entity {
     using #as entity : Entity;
 
-    is_wobbly   : bool = false;
+    selected_card_index : int = -1;
 }
 
 init_player_battle :: (entity : *PlayerBattle) {
@@ -17,20 +16,15 @@ init_player_battle :: (entity : *PlayerBattle) {
     BATTLE_INTRO = create_texture_animated(TEX_KRIS_BATTLE_INTRO, 8);
     BATTLE_IDLE = create_texture_animated(TEX_KRIS_BATTLE_IDLE, 6);
 
-
-    WOBBLE_SHADER = create_shader_program(
-        get_shader_object("WOBBLE_SPRITE_VERT"),
-        get_shader_object("RAINBOW_SPRITE_FRAG"),
-    );
-    
     // Subscriptions
     subscribe_entity_to_input(entity);
     subscribe_entity_to_tick(entity, xx tick_player_battle);
     subscribe_entity_to_render(entity);
 
     // Input
-    create_input_binding(entity, .KEY_X,        xx test);
-
+    create_input_binding(entity, .KEY_LEFT,     xx hover_left_card);
+    create_input_binding(entity, .KEY_RIGHT,    xx hover_right_card);
+    create_input_binding(entity, .KEY_Z,        xx select_current_card);
 
     create_input_binding(entity,  27,    xx close_game_binding);
 
@@ -47,25 +41,53 @@ tick_player_battle :: (player : *PlayerBattle) {
     // Left Right
     entity.sprite.animation_frame = cast(s32)( (game_state.time*(6)) );
 
-    //print("%\n",time_moving);
+    //print("%\n",player.selected_card_index);
     //print("Position: %\nRotation: %\n", entity.position, entity.rotation);
     //print("Forward: %\nRight: %\n", get_forward_vector(camera.rotation), get_right_vector(camera.rotation));
 }
 
-test :: (player: *PlayerBattle, event : *Event) {
-    using player;
-    if !event.key_pressed then return;
-    play_anim(player);
-
-    // entity.sprite.shader_program = ifx is_wobbly then 0 else WOBBLE_SHADER;
-
-    // is_wobbly = !is_wobbly;
-}
-
-play_anim :: (player: *PlayerBattle) {    
+play_anim :: (player: *PlayerBattle) {
     sprite : *Sprite = New(Sprite);
     set_sprite_texture(sprite, BATTLE_INTRO);
     sprite.position += .{24,2};
     play_sprite_animation(*player.entity, sprite, .5, false, true);
-    player.animator.sprite.shader_program = ifx !player.is_wobbly then 0 else WOBBLE_SHADER;
 }
+
+hover_left_card :: (player: *PlayerBattle, event : *Event) {
+    if !event.key_pressed then return;
+    player.selected_card_index =
+    abs(player.selected_card_index - 1) % (game_state.hand_size);
+    hover_card(player, player.selected_card_index);
+}
+
+hover_right_card :: (player: *PlayerBattle, event : *Event) {
+    if !event.key_pressed then return;
+    player.selected_card_index =
+    abs(player.selected_card_index + 1) % (game_state.hand_size);
+    hover_card(player, player.selected_card_index);
+}
+
+hover_card :: (player : *PlayerBattle, index : int) {
+    for card : game_state.hand set_hovered(card, false);
+
+    player.selected_card_index = index;
+    new_card : *SelectableCard = game_state.hand[index];
+    set_hovered(new_card, true);
+}
+
+select_current_card :: (player: *PlayerBattle, event : *Event) {
+    if !event.key_pressed then return;
+
+    card : *SelectableCard = game_state.hand[player.selected_card_index];
+
+    num_selected : int = 0;
+    for card : game_state.hand {
+        num_selected += ifx card.selected then 1 else 0;
+    }
+
+    if num_selected + 1 > 5 && !card.selected then return;
+
+    set_selected(card, !card.selected);
+}
+
+

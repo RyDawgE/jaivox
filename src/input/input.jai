@@ -105,7 +105,7 @@ KeyboardKey :: enum u32 {
     // Function keys
     KEY_SPACE           :: 32;
     KEY_ESCAPE          :: 256;
-    KEY_ENTER           :: 257;
+    KEY_ENTER           :: 13;
     KEY_TAB             :: 258;
     KEY_BACKSPACE       :: 259;
     KEY_INSERT          :: 260;

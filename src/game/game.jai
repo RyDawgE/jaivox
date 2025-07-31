@@ -7,7 +7,7 @@ Battle :: struct {
 UserGameState :: struct {
     battle : *Battle;
     deck   : [..]Card;
-    hand   : [..]Card;
+    hand   : [..]*SelectableCard;
     hand_size : u16 = 11;
 }
 

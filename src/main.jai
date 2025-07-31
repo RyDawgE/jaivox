@@ -106,3 +106,4 @@ print_size_info :: () #compile_time {
 #import "String";
 #import "System";
 #import "File";
+#import "Random";

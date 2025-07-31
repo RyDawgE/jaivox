@@ -9,6 +9,8 @@ load_overworld_scene :: (scene : *Scene) {
 };
 
 load_battle_scene :: (scene : *Scene) {
+        random_seed(current_time_monotonic().low);
+
         game_state.render_handle.background_sprite.shader_program = create_shader_program(
             get_shader_object("SPRITE_VERT"),
             get_shader_object("BATTLEBG_FRAG"),
@@ -32,9 +34,18 @@ load_battle_scene :: (scene : *Scene) {
             init_enemy_battle(ent);
             play_anim(ent);
         }
-        
-        card := create_entity(SelectableCard);
-        init_selectable_card(card);
+
+
+        array_copy(*game_state.deck, STANDARD_DECK);
+
+
+        for i : 1..game_state.hand_size {
+            card := draw_random_card(game_state.deck);
+
+            entity := create_entity(SelectableCard);
+            entity.position = .{(i.(float) * 20) +210, 400};
+            init_selectable_card(entity, card);
+        }
 };
 
 #scope_file

@@ -203,7 +203,7 @@ draw_entities :: () {
 
         sprite, texture_object, shader_program, current_frame, num_frames =
             get_entity_render_info(entity);
-            
+
         atlas_data = sprite.texture_data.atlas_data;
 
         pos = .{
@@ -212,8 +212,8 @@ draw_entities :: () {
             0
         };
         scl = .{
-            entity.scale.x * sprite.scale.x,
-            entity.scale.y * sprite.scale.y,
+            (entity.scale.x * sprite.scale.x)/atlas_data.size_x,
+            (entity.scale.y * sprite.scale.y)/atlas_data.size_y ,
             1,
         };
 
@@ -241,16 +241,16 @@ draw_entities :: () {
 
         num_frames_loc := glGetUniformLocation(program, "num_frames");
         glUniform1iv(num_frames_loc, 1, *num_frames);
-        
+
         atlas_get_x_loc := glGetUniformLocation(program, "atlas_get_x");
         glUniform1iv(atlas_get_x_loc, 1, *atlas_data.x);
 
         atlas_get_y_loc := glGetUniformLocation(program, "atlas_get_y");
         glUniform1iv(atlas_get_y_loc, 1, *atlas_data.y);
-        
+
         atlas_size_x_loc := glGetUniformLocation(program, "atlas_size_x");
         glUniform1iv(atlas_size_x_loc, 1, *atlas_data.size_x);
-        
+
         atlas_size_y_loc := glGetUniformLocation(program, "atlas_size_y");
         glUniform1iv(atlas_size_y_loc, 1, *atlas_data.size_y);
 

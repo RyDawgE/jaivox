@@ -18,6 +18,12 @@ EnemyBattle :: struct @entity {
 
     kind : EnemyKind = .DEFAULT;
     battle_intro_anim : TextureData;
+
+    health : int = 1;
+    attack : int = 1;
+    vibrator : float = 0; //no im not changing it
+
+    base_pos : Vector2;
 }
 
 //These procedures should become generic, and the
@@ -28,6 +34,9 @@ init_enemy_battle :: (entity : *EnemyBattle) {
 
     if entity.kind == {
         case .ROARING_KNIGHT; {
+            entity.health = 100;
+            entity.attack = 4;
+            
             BATTLE_INTRO = create_texture_animated(TEX_KNIGHT_BATTLE_INTRO, 11);
             BATTLE_IDLE = create_texture(TEX_KNIGHT_IDLE);
 
@@ -42,9 +51,12 @@ init_enemy_battle :: (entity : *EnemyBattle) {
 
     // Subscriptions
     subscribe_entity_to_render(entity);
+    
+    // Transformation Defaults
+    entity.scale = .{2, 2};
+    entity.base_pos = entity.position;
 
     // Configure sprite defaults
-    entity.scale = .{2, 2};
     entity.sprite = New(Sprite);
     set_sprite_texture(entity.sprite, BATTLE_IDLE);
     entity.sprite.shader_program = DEFAULT_SHADER;
@@ -64,8 +76,10 @@ play_intro_anim :: (enemy: *EnemyBattle) {
 // Roaring Knight
 tick_roaring_knight :: (enemy : *EnemyBattle) {
     using enemy;
+    enemy.vibrator = lerp(enemy.vibrator, 0, game_state.delta_time*3);
 
     entity.velocity = .{0, sin(game_state.time*3)/1.5};
     entity.position += Vector2.{enemy.velocity.x, -enemy.velocity.y} * (100 * game_state.delta_time);
+    entity.position.x = sin(enemy.vibrator)*5 + enemy.base_pos.x;
 }
 

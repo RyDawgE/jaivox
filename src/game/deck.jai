@@ -24,6 +24,23 @@ Rank :: enum u16 {
     ZERO    :: 0b0000000000000000; // Definetly something fancy to do here
 }
 
+RANK_SCORE : [14]int : .[
+    0,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    10,
+    10,
+    10,
+    11,
+];
+
 Card :: struct {
     rank : Rank = .ACE;
     suit : Suit = .SPADE;
@@ -69,3 +86,8 @@ draw_random_card :: (deck : *[..]Card) -> Card, bool {
     array_unordered_remove_by_index(deck, index);
     return card, true;
 }
+
+calculate_card_score :: (card : Card) -> int {
+    return RANK_SCORE[bit_scan_reverse(card.rank)-1];
+}
+

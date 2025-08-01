@@ -31,6 +31,7 @@ load_battle_scene :: (scene : *Scene) {
             enemy.position = .{480,y_pos};
             ent := add_entity(*enemy, EnemyBattle);
 
+            array_add(*game_state.enemies, ent);
             init_enemy_battle(ent);
             play_intro_anim(ent);
         }

@@ -9,9 +9,13 @@ BATTLE_THROW    : TextureData;
 PlayerBattle :: struct @entity {
     using #as entity : Entity;
 
-    selected_card_index : int = -1;
+    selected_card_index    : int = -1;
     is_scoring_hand        : bool = false;
     playing_hand           : [..] *SelectableCard;
+    playing_hand_total     : int;
+    discard_hand           : [..] *SelectableCard;
+    scroll_amt             : int = 1;
+
 }
 
 init_player_battle :: (entity : *PlayerBattle) {
@@ -28,12 +32,13 @@ init_player_battle :: (entity : *PlayerBattle) {
     subscribe_entity_to_render(entity);
 
     // Input
+    create_input_binding(entity, .KEY_LEFT_CONTROL,        xx set_scroll_amt);
     create_input_binding(entity, .KEY_LEFT,     xx hover_left_card);
     create_input_binding(entity, .KEY_RIGHT,    xx hover_right_card);
     create_input_binding(entity, .KEY_Z,        xx select_current_card);
     create_input_binding(entity, .KEY_SPACE,    xx unselect_all_cards);
     create_input_binding(entity, .KEY_ENTER,    xx play_hand);
-    create_input_binding(entity, .KEY_X,        xx test_card);
+    create_input_binding(entity, .KEY_X,        xx discard);
     create_input_binding(entity, .KEY_F,        xx test);
 
 
@@ -62,6 +67,10 @@ test :: (player: *PlayerBattle, event : *Event) {
     play_throw_anim(player);
 }
 
+set_scroll_amt :: (player: *PlayerBattle, event : *Event) {
+    player.scroll_amt = ifx event.key_pressed then 2 else 1;
+}
+
 play_intro_anim :: (player: *PlayerBattle) {
     sprite : *Sprite = New(Sprite);
     set_sprite_texture(sprite, BATTLE_INTRO);
@@ -81,7 +90,7 @@ hover_left_card :: (player: *PlayerBattle, event : *Event) {
     if !(game_state.hand.count > 0) then return;
 
     player.selected_card_index =
-    abs(player.selected_card_index - 1) % (game_state.hand.count);
+    abs(player.selected_card_index - player.scroll_amt) % (game_state.hand.count);
     hover_card(player, player.selected_card_index);
 }
 
@@ -90,7 +99,7 @@ hover_right_card :: (player: *PlayerBattle, event : *Event) {
     if !(game_state.hand.count > 0) then return;
 
     player.selected_card_index =
-    abs(player.selected_card_index + 1) % (game_state.hand.count);
+    abs(player.selected_card_index + player.scroll_amt) % (game_state.hand.count);
     hover_card(player, player.selected_card_index);
 }
 
@@ -134,7 +143,6 @@ test_card :: (player: *PlayerBattle, event : *Event) {
 
     card : *SelectableCard = game_state.hand[player.selected_card_index];
     ping(card);
-
 }
 
 play_hand :: (player: *PlayerBattle, event : *Event) {
@@ -155,8 +163,8 @@ play_hand :: (player: *PlayerBattle, event : *Event) {
 
     if !(played_cards.count > 0) then return;
 
-    hover_card(player, 0);
     player.is_scoring_hand = true;
+    player.playing_hand_total = 0;
 
     for *card : played_cards {
         base_pos : Vector2 = player.position + .{20, -70};
@@ -165,6 +173,7 @@ play_hand :: (player: *PlayerBattle, event : *Event) {
         array_ordered_remove_by_value(*game_state.hand, card.*);
     }
 
+    hover_card(player, 0);
     num_new_cards : int = game_state.hand_size - game_state.hand.count;
 
     for i : 1..num_new_cards {
@@ -179,4 +188,40 @@ play_hand :: (player: *PlayerBattle, event : *Event) {
     }
 
     score_hand(player, played_cards);
+}
+
+discard :: (player: *PlayerBattle, event : *Event) {
+    if !event.key_pressed then return;
+ 
+    played_cards : [..]*SelectableCard;
+
+    for card : game_state.hand {
+        if card.selected {
+            array_add(*played_cards, card);
+        } else {
+            set_hovered(card, false);
+            card.target_position = .{((it_index.(float) - played_cards.count) * 20) +210, 400};
+        };
+        set_selected(card, false);
+    }
+    
+    for *card : played_cards {
+        array_ordered_remove_by_value(*game_state.hand, card.*);
+    }    
+    
+    hover_card(player, 0);
+    discard_hand(player, played_cards);
+    
+    num_new_cards : int = game_state.hand_size - game_state.hand.count;
+    for i : 1..num_new_cards {
+        card, success := draw_random_card(*game_state.deck);
+        if !success then break;
+
+        entity := create_entity(SelectableCard);
+        entity.target_position = .{(game_state.hand.count.(float) * 20) +210, 400};
+        entity.position = .{800, 400};
+        init_selectable_card(entity, card);
+        array_add(*game_state.hand, entity);
+    }
+
 }

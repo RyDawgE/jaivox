@@ -25,10 +25,6 @@ Entity :: struct @entity {
         model               : *Model;
         collider            : *EntityCollider;
     }
-
-    // stuff for the turn based game move me later
-    health : int = 1;
-    attack : int = 1;
 }
 
 EntityBlock :: struct {

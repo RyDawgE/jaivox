@@ -23,7 +23,6 @@ init_selectable_card :: (entity : *SelectableCard, card : Card = .{}) {
     subscribe_entity_to_render(entity);
     subscribe_entity_to_tick(entity, xx tick_selectable_card);
 
-
     // Configure card details
     entity.card = card;
 
@@ -91,10 +90,12 @@ threaded_scoring :: (thread : *Thread) -> s64{
 
     for card : player.playing_hand {
         ping(card);
+        player.playing_hand_total += calculate_card_score(card.card);
         sleep_milliseconds(200);
 
         card.target_position.x = -100;
         play_throw_anim(player);
+        game_state.enemies[game_state.target_index].vibrator = 30;
         sleep_milliseconds(500);
     }
 
@@ -102,9 +103,30 @@ threaded_scoring :: (thread : *Thread) -> s64{
         destroy_entity(card);
     }
 
+    print("TOTAL: %\n",player.playing_hand_total);
     player.is_scoring_hand = false;
+    thread_deinit(thread);
     return 0;
 }
+
+threaded_discard :: (thread : *Thread) -> s64{
+    player_id : u64 = thread.data.(*u64).*;
+    player : *PlayerBattle = get_entity(player_id);
+
+    for card : player.discard_hand {
+        card.target_position.x = -100;
+    }
+    
+    sleep_milliseconds(100);
+    
+    for card : player.discard_hand {
+        destroy_entity(card);
+    }
+
+    thread_deinit(thread);
+    return 0;
+}
+
 
 //thread_init :: (thread: *Thread, proc: Thread_Proc, temporary_storage_size : s32 = 16384, starting_storage: *Temporary_Storage = null) -> bool {
 score_hand :: (player : *PlayerBattle, hand : [..]*SelectableCard) {
@@ -113,6 +135,17 @@ score_hand :: (player : *PlayerBattle, hand : [..]*SelectableCard) {
     t : *Thread = New(Thread);
 
     thread_init(t, threaded_scoring);
+    t.data = *player.id;
+    thread_start(t);
+}
+
+//thread_init :: (thread: *Thread, proc: Thread_Proc, temporary_storage_size : s32 = 16384, starting_storage: *Temporary_Storage = null) -> bool {
+discard_hand :: (player : *PlayerBattle, hand : [..]*SelectableCard) {
+    player.discard_hand = hand;
+    
+    t : *Thread = New(Thread);
+
+    thread_init(t, threaded_discard);
     t.data = *player.id;
     thread_start(t);
 }

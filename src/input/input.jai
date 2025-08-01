@@ -136,7 +136,7 @@ KeyboardKey :: enum u32 {
     KEY_F11             :: 300;
     KEY_F12             :: 301;
     KEY_LEFT_SHIFT      :: 340;
-    KEY_LEFT_CONTROL    :: 341;
+    KEY_LEFT_CONTROL    :: 140;
     KEY_LEFT_ALT        :: 342;
     KEY_LEFT_SUPER      :: 343;
     KEY_RIGHT_SHIFT     :: 344;

@@ -223,7 +223,6 @@ draw_entities :: () {
         //translate
         transform = make_translation_matrix4(pos);
 
-        //rotate (move origin to center, rotate, move origin back to 0,0)
         pivot = make_translation_matrix4(.{0.5 * scl.x, 0.5 * scl.y, 0.0});
         pivot = rotation_matrix(Matrix4, qrot);
         transform = transform * pivot;

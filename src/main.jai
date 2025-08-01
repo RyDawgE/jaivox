@@ -9,6 +9,8 @@ EngineRenderer :: enum u8 {
     ENGINE_OGL  :: 1;
 }
 
+// TODO: make the game
+
 //TODO: Overall engine todo:
 //Collisions
 //Timer, proc runs after x amt of time. should run immediately, should loop, etc
@@ -40,7 +42,7 @@ main :: () {
 
     // @MainLoop
     while !game_state.should_close {
-		frame_start = current_time_monotonic ();
+		frame_start = current_time_monotonic();
 
         poll_events();
         simulate_game();

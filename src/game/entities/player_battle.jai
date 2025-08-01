@@ -1,6 +1,8 @@
 #scope_file
 BATTLE_INTRO    : TextureData;
 BATTLE_IDLE     : TextureData;
+BATTLE_THROW    : TextureData;
+
 
 #scope_export
 
@@ -8,7 +10,7 @@ PlayerBattle :: struct @entity {
     using #as entity : Entity;
 
     selected_card_index : int = -1;
-    is_playing_hand        : bool = false;
+    is_scoring_hand        : bool = false;
     playing_hand           : [..] *SelectableCard;
 }
 
@@ -17,6 +19,8 @@ init_player_battle :: (entity : *PlayerBattle) {
 
     BATTLE_INTRO = create_texture_animated(TEX_KRIS_BATTLE_INTRO, 8);
     BATTLE_IDLE  = create_texture_animated(TEX_KRIS_BATTLE_IDLE, 6);
+    BATTLE_THROW = create_texture_animated(TEX_KRIS_BATTLE_THROW, 11);
+
 
     // Subscriptions
     subscribe_entity_to_input(entity);
@@ -30,6 +34,8 @@ init_player_battle :: (entity : *PlayerBattle) {
     create_input_binding(entity, .KEY_SPACE,    xx unselect_all_cards);
     create_input_binding(entity, .KEY_ENTER,    xx play_hand);
     create_input_binding(entity, .KEY_X,        xx test_card);
+    create_input_binding(entity, .KEY_F,        xx test);
+
 
 
     create_input_binding(entity,  27,    xx close_game_binding);
@@ -51,11 +57,23 @@ tick_player_battle :: (player : *PlayerBattle) {
     //print("Forward: %\nRight: %\n", get_forward_vector(camera.rotation), get_right_vector(camera.rotation));
 }
 
-play_anim :: (player: *PlayerBattle) {
+test :: (player: *PlayerBattle, event : *Event) {
+    if !event.key_pressed then return;
+    play_throw_anim(player);
+}
+
+play_intro_anim :: (player: *PlayerBattle) {
     sprite : *Sprite = New(Sprite);
     set_sprite_texture(sprite, BATTLE_INTRO);
     sprite.position += .{24,2};
     play_sprite_animation(*player.entity, sprite, .5, false, true);
+}
+
+play_throw_anim :: (player: *PlayerBattle) {
+    sprite : *Sprite = New(Sprite);
+    set_sprite_texture(sprite, BATTLE_THROW);
+    sprite.position += .{27,-4};
+    play_sprite_animation(*player.entity, sprite, .65, false, true);
 }
 
 hover_left_card :: (player: *PlayerBattle, event : *Event) {
@@ -113,7 +131,7 @@ unselect_all_cards :: (player: *PlayerBattle, event : *Event) {
 test_card :: (player: *PlayerBattle, event : *Event) {
     if !event.key_pressed then return;
     if !(game_state.hand.count > 0) then return;
-    
+
     card : *SelectableCard = game_state.hand[player.selected_card_index];
     ping(card);
 
@@ -121,7 +139,7 @@ test_card :: (player: *PlayerBattle, event : *Event) {
 
 play_hand :: (player: *PlayerBattle, event : *Event) {
     if !event.key_pressed then return;
-    //if player.is_playing_hand then return;
+    if player.is_scoring_hand then return;
 
     played_cards : [..]*SelectableCard;
 
@@ -138,7 +156,7 @@ play_hand :: (player: *PlayerBattle, event : *Event) {
     if !(played_cards.count > 0) then return;
 
     hover_card(player, 0);
-    player.is_playing_hand = true;
+    player.is_scoring_hand = true;
 
     for *card : played_cards {
         base_pos : Vector2 = player.position + .{20, -70};

@@ -19,7 +19,7 @@ load_battle_scene :: (scene : *Scene) {
         player := create_entity(PlayerBattle);
         init_player_battle(player);
         player.position = .{120, 240};
-        play_anim(player);
+        play_intro_anim(player);
 
         game_state.battle = New(Battle);
 
@@ -32,7 +32,7 @@ load_battle_scene :: (scene : *Scene) {
             ent := add_entity(*enemy, EnemyBattle);
 
             init_enemy_battle(ent);
-            play_anim(ent);
+            play_intro_anim(ent);
         }
 
         array_copy(*game_state.deck, STANDARD_DECK);

@@ -51,7 +51,7 @@ init_enemy_battle :: (entity : *EnemyBattle) {
 }
 
 
-play_anim :: (enemy: *EnemyBattle) {
+play_intro_anim :: (enemy: *EnemyBattle) {
     sprite : *Sprite = New(Sprite);
     set_sprite_texture(sprite, BATTLE_INTRO);
     sprite.position += .{42,-22};

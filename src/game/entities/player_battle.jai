@@ -28,6 +28,8 @@ init_player_battle :: (entity : *PlayerBattle) {
     create_input_binding(entity, .KEY_Z,        xx select_current_card);
     create_input_binding(entity, .KEY_SPACE,    xx unselect_all_cards);
     create_input_binding(entity, .KEY_ENTER,    xx play_hand);
+    create_input_binding(entity, .KEY_X,        xx test_card);
+
 
     create_input_binding(entity,  27,    xx close_game_binding);
 
@@ -107,6 +109,15 @@ unselect_all_cards :: (player: *PlayerBattle, event : *Event) {
     for card : game_state.hand set_selected(card, false);
 }
 
+test_card :: (player: *PlayerBattle, event : *Event) {
+    if !event.key_pressed then return;
+    if !(game_state.hand.count > 0) then return;
+    
+    card : *SelectableCard = game_state.hand[player.selected_card_index];
+    ping(card);
+
+}
+
 play_hand :: (player: *PlayerBattle, event : *Event) {
     if !event.key_pressed then return;
     //if player.playing_hand then return;
@@ -138,7 +149,8 @@ play_hand :: (player: *PlayerBattle, event : *Event) {
     num_new_cards : int = game_state.hand_size - game_state.hand.count;
 
     for i : 1..num_new_cards {
-        card := draw_random_card(game_state.deck);
+        card, success := draw_random_card(*game_state.deck);
+        if !success then break;
 
         entity := create_entity(SelectableCard);
         entity.target_position = .{(game_state.hand.count.(float) * 20) +210, 400};

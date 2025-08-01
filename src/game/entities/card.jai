@@ -9,6 +9,7 @@ SelectableCard :: struct @entity {
     target_position : Vector2 = .{};
     selected : bool = false;
     hovered  : bool = false;
+    ping     : float = 0;
 }
 
 init_selectable_card :: (entity : *SelectableCard, card : Card = .{}) {
@@ -43,7 +44,16 @@ init_selectable_card :: (entity : *SelectableCard, card : Card = .{}) {
 
 tick_selectable_card :: (entity : *SelectableCard) {
     entity.position = lerp(entity.position, entity.target_position, game_state.delta_time*10);
-    entity.position += .{0, sin((game_state.time*3) + entity.position.x)  /50};
+    entity.velocity = .{0, sin((game_state.time+(entity.position.x/3))*3)/8};
+
+    entity.position += entity.velocity;
+    
+    entity.ping = lerp(entity.ping, 0, game_state.delta_time * 50);
+    entity.rotation = sin(entity.ping)*10;
+}
+
+ping :: (entity : *SelectableCard, speed : float = 1) {
+    entity.ping = 30;
 }
 
 set_selected :: (entity : *SelectableCard, selected : bool) {
@@ -68,6 +78,15 @@ set_hovered :: (entity : *SelectableCard, hovered : bool) {
     entity.hovered = hovered;
 }
 
-score_hand :: (hand : [..]*SelectableCard) {
+threaded_scoring :: (thread : *Thread) -> s64{
+    sleep_milliseconds(100);
+    
+    return 0;
+}
 
+score_hand :: (hand : [..]*SelectableCard) {
+    print("Thread Started\n");
+    t : *Thread = New(Thread);
+    thread_init(t, threaded_scoring);
+    thread_start(t);
 }

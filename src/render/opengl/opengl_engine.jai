@@ -188,6 +188,7 @@ draw_entities :: () {
     //Have a reference to every entity that uses it, or at least the transform of such.
 
     transform : Matrix4;
+    pivot     : Matrix4;
     pos       : Vector3 = .{0, 0, 0};
     scl       : Vector3 = .{1, 1, 1};
     qrot      : Quaternion;
@@ -217,14 +218,17 @@ draw_entities :: () {
             1,
         };
 
-         //translate
+        // setup rotation matrix
+        set_from_axis_and_angle(*qrot, 0, 0, 1, radians(entity.rotation));
+        //translate
         transform = make_translation_matrix4(pos);
 
         //rotate (move origin to center, rotate, move origin back to 0,0)
-        //transform = transform * make_translation_matrix4(.{0.5 * scl.x, 0.5 * scl.y, 0.0});
+        pivot = make_translation_matrix4(.{0.5 * scl.x, 0.5 * scl.y, 0.0});
+        pivot = rotation_matrix(Matrix4, qrot);
+        transform = transform * pivot;
         transform = transform * make_translation_matrix4(.{-0.5 * scl.x, -0.5 * scl.y, 0.0});
-        set_from_axis_and_angle(*qrot, 0, 0, 1, radians(entity.rotation));
-        transform = transform * rotation_matrix(Matrix4, qrot);
+
 
         //scale
         transform = transform * make_scale_matrix4(scl);

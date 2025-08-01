@@ -59,10 +59,13 @@ generate_standard_deck :: () -> [52]Card #compile_time {
     return deck;
 };
 
-draw_random_card :: (deck : [..]Card) -> Card {
+draw_random_card :: (deck : *[..]Card) -> Card, bool {
     index : int = xx random_get_within_range(0.0, (deck.count-1).(float));
-    card : Card = deck[index];
+    
+    if !(index < deck.*.count-1) then return .{}, false;
+    
+    card : Card = deck.*[index];
 
-    array_unordered_remove_by_index(*deck, index);
-    return card;
+    array_unordered_remove_by_index(deck, index);
+    return card, true;
 }

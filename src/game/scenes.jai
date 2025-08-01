@@ -38,7 +38,8 @@ load_battle_scene :: (scene : *Scene) {
         array_copy(*game_state.deck, STANDARD_DECK);
 
         for i : 1..game_state.hand_size {
-            card := draw_random_card(game_state.deck);
+            card, success := draw_random_card(*game_state.deck);
+            if !success then break;
 
             entity := create_entity(SelectableCard);
             entity.target_position = .{(i.(float) * 20) +210, 400};

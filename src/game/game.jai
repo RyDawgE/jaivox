@@ -1,6 +1,8 @@
 Battle :: struct {
     enemy_kinds : []EnemyKind = .[
         .ROARING_KNIGHT,
+        .ROARING_KNIGHT,
+
     ];
     
 }

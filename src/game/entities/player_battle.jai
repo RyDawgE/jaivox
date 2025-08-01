@@ -8,7 +8,8 @@ PlayerBattle :: struct @entity {
     using #as entity : Entity;
 
     selected_card_index : int = -1;
-    playing_hand        : bool = false;
+    is_playing_hand        : bool = false;
+    playing_hand           : [..] *SelectableCard;
 }
 
 init_player_battle :: (entity : *PlayerBattle) {
@@ -120,7 +121,7 @@ test_card :: (player: *PlayerBattle, event : *Event) {
 
 play_hand :: (player: *PlayerBattle, event : *Event) {
     if !event.key_pressed then return;
-    //if player.playing_hand then return;
+    //if player.is_playing_hand then return;
 
     played_cards : [..]*SelectableCard;
 
@@ -137,7 +138,7 @@ play_hand :: (player: *PlayerBattle, event : *Event) {
     if !(played_cards.count > 0) then return;
 
     hover_card(player, 0);
-    player.playing_hand = true;
+    player.is_playing_hand = true;
 
     for *card : played_cards {
         base_pos : Vector2 = player.position + .{20, -70};
@@ -159,5 +160,5 @@ play_hand :: (player: *PlayerBattle, event : *Event) {
         array_add(*game_state.hand, entity);
     }
 
-    score_hand(played_cards);
+    score_hand(player, played_cards);
 }

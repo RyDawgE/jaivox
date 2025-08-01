@@ -79,14 +79,34 @@ set_hovered :: (entity : *SelectableCard, hovered : bool) {
 }
 
 threaded_scoring :: (thread : *Thread) -> s64{
-    sleep_milliseconds(100);
+    player_id : u64 = thread.data.(*u64).*;    
+    player : *PlayerBattle = get_entity(player_id);
+    sleep_milliseconds(1000);
+
+    // Here is where straight / flush would go
+    
+    for card : player.playing_hand {
+        ping(card);
+        sleep_milliseconds(200);
+        
+        card.target_position.x = -100;
+        sleep_milliseconds(500);
+    }
+    
+    for card : player.playing_hand {
+        destroy_entity(card);
+    }
     
     return 0;
 }
 
-score_hand :: (hand : [..]*SelectableCard) {
-    print("Thread Started\n");
+//thread_init :: (thread: *Thread, proc: Thread_Proc, temporary_storage_size : s32 = 16384, starting_storage: *Temporary_Storage = null) -> bool {
+score_hand :: (player : *PlayerBattle, hand : [..]*SelectableCard) {
+    player.playing_hand = hand;
+    
     t : *Thread = New(Thread);
+
     thread_init(t, threaded_scoring);
+    t.data = *player.id;
     thread_start(t);
 }

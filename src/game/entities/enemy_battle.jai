@@ -123,7 +123,7 @@ play_damage_anim :: (enemy: *EnemyBattle) {
 }
 
 take_damage :: (enemy : *EnemyBattle, damage : int) {
-    enemy.vibrator = 30;
+    enemy.vibrator = (ifx damage < 30 then 30 else 50).(float);
     enemy.health -= damage;
     if enemy.health <= 0 {
         kill(enemy);

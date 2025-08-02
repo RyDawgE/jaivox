@@ -300,7 +300,7 @@ get_entity_render_info :: (entity : *Entity) -> *Sprite, u32, u32, s32, s32 {
     // Delete the animator and revert back to rendering
     // with the entity sprite.
     if (use_animator) {
-        if (current_frame == num_frames) {
+        if ((current_frame == num_frames) && !entity.animator.looping) {        
             entity.animator = cleanup_animator(entity.animator);
 
             sprite = entity.sprite;

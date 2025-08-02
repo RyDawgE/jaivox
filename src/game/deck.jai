@@ -1,8 +1,8 @@
 Suit :: enum {
-    CLUB    :: 0;
-    HEART   :: 1;
-    SPADE   :: 2;
-    DIAMOND :: 3;
+    CLUB    :: 1;
+    HEART   :: 2;
+    SPADE   :: 4;
+    DIAMOND :: 8;
 }
 
 // Done like this to detect straights easier
@@ -24,7 +24,55 @@ Rank :: enum u16 {
     ZERO    :: 0b0000000000000000; // Definetly something fancy to do here
 }
 
-RANK_SCORE : [14]int : .[
+Hand :: enum int {
+    HIGH_CARD;
+    TWO_KIND;
+    THREE_KIND;
+    FOUR_KIND;
+    FIVE_KIND;
+    TWO_PAIR;
+    FULL_HOUSE;
+    STRAIGHT;
+    FLUSH;
+    FLUSH_HOUSE;
+    STRAIGHT_FLUSH;
+    FLUSH_FIVE;
+}
+
+HAND_NAMES : [12]string : .[
+    "High Card",
+    "Two of a Kind",
+    "Three of a Kind",
+    "Four of a Kind",
+    "Five of a Kind",
+    "Two Pair",
+    "Full House",
+    "Straight",
+    "Flush",
+    "Flush House",
+    "Straight Flush",
+    "Flush Five"
+];
+
+HAND_SCORES : [12]float : .[
+    // XX = done
+    1.0,  // High card XX
+    1.5,  // 2 kind
+    2.0,  // 3 kind
+    4.0,  // 4 kind
+    6.0,  // 5 kind
+    1.75, // 2 pair 
+    5.0,  // full house
+    4.0,  // straight XX
+    2.0,  // flush XX
+    
+    // shit gets crazy if you score one of these. Global score modifiers for x turns?
+    10.0, // flush house
+    12.0, // straight flush XX
+    15.0, // flush five
+];
+
+RANK_SCORES : [14]float : .[
     0,
     2,
     3,
@@ -54,6 +102,18 @@ RANKS : [13]Rank : .[
 SUITS : [4]Suit : .[.HEART, .SPADE, .DIAMOND, .CLUB];
 
 STANDARD_DECK : [52]Card : #run generate_standard_deck();
+STRAIGHTS     : [10]u16  : .[
+    0b0011111000000001,
+    0b0001111100000000,
+    0b0000111110000000,
+    0b0000011111000000,
+    0b0000001111100000,
+    0b0000000111110000,
+    0b0000000011111000,
+    0b0000000001111100,
+    0b0000000000111110,
+    0b0010000000011111,
+];
 
 generate_standard_deck :: () -> [52]Card #compile_time {
     deck : [52]Card;
@@ -87,7 +147,41 @@ draw_random_card :: (deck : *[..]Card) -> Card, bool {
     return card, true;
 }
 
-calculate_card_score :: (card : Card) -> int {
-    return RANK_SCORE[bit_scan_reverse(card.rank)-1];
+calculate_card_score :: (card : Card) -> float {
+    return RANK_SCORES[bit_scan_reverse(card.rank)-1];
 }
 
+calculate_hand_bonus :: (cards : [..]Card) -> float, Hand {
+    is_flush    : bool;
+    is_straight : bool;
+    
+    straight_bits : u16;
+    flush_bits    : u16;
+    
+    current_hand  : Hand = .HIGH_CARD;
+    
+    for card : cards {
+        straight_bits |= card.rank.(u16);
+        flush_bits    |= card.suit.(u16);
+    };
+    
+    is_straight = array_find(STRAIGHTS, straight_bits);     
+    if is_straight then current_hand = .STRAIGHT;
+    
+    //print("%\n", formatInt(flush_bits, 2, 16));
+    
+    is_flush = ((flush_bits == 1) || (flush_bits == 2) || (flush_bits == 4) || (flush_bits == 8)) && cards.count == 5;
+    if is_flush {
+        current_hand = (ifx current_hand == .STRAIGHT then .STRAIGHT_FLUSH else .FLUSH);
+    }
+
+    return get_hand_score(current_hand), current_hand;
+}
+
+get_hand_name :: (hand : Hand) -> string {
+    return HAND_NAMES[hand.(int)];
+}
+
+get_hand_score :: (hand : Hand) -> float {
+    return HAND_SCORES[hand.(int)];
+}

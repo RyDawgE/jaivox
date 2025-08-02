@@ -2,6 +2,10 @@
 BATTLE_INTRO    : TextureData;
 BATTLE_IDLE     : TextureData;
 BATTLE_THROW    : TextureData;
+BATTLE_DAMAGE   : TextureData;
+BATTLE_DEATH    : TextureData;
+
+
 
 
 #scope_export
@@ -15,7 +19,12 @@ PlayerBattle :: struct @entity {
     playing_hand_total     : int;
     discard_hand           : [..] *SelectableCard;
     scroll_amt             : int = 1;
-
+    
+    health : int = 20;
+    dead   : bool = false;
+    vibrator : float = 0; //no im not changing it
+    
+    base_pos : Vector2;
 }
 
 init_player_battle :: (entity : *PlayerBattle) {
@@ -24,6 +33,10 @@ init_player_battle :: (entity : *PlayerBattle) {
     BATTLE_INTRO = create_texture_animated(TEX_KRIS_BATTLE_INTRO, 8);
     BATTLE_IDLE  = create_texture_animated(TEX_KRIS_BATTLE_IDLE, 6);
     BATTLE_THROW = create_texture_animated(TEX_KRIS_BATTLE_THROW, 11);
+    BATTLE_DAMAGE = create_texture_animated(TEX_KRIS_BATTLE_DAMAGE, 1);
+    BATTLE_DEATH = create_texture_animated(TEX_KRIS_BATTLE_DEATH, 1);
+
+
 
 
     // Subscriptions
@@ -47,6 +60,7 @@ init_player_battle :: (entity : *PlayerBattle) {
 
     // Configure sprite defaults
     entity.scale = .{2, 2};
+    entity.base_pos = entity.position;
     entity.sprite = New(Sprite);
     set_sprite_texture(entity.sprite, BATTLE_IDLE);
 }
@@ -56,6 +70,8 @@ tick_player_battle :: (player : *PlayerBattle) {
 
     // Left Right
     entity.sprite.animation_frame = cast(s32)( (game_state.time*(6)) );
+    player.vibrator = lerp(player.vibrator, 0, game_state.delta_time*3);
+    player.position.x = sin(player.vibrator)*5 + player.base_pos.x;
 
     //print("%\n",player.selected_card_index);
     //print("Position: %\nRotation: %\n", entity.position, entity.rotation);
@@ -67,9 +83,6 @@ test :: (player: *PlayerBattle, event : *Event) {
     play_throw_anim(player);
 }
 
-set_scroll_amt :: (player: *PlayerBattle, event : *Event) {
-    player.scroll_amt = ifx event.key_pressed then 2 else 1;
-}
 
 play_intro_anim :: (player: *PlayerBattle) {
     sprite : *Sprite = New(Sprite);
@@ -83,6 +96,43 @@ play_throw_anim :: (player: *PlayerBattle) {
     set_sprite_texture(sprite, BATTLE_THROW);
     sprite.position += .{27,-4};
     play_sprite_animation(*player.entity, sprite, .65, false, true);
+}
+
+play_damage_anim :: (player: *PlayerBattle) {
+    sprite : *Sprite = New(Sprite);
+    set_sprite_texture(sprite, BATTLE_DAMAGE);
+    sprite.position += .{27,-4};
+    play_sprite_animation(*player.entity, sprite, .75, false, true);
+}
+
+play_death_anim :: (player: *PlayerBattle) {
+    sprite : *Sprite = New(Sprite);
+    set_sprite_texture(sprite, BATTLE_DEATH);
+    sprite.position += .{27,-4};
+    play_sprite_animation(*player.entity, sprite, 3, true, false);
+}
+
+
+// Combat
+take_damage :: (player: *PlayerBattle, damage : int) {
+    player.vibrator = 30;
+    player.health -= damage;
+    if player.health <= 0 {
+        kill(player);
+    } else {
+        play_damage_anim(player);
+    }
+    play_damage_anim(player);
+}
+
+kill :: (player: *PlayerBattle) {
+    player.dead = true;
+    play_death_anim(player);
+}
+
+// Hand Control
+set_scroll_amt :: (player: *PlayerBattle, event : *Event) {
+    player.scroll_amt = ifx event.key_pressed then 2 else 1;
 }
 
 hover_left_card :: (player: *PlayerBattle, event : *Event) {

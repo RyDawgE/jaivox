@@ -10,6 +10,7 @@ load_overworld_scene :: (scene : *Scene) {
 
 load_battle_scene :: (scene : *Scene) {
         random_seed(current_time_monotonic().low);
+        game_state.battle = New(Battle);
 
         game_state.render_handle.background_sprite.shader_program = create_shader_program(
             get_shader_object("SPRITE_VERT"),
@@ -17,11 +18,10 @@ load_battle_scene :: (scene : *Scene) {
         );
 
         player := create_entity(PlayerBattle);
-        init_player_battle(player);
         player.position = .{120, 240};
+        init_player_battle(player);
         play_intro_anim(player);
-
-        game_state.battle = New(Battle);
+        array_add(*game_state.players, player);
 
         for kind : game_state.battle.enemy_kinds {
             enemy : EnemyBattle = .{

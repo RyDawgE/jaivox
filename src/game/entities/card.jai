@@ -36,7 +36,7 @@ init_selectable_card :: (entity : *SelectableCard, card : Card = .{}) {
 
     // Minus two to account for there not being 1, and starting 0 index
     entity.sprite.texture_data.atlas_data.x = cast (s32) bit_scan_reverse(entity.card.rank) -2;
-    entity.sprite.texture_data.atlas_data.y = xx entity.card.suit;
+    entity.sprite.texture_data.atlas_data.y = cast (s32) bit_scan_reverse(entity.card.suit) -1;
 
     entity.sprite.shader_program = DEFAULT_SHADER;
 }
@@ -83,28 +83,62 @@ set_hovered :: (entity : *SelectableCard, hovered : bool) {
 
 threaded_scoring :: (thread : *Thread) -> s64{
     player_id : u64 = thread.data.(*u64).*;
-    player : *PlayerBattle = get_entity(player_id);
+    player    : *PlayerBattle = get_entity(player_id);
+    card_data : [..]Card;
+    bonus     : float = 1;
+    hand      : Hand;
+    total_score : int = 0;
+    final_score : int = 0;
+    target : *EnemyBattle = game_state.enemies[game_state.target_index];
+    
+    target.can_attack = false;
+    
+    for card : player.playing_hand {
+        array_add(*card_data, card.card);
+    }
+    
+    bonus, hand = calculate_hand_bonus(card_data);
+    
     sleep_milliseconds(1000);
 
     // Here is where straight / flush would go
-
+    // Seperate loop because this is data stuff. I dont want
+    // waits when im working with only numbers.
+    
     for card : player.playing_hand {
         ping(card);
-        player.playing_hand_total += calculate_card_score(card.card);
+        damage : int = calculate_card_score(card.card).(int);
+        total_score += damage;
+        
+        player.playing_hand_total = total_score;
         sleep_milliseconds(200);
 
         card.target_position.x = -100;
         play_throw_anim(player);
-        game_state.enemies[game_state.target_index].vibrator = 30;
+        take_damage(target, damage);
         sleep_milliseconds(500);
     }
+    sleep_milliseconds(200);
+
+    final_score = (total_score * bonus).(int);
+    player.playing_hand_total = final_score;
 
     for card : player.playing_hand {
         destroy_entity(card);
     }
+    // Fancy display stuff go here
+    if hand != .HIGH_CARD {
+        play_intro_anim(player);
+        sleep_milliseconds(100);
+        take_damage(game_state.enemies[game_state.target_index], final_score-total_score);
 
-    print("TOTAL: %\n",player.playing_hand_total);
+        print("% BONUS: %X\n", get_hand_name(hand), bonus);
+    }
+    print("TOTAL: %\n",final_score);
+    
+    
     player.is_scoring_hand = false;
+    target.can_attack = true;
     thread_deinit(thread);
     return 0;
 }

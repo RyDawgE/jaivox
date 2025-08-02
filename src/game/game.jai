@@ -1,7 +1,7 @@
 Battle :: struct {
     enemy_kinds : []EnemyKind = .[
         .ROARING_KNIGHT,
-        .ROARING_KNIGHT,
+        //.ROARING_KNIGHT,
 
     ];
     
@@ -13,6 +13,7 @@ UserGameState :: struct {
     hand   : [..]*SelectableCard;
     hand_size : u16 = 11;
     enemies : [..]*EnemyBattle;
+    players : [..]*PlayerBattle;
     target_index : int = 0;
 }
 

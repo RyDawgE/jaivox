@@ -3,7 +3,7 @@ LARGEST_ENTITY_SIZE :: #run get_entity_slot_size();
 ENTITY_TICK_PROCEDURE_SIGNATURE :: #type (entity: *Entity);
 
 Entity :: struct @entity {
-    id : u64;
+    id : s64;
 
     active              : bool    = false;
     input_bindings      : *Table(KeyboardKey, INPUT_BINDING_PROCEDURE_SIGNATURE);
@@ -34,11 +34,11 @@ EntityBlock :: struct {
 
 EntityHandle :: struct {
     entity_blocks : [..] EntityBlock;
-    tickable_entities : *Table(u64, ENTITY_TICK_PROCEDURE_SIGNATURE);
+    tickable_entities : *Table(s64, ENTITY_TICK_PROCEDURE_SIGNATURE);
 }
 
 initialize_entity_handle :: (handle : *EntityHandle) {
-    handle.tickable_entities  = New(Table(u64, ENTITY_TICK_PROCEDURE_SIGNATURE));
+    handle.tickable_entities  = New(Table(s64, ENTITY_TICK_PROCEDURE_SIGNATURE));
 }
 
 cleanup_entity_handle :: (handle : *EntityHandle) {
@@ -73,9 +73,9 @@ get_entity_slot_size :: () -> s64 #compile_time {
 }
 
 
-get_entity_mem_info :: (id : u64) -> u32, u32 {
+get_entity_mem_info :: (id : s64) -> u32, u32 {
     //block, slot
-    return (cast,no_check(u32) id >> 32) - 1, (cast,no_check(u32) id) - 1;
+    return (cast,no_check(u32) id.(s64) >> 32) - 1, (cast,no_check(u32) id) - 1;
 }
 
 create_entity :: ($T : Type, _handle : *EntityHandle = null) -> *T {
@@ -110,8 +110,8 @@ create_entity :: ($T : Type, _handle : *EntityHandle = null) -> *T {
     entity : *T = cast(*T)(available_block.memory + (available_slot * LARGEST_ENTITY_SIZE));
     entity.* = .{}; // default initialize as type T
 
-    id : u64 = 0;
-    id |= ((cast(u64) available_block_index + 1) << 32) | (cast(u64) available_slot + 1);
+    id : s64 = 0;
+    id |= xx ((cast(u64) available_block_index + 1) << 32) | (cast(u64) available_slot + 1);
 
     entity.id = id;
     entity.active = true;
@@ -152,8 +152,8 @@ add_entity :: (entity : *Entity, $T : Type, _handle : *EntityHandle = null) -> *
     _entity.* = .{}; // default initialize as type T
     memcpy(_entity, entity, size_of(T));
 
-    id : u64 = 0;
-    id |= ((cast(u64) available_block_index + 1) << 32) | (cast(u64) available_slot + 1);
+    id : s64 = 0;
+    id |= xx ((cast(u64) available_block_index + 1) << 32) | (cast(u64) available_slot + 1);
 
     _entity.id = id;
     _entity.active = true;
@@ -206,16 +206,16 @@ destroy_entity :: (entity : *Entity) -> bool {
     return true;
 }
 
-get_entity :: (id : u64) -> *void {
+get_entity :: (id : s64) -> *void {
     using game_state.entity_handle;
 
     if entity_blocks.count == 0 then return null;
 
     ones : u64 = ~0;
 
-    block_index : u64 = (id >> 32) - 1; // only back half
+    block_index : u64 = (id.(u64) >> 32) - 1; // only back half
     slot_mask   : u64 = (ones >> 32);
-    slot_index  : u64 = slot_mask & id; // only front half
+    slot_index  : u64 = slot_mask & id.(u64); // only front half
 
     // print("block: %\n", formatInt(block_index, 2, 64));
     // print("mask: %\n", formatInt(slot_mask, 2, 64));

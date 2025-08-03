@@ -81,6 +81,11 @@ tick_player_battle :: (player : *PlayerBattle) {
 test :: (player: *PlayerBattle, event : *Event) {
     if !event.key_pressed then return;
     play_throw_anim(player);
+    if !event.key_pressed then return;
+    if !(game_state.hand.count > 0) then return;
+
+    card : *SelectableCard = game_state.hand[player.selected_card_index];
+    destroy_entity(card);
 }
 
 

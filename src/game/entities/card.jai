@@ -82,7 +82,7 @@ set_hovered :: (entity : *SelectableCard, hovered : bool) {
 }
 
 threaded_scoring :: (thread : *Thread) -> s64{
-    player_id : u64 = thread.data.(*u64).*;
+    player_id : s64 = thread.data.(*s64).*;
     player    : *PlayerBattle = get_entity(player_id);
     card_data : [..]Card;
     bonus     : float = 1;
@@ -116,26 +116,45 @@ threaded_scoring :: (thread : *Thread) -> s64{
         card.target_position.x = -100;
         play_throw_anim(player);
         take_damage(target, damage);
+        
+        if it_index == player.playing_hand.count-1 {
+            if target.overkill && !target.dead && (hand == .HIGH_CARD) {
+                kill(target);
+            }
+        }
+        
         sleep_milliseconds(500);
     }
-    sleep_milliseconds(200);
 
     final_score = (total_score * bonus).(int);
     player.playing_hand_total = final_score;
 
-    for card : player.playing_hand {
-        destroy_entity(card);
-    }
     // Fancy display stuff go here
+    // Bonus swing
     if hand != .HIGH_CARD {
+        sleep_milliseconds(200);
         play_intro_anim(player);
         sleep_milliseconds(100);
         take_damage(game_state.enemies[game_state.target_index], final_score-total_score);
 
         print("% BONUS: %X\n", get_hand_name(hand), bonus);
     }
+    
+    // this needs to be moved to whenever the last attack is
+    // I want the last swing to just enter this state instead
+    // of playing a damage animation.
+    // @TODO: Make a "Cancel Animation" procedure.
+    if target.overkill && !target.dead {
+        kill(target);
+    }
+    
+    sleep_milliseconds(400);
+        
     print("TOTAL: %\n",final_score);
     
+    for card : player.playing_hand {
+        destroy_entity(card);
+    }
     
     player.is_scoring_hand = false;
     target.can_attack = true;
@@ -144,7 +163,7 @@ threaded_scoring :: (thread : *Thread) -> s64{
 }
 
 threaded_discard :: (thread : *Thread) -> s64{
-    player_id : u64 = thread.data.(*u64).*;
+    player_id : s64 = thread.data.(*s64).*;
     player : *PlayerBattle = get_entity(player_id);
 
     for card : player.discard_hand {

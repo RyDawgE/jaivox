@@ -1,9 +1,12 @@
 #scope_file
 // these r gonna need to become members methinks
-BATTLE_INTRO    : TextureData;
-BATTLE_IDLE     : TextureData;
-BATTLE_DEATH    : TextureData;
-BATTLE_DAMAGE    : TextureData;
+BATTLE_INTRO        : TextureData;
+BATTLE_IDLE         : TextureData;
+BATTLE_OVERKILL     : TextureData;
+BATTLE_DAMAGE       : TextureData;
+BATTLE_HEAVY_DAMAGE : TextureData;
+BATTLE_DEATH        : TextureData;
+
 
 
 DEFAULT_SHADER   : u32;
@@ -27,13 +30,17 @@ EnemyBattle :: struct @entity {
     // Dead and "Overkill". Death doesnt actually happen until the end
     // of scoring to prevent thread bullshit... and also for the actual
     // mechanic.
+    overkill   : bool = false;
     dead   : bool = false;
+
     attack : int = 1;
     vibrator : float = 0; //no im not changing it
     
     attack_timer : float = 0;
     attack_interval : float = 5;
     can_attack      : bool = true;
+    
+    death_time : Apollo_Time;
     
     target_player_index : int = 0;
 
@@ -55,8 +62,11 @@ init_enemy_battle :: (entity : *EnemyBattle) {
             entity.attack_interval = 5;
             
             BATTLE_INTRO = create_texture_animated(TEX_KNIGHT_BATTLE_INTRO, 11);
-            BATTLE_DEATH = create_texture_animated(TEX_KNIGHT_BATTLE_DEATH, 3);
+            BATTLE_OVERKILL = create_texture_animated(TEX_KNIGHT_BATTLE_OVERKILL, 3);
             BATTLE_DAMAGE = create_texture_animated(TEX_KNIGHT_BATTLE_DAMAGE, 1);
+            BATTLE_DEATH = create_texture_animated(TEX_KNIGHT_BATTLE_DEATH, 2);
+            BATTLE_HEAVY_DAMAGE = create_texture_animated(TEX_KNIGHT_BATTLE_HEAVY_DAMAGE, 1);
+
 
             BATTLE_IDLE = create_texture(TEX_KNIGHT_IDLE);
 
@@ -89,10 +99,18 @@ tick_enemy :: (enemy : *EnemyBattle) {
     enemy.vibrator = lerp(enemy.vibrator, 0, game_state.delta_time*3);
     enemy.position.x = sin(enemy.vibrator)*5 + enemy.base_pos.x;
     
-    if (enemy.attack_timer >= enemy.attack_interval) && enemy.can_attack && !enemy.dead {
+    if (enemy.attack_timer >= enemy.attack_interval) && enemy.can_attack && !enemy.overkill && !enemy.dead {
         play_intro_anim(enemy);
         take_damage(game_state.players[enemy.target_player_index], enemy.attack);
         enemy.attack_timer = 0;
+    }
+    
+    enemy.sprite.animation_frame = cast(s32)( (game_state.time*(6)) );
+    
+    //print("%\n", to_float64_seconds(current_time_monotonic() - enemy.death_time));
+    
+    if enemy.dead && (to_float64_seconds(current_time_monotonic() - enemy.death_time) >= 5) {
+        destroy_entity(enemy);
     }
 }
 
@@ -105,12 +123,12 @@ play_intro_anim :: (enemy: *EnemyBattle) {
     play_sprite_animation(*enemy.entity, sprite, 1, false, true);
 }
 
+play_overkill_anim :: (enemy: *EnemyBattle) {
+    set_sprite_texture(enemy.sprite, BATTLE_OVERKILL);
+}
+
 play_death_anim :: (enemy: *EnemyBattle) {
-    sprite : *Sprite = New(Sprite);
-    set_sprite_texture(sprite, BATTLE_DEATH);
-    sprite.position += .{42,-22};
-    sprite.shader_program = DEFAULT_SHADER;
-    play_sprite_animation(*enemy.entity, sprite, .25, true, false);
+    set_sprite_texture(enemy.sprite, BATTLE_DEATH);
 }
 
 play_damage_anim :: (enemy: *EnemyBattle) {
@@ -122,20 +140,37 @@ play_damage_anim :: (enemy: *EnemyBattle) {
     // Damage number color should correspond to suit of card
 }
 
+play_heavy_damage_anim :: (enemy: *EnemyBattle) {
+    sprite : *Sprite = New(Sprite);
+    set_sprite_texture(sprite, BATTLE_HEAVY_DAMAGE);
+    //sprite.position += .{42,-32};
+    sprite.shader_program = DEFAULT_SHADER;
+    play_sprite_animation(*enemy.entity, sprite, .5, false, true);
+    // Damage number color should correspond to suit of card
+}
+
 take_damage :: (enemy : *EnemyBattle, damage : int) {
+    print("%\n", damage);
     enemy.vibrator = (ifx damage < 30 then 30 else 50).(float);
     enemy.health -= damage;
+    if enemy.dead || enemy.overkill then return;
+    
     if enemy.health <= 0 {
-        kill(enemy);
+        play_heavy_damage_anim(enemy);
+        enter_overkill(enemy);
     } else {
         play_damage_anim(enemy);
     }
-    print("%\n", damage);
+}
 
+enter_overkill :: (enemy : *EnemyBattle) {
+    enemy.overkill = true;
+    play_overkill_anim(enemy);
 }
 
 kill :: (enemy : *EnemyBattle) {
     enemy.dead = true;
+    enemy.death_time = current_time_monotonic();
     play_death_anim(enemy);
 }
 

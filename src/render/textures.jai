@@ -22,8 +22,12 @@ TEX_KRIS_BATTLE_DEATH  : string : #run bake_texture("%/../data/texture/tex_kris_
 TEX_KNIGHT_IDLE : string : #run bake_texture("%/../data/texture/tex_knight_idle.png");
 TEX_KNIGHT_BATTLE_INTRO  : string : #run bake_texture("%/../data/texture/tex_knight_battle_intro.png");
 TEX_KNIGHT_BATTLE_ATTACK : string : #run bake_texture("%/../data/texture/tex_knight_battle_attack.png");
-TEX_KNIGHT_BATTLE_DEATH  : string : #run bake_texture("%/../data/texture/tex_knight_battle_death.png");
+TEX_KNIGHT_BATTLE_OVERKILL  : string : #run bake_texture("%/../data/texture/tex_knight_battle_overkill.png");
 TEX_KNIGHT_BATTLE_DAMAGE : string : #run bake_texture("%/../data/texture/tex_knight_battle_damage.png");
+TEX_KNIGHT_BATTLE_HEAVY_DAMAGE : string : #run bake_texture("%/../data/texture/tex_knight_battle_heavy_damage.png");
+TEX_KNIGHT_BATTLE_DEATH : string : #run bake_texture("%/../data/texture/tex_knight_battle_death.png");
+
+
 
 TEX_BG_HOMETOWN : string : #run bake_texture("%/../data/texture/background/tex_bg_hometown.png");
 

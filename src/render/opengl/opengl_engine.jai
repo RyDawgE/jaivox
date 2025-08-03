@@ -20,7 +20,7 @@ RenderHandle :: struct {
 
     shader_objects             : *Table(string, u32);
 
-    subscribed_entities        : [..] u64;
+    subscribed_entities        : [..] s64;
 }
 
 GameStateUniform :: struct {
@@ -274,6 +274,7 @@ get_entity_render_info :: (entity : *Entity) -> *Sprite, u32, u32, s32, s32 {
     use_animator               : bool    = false;
 
     if (!entity) then return null,0,0,0,0;
+    if (!entity.sprite) then return null,0,0,0,0;
 
     sprite = entity.sprite;
     if (entity.animator != null) {

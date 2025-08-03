@@ -89,11 +89,6 @@ RANK_SCORES : [14]float : .[
     11,
 ];
 
-Card :: struct {
-    rank : Rank = .ACE;
-    suit : Suit = .SPADE;
-}
-
 RANKS : [13]Rank : .[
     .ACE, .TWO, .THREE, .FOUR, .FIVE, .SIX, .SEVEN, .EIGHT, .NINE, .TEN,
     .JACK, .QUEEN, .KING,
@@ -114,6 +109,11 @@ STRAIGHTS     : [10]u16  : .[
     0b0000000000111110,
     0b0010000000011111,
 ];
+
+Card :: struct {
+    rank : Rank = .ACE;
+    suit : Suit = .SPADE;
+}
 
 generate_standard_deck :: () -> [52]Card #compile_time {
     deck : [52]Card;

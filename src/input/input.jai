@@ -1,5 +1,5 @@
 InputHandle :: struct {
-    subscribed_entities : [..] u64;
+    subscribed_entities : [..] s64;
     mouse_position : Vector2;
     mouse_delta : Vector2;
 }

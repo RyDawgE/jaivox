@@ -4,6 +4,12 @@ ENTITY_TICK_PROCEDURE_SIGNATURE :: #type (entity: *Entity);
 
 DEAD_BIT : s64 : (-1<<63);
 
+// @TODO:
+// Biggest TODO Rn. When an entity is destroyed and removed 
+// from the block... the pointer is still valid it just gives bad data
+// Need to mark the entity for destruction by using -1, and get_entity should return 0 if so
+// for that frame. 
+
 Entity :: struct @entity {
     id : s64;
 
@@ -174,8 +180,6 @@ destroy_entity :: (entity : *Entity) -> bool {
     if (entity.id == 0 || entity.active == false) {
         return false; //Already inactive
     }
-
-    print("%\n", formatInt(entity.id | DEAD_BIT, 2, 64));
     //print("%\n", formatInt(-1<<63, 2, 64));
 
     
@@ -185,15 +189,21 @@ destroy_entity :: (entity : *Entity) -> bool {
     game_state.entity_handle.entity_blocks[block].member_mask &= ~((cast(u64) 1) << slot);
 
     input_subscription := *game_state.input_handle.subscribed_entities;
-    if array_find(<<input_subscription, entity.id) {
-        array_unordered_remove_by_value(input_subscription, entity.id);
+    if array_find(input_subscription.*, entity.id) {
+        array_ordered_remove_by_value(input_subscription, entity.id);
         deinit(entity.input_bindings);
         free(entity.input_bindings);
     }
 
     render_subscription := *game_state.render_handle.subscribed_entities;
-    if array_find(<<render_subscription, entity.id) {
-        array_unordered_remove_by_value(input_subscription, entity.id);
+    if array_find(render_subscription.*, entity.id) {
+        array_ordered_remove_by_value(render_subscription, entity.id);
+    }
+    
+    tick_subscription := *game_state.entity_handle.tickable_entities;
+    callback, success := table_find(tick_subscription.*, entity.id); 
+    if success {
+        table_remove(tick_subscription.*, entity.id);
     }
 
     #if ENGINE2D {
@@ -209,6 +219,7 @@ destroy_entity :: (entity : *Entity) -> bool {
         }
     }
     
+    entity.id |= DEAD_BIT;
 
     return true;
 }
@@ -231,6 +242,10 @@ get_entity :: (id : s64) -> *void {
 
     memory : *void = entity_blocks[block_index].memory;
     memory += (slot_index - 1) * LARGEST_ENTITY_SIZE;
+
+    if !(memory.(*Entity)) then return null;
+    if memory.(*Entity).id < 0 then return null;
+
 
     return memory;
 }

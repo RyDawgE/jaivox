@@ -75,7 +75,6 @@ init_enemy_battle :: (entity : *EnemyBattle) {
                 get_shader_object("RAINBOW_SPRITE_FRAG"),
             );
             
-            subscribe_entity_to_tick(entity, xx tick_enemy);
             subscribe_entity_to_tick(entity, xx tick_roaring_knight);
         }
     }
@@ -177,7 +176,8 @@ kill :: (enemy : *EnemyBattle) {
 // Roaring Knight
 tick_roaring_knight :: (enemy : *EnemyBattle) {
     using enemy;
-
+    
+    tick_enemy(enemy);
     entity.velocity = .{0, sin(game_state.time*3)/1.5};
     entity.position += Vector2.{enemy.velocity.x, -enemy.velocity.y} * (100 * game_state.delta_time);
 }

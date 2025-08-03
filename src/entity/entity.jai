@@ -2,6 +2,8 @@ LARGEST_ENTITY_SIZE :: #run get_entity_slot_size();
 
 ENTITY_TICK_PROCEDURE_SIGNATURE :: #type (entity: *Entity);
 
+DEAD_BIT : s64 : (-1<<63);
+
 Entity :: struct @entity {
     id : s64;
 
@@ -115,7 +117,7 @@ create_entity :: ($T : Type, _handle : *EntityHandle = null) -> *T {
 
     entity.id = id;
     entity.active = true;
-
+    
     return entity;
 }
 
@@ -173,6 +175,10 @@ destroy_entity :: (entity : *Entity) -> bool {
         return false; //Already inactive
     }
 
+    print("%\n", formatInt(entity.id | DEAD_BIT, 2, 64));
+    //print("%\n", formatInt(-1<<63, 2, 64));
+
+    
     entity.active = false;
     block, slot := get_entity_mem_info(entity.id);
 
@@ -202,6 +208,7 @@ destroy_entity :: (entity : *Entity) -> bool {
             free(entity.model);
         }
     }
+    
 
     return true;
 }

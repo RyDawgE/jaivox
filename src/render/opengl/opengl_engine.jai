@@ -414,8 +414,7 @@ draw_frame :: () {
 
         transform = make_translation_matrix4(bound_camera.position) * rotation_matrix(Matrix4, rotation);
 
-        success : bool;
-        success, view = inverse(transform); //type mat4
+        view = inverse(transform); //type mat4
 
         //view = make_look_at_matrix(bound_camera.position, .{0, 0, 0}, .{0, 0, 1}, false);
     } else {

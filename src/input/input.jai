@@ -13,23 +13,23 @@ InputBindType :: enum u8 {
 
 poll_events :: () {
     update_window_events();
-
+    
     game_state.input_handle.mouse_delta = .{xx mouse_delta_x, xx mouse_delta_y};
 
     for events_this_frame {
-
+            
         if it.type == .QUIT {
             game_state.should_close = true;
         } else if it.type == .KEYBOARD && it.repeat == false {
             //print("%\n", cast (KeyboardKey) it.key_code);
             for id : game_state.input_handle.subscribed_entities {
                 entity : *Entity = cast (*Entity) get_entity(id);
-                success, callback := table_find_new(entity.input_bindings, cast (KeyboardKey) it.key_code);
+                callback, success := table_find(entity.input_bindings, cast (KeyboardKey) it.key_code);
                 if success {
                     callback(entity, *it);
                 }
             }
-        }
+        } 
     }
 }
 
@@ -162,7 +162,7 @@ KeyboardKey :: enum u32 {
     KEY_KP_ADD          :: 334;
     KEY_KP_ENTER        :: 335;
     KEY_KP_EQUAL        :: 336;
-
+    
     // Android key buttons
     KEY_BACK            :: 4;
     KEY_MENU            :: 82;
